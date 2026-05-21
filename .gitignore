@@ -17,3 +17,10 @@ gradle-app.setting
 
 .env
 .env.local
+
+# OpenCode / skills
+.skills/
+.skill/
+skills/
+**/skill.md
+.agents/

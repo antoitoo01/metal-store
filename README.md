@@ -1,2 +1,3 @@
 # metal-store
-Metal Store APP Version Control
+
+Metal ERP - Modular Monolith
