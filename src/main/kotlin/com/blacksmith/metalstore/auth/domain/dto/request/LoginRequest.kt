@@ -1,7 +1,11 @@
 package com.blacksmith.metalstore.auth.domain.dto.request
 
+import jakarta.validation.constraints.NotBlank
+
 data class LoginRequest(
-    val username: String?,
-    val email: String?,
+    @field:NotBlank
+    val email: String,
+
+    @field:NotBlank
     val password: String
 )

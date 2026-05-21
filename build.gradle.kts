@@ -16,12 +16,15 @@ repositories {
 
 dependencies {
 	implementation("org.springframework.boot:spring-boot-h2console")
+	implementation("org.springframework.boot:spring-boot-autoconfigure")
 	implementation("org.springframework.boot:spring-boot-starter-data-jpa")
 	implementation("org.springframework.boot:spring-boot-starter-security")
 	implementation("org.springframework.boot:spring-boot-starter-validation")
 	implementation("org.springframework.boot:spring-boot-starter-webmvc")
 	implementation("org.jetbrains.kotlin:kotlin-reflect")
 	implementation("tools.jackson.module:jackson-module-kotlin")
+	implementation("me.paulschwarz:spring-dotenv:4.0.0")
+	implementation("org.springframework.boot:spring-boot-starter-oauth2-resource-server")
 	runtimeOnly("com.h2database:h2")
 	runtimeOnly("org.postgresql:postgresql")
 	testImplementation("org.springframework.boot:spring-boot-starter-data-jpa-test")

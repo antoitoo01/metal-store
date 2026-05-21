@@ -7,9 +7,11 @@ spring:
   profiles:
     active: dev
 
-  datasource:
-    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
 
-    jpa:
-      hibernate:
-        ddl-auto: update
+supabase:
+  url: ${SUPABASE_URL:}
+  anon-key: ${SUPABASE_ANON_KEY:}
+  service-role-key: ${SUPABASE_SERVICE_ROLE_KEY:}

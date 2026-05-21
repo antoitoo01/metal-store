@@ -2,9 +2,8 @@ package com.blacksmith.metalstore.auth.exception
 
 sealed class AuthException(message: String) : RuntimeException(message)
 
-class UserNotFoundException(userId: String) :
-    AuthException("User with id $userId not found")
+class UserNotFoundException(message: String = "User not found") :
+    AuthException(message)
 
-class UserAlreadyExistsException(username: String) :
-    AuthException("User $username already exists")
-
+class UserAlreadyExistsException(message: String = "User already exists") :
+    AuthException(message)
