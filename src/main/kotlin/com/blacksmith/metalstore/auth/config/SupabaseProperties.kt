@@ -5,6 +5,6 @@ import org.springframework.boot.context.properties.ConfigurationProperties
 @ConfigurationProperties(prefix = "supabase")
 data class SupabaseProperties(
     val url: String = "",
-    val anonKey: String = "",
-    val serviceRoleKey: String = ""
+    val publishableKey: String = "",
+    val secretKey: String = ""
 )

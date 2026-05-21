@@ -20,8 +20,8 @@ class SupabaseAuthClient(
 
     fun signUp(email: String, password: String, username: String?): Map<String, Any?> {
         val headers = HttpHeaders().apply {
-            set("apikey", props.serviceRoleKey)
-            set("Authorization", "Bearer ${props.serviceRoleKey}")
+            set("apikey", props.secretKey)
+            set("Authorization", "Bearer ${props.secretKey}")
             set("Content-Type", "application/json")
         }
         val body = buildMap<String, Any?> {
@@ -51,7 +51,7 @@ class SupabaseAuthClient(
 
     fun signIn(email: String, password: String): Map<String, Any?> {
         val headers = HttpHeaders().apply {
-            set("apikey", props.anonKey)
+            set("apikey", props.publishableKey)
             set("Content-Type", "application/json")
         }
         val body = mapOf("email" to email, "password" to password)
@@ -75,7 +75,7 @@ class SupabaseAuthClient(
 
     fun getUser(accessToken: String): Map<String, Any?> {
         val headers = HttpHeaders().apply {
-            set("apikey", props.anonKey)
+            set("apikey", props.publishableKey)
             set("Authorization", "Bearer $accessToken")
         }
         val response: ResponseEntity<Map<String, Any?>> = rest.exchange(

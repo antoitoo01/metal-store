@@ -25,7 +25,7 @@
 - **JWKs**: Spring Security OAuth2 resource server validates Supabase JWT via `jwk-set-uri`.
 - **DB**: `auth/` entity maps to local `users` table. No FK to `auth.users` — `User.id` = Supabase `auth.users.id` UUID.
 - **Profile separation**: `dev` = permit-all security + H2; non-dev = OAuth2 + JWT validation.
-- **Env vars** (loaded via spring-dotenv `.env`): `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_DB_URL`, `SUPABASE_DB_USER`, `SUPABASE_DB_PASSWORD`.
+- **Env vars** (loaded via spring-dotenv `.env`): `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SECRET_KEY`, `SUPABASE_DB_URL`, `SUPABASE_DB_USER`, `SUPABASE_DB_PASSWORD`.
 
 ## Auth Flow
 
