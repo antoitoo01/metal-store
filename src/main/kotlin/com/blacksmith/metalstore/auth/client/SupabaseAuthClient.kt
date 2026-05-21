@@ -86,4 +86,39 @@ class SupabaseAuthClient(
         )
         return response.body ?: throw UserNotFoundException("User not found")
     }
+
+    fun refreshToken(refreshToken: String): Map<String, Any?> {
+        val headers = HttpHeaders().apply {
+            set("apikey", props.publishableKey)
+            set("Content-Type", "application/json")
+        }
+        val body = mapOf("refresh_token" to refreshToken)
+        return try {
+            val response: ResponseEntity<Map<String, Any?>> = rest.exchange(
+                "${props.url}/auth/v1/token?grant_type=refresh_token",
+                HttpMethod.POST,
+                HttpEntity(body, headers),
+                object : ParameterizedTypeReference<Map<String, Any?>>() {}
+            )
+            response.body ?: throw UserNotFoundException("Invalid refresh token")
+        } catch (e: HttpClientErrorException) {
+            throw when (e.statusCode.value()) {
+                400 -> UserNotFoundException("Invalid refresh token")
+                else -> UserNotFoundException(e.responseBodyAsString)
+            }
+        }
+    }
+
+    fun signOut(accessToken: String) {
+        val headers = HttpHeaders().apply {
+            set("apikey", props.publishableKey)
+            set("Authorization", "Bearer $accessToken")
+        }
+        rest.exchange(
+            "${props.url}/auth/v1/logout",
+            HttpMethod.POST,
+            HttpEntity(emptyMap<String, Any>(), headers),
+            Map::class.java
+        )
+    }
 }

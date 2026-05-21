@@ -1,5 +1,6 @@
 package com.blacksmith.metalstore
 
+import com.blacksmith.metalstore.config.loadDotenv
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.context.properties.ConfigurationPropertiesScan
 import org.springframework.boot.runApplication
@@ -9,5 +10,6 @@ import org.springframework.boot.runApplication
 class MetalStoreApplication
 
 fun main(args: Array<String>) {
-	runApplication<MetalStoreApplication>(*args)
+    loadDotenv()
+    runApplication<MetalStoreApplication>(*args)
 }

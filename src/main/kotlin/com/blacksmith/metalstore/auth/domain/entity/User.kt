@@ -1,5 +1,6 @@
 package com.blacksmith.metalstore.auth.domain.entity
 
+import com.blacksmith.metalstore.auth.domain.dto.response.UserResponse
 import jakarta.persistence.*
 import jakarta.validation.constraints.Email
 import java.time.LocalDateTime
@@ -30,4 +31,11 @@ data class User(
 
     @Column(nullable = false)
     var lastModifiedDate: LocalDateTime = LocalDateTime.now()
-)
+) {
+    fun toResponse() = UserResponse(
+        id = id,
+        username = username ?: "",
+        email = email,
+        role = role
+    )
+}

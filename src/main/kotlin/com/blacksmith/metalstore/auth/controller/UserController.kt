@@ -2,7 +2,6 @@ package com.blacksmith.metalstore.auth.controller
 
 import com.blacksmith.metalstore.auth.domain.dto.request.UpdateUserRequest
 import com.blacksmith.metalstore.auth.domain.dto.response.UserResponse
-import com.blacksmith.metalstore.auth.domain.entity.User
 import com.blacksmith.metalstore.auth.service.UserService
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
@@ -29,11 +28,4 @@ class UserController(private val userService: UserService) {
         userService.deleteById(id)
         return ResponseEntity.noContent().build()
     }
-
-    private fun User.toResponse() = UserResponse(
-        id = id,
-        username = username ?: "",
-        email = email,
-        role = role
-    )
 }
