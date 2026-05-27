@@ -121,4 +121,46 @@ class SupabaseAuthClient(
             Map::class.java
         )
     }
+
+    fun updateUserEmail(userId: java.util.UUID, newEmail: String) {
+        val headers = HttpHeaders().apply {
+            set("apikey", props.secretKey)
+            set("Authorization", "Bearer ${props.secretKey}")
+            set("Content-Type", "application/json")
+        }
+        val body = mapOf("email" to newEmail, "email_confirm" to true)
+        try {
+            rest.exchange(
+                "${props.url}/auth/v1/admin/users/$userId",
+                HttpMethod.PUT,
+                HttpEntity(body, headers),
+                Map::class.java
+            )
+        } catch (e: HttpClientErrorException) {
+            throw when (e.statusCode.value()) {
+                400, 422 -> UserAlreadyExistsException("Email already exists or invalid: ${e.responseBodyAsString}")
+                else -> UserAlreadyExistsException("Error updating user in Supabase: ${e.responseBodyAsString}")
+            }
+        }
+    }
+
+    fun deleteUser(userId: java.util.UUID) {
+        val headers = HttpHeaders().apply {
+            set("apikey", props.secretKey)
+            set("Authorization", "Bearer ${props.secretKey}")
+        }
+        try {
+            rest.exchange(
+                "${props.url}/auth/v1/admin/users/$userId",
+                HttpMethod.DELETE,
+                HttpEntity(emptyMap<String, Any>(), headers),
+                Map::class.java
+            )
+        } catch (e: HttpClientErrorException) {
+            throw when (e.statusCode.value()) {
+                404 -> UserNotFoundException("User not found in Supabase")
+                else -> UserNotFoundException("Error deleting user in Supabase: ${e.responseBodyAsString}")
+            }
+        }
+    }
 }

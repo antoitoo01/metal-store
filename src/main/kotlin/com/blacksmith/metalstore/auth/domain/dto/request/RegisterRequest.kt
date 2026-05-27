@@ -6,6 +6,7 @@ import jakarta.validation.constraints.Pattern
 
 data class RegisterRequest(
     val username: String?,
+    val tenantName: String?,
 
     @field:NotBlank
     @field:Email

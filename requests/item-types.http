@@ -1,0 +1,48 @@
+### Crear Panel Vidrio
+POST {{baseUrl}}/api/catalog/item-types
+X-Tenant-Id: {{tenantId}}
+Content-Type: application/json
+
+{
+  "name": "Panel Vidrio",
+  "description": "Paneles de vidrio templado",
+  "schemaDefinition": "{\"fields\":[{\"name\":\"largo\",\"type\":\"decimal\",\"unit\":\"mm\"},{\"name\":\"ancho\",\"type\":\"decimal\",\"unit\":\"mm\"},{\"name\":\"espesor\",\"type\":\"decimal\",\"unit\":\"mm\"}]}"
+}
+
+> {%
+    client.global.set("typeId", response.body.id);
+%}
+
+### Crear Soporte Personalizado
+POST {{baseUrl}}/api/catalog/item-types
+X-Tenant-Id: {{tenantId}}
+Content-Type: application/json
+
+{
+  "name": "Soporte Personalizado",
+  "description": "Soportes fabricados a medida",
+  "schemaDefinition": "{\"fields\":[{\"name\":\"alto\",\"type\":\"decimal\",\"unit\":\"mm\"},{\"name\":\"ancho\",\"type\":\"decimal\",\"unit\":\"mm\"},{\"name\":\"material\",\"type\":\"string\"}]}"
+}
+
+### Listar tipos
+GET {{baseUrl}}/api/catalog/item-types?page=0&size=20
+X-Tenant-Id: {{tenantId}}
+
+### Obtener tipo por ID
+GET {{baseUrl}}/api/catalog/item-types/{{typeId}}
+X-Tenant-Id: {{tenantId}}
+
+### Actualizar tipo
+PUT {{baseUrl}}/api/catalog/item-types/{{typeId}}
+X-Tenant-Id: {{tenantId}}
+Content-Type: application/json
+
+{
+  "name": "Panel Vidrio Templado",
+  "description": "Actualizado: paneles de vidrio templado",
+  "schemaDefinition": "{\"fields\":[{\"name\":\"largo\",\"type\":\"decimal\",\"unit\":\"mm\"},{\"name\":\"ancho\",\"type\":\"decimal\",\"unit\":\"mm\"},{\"name\":\"espesor\",\"type\":\"decimal\",\"unit\":\"mm\"},{\"name\":\"tinte\",\"type\":\"string\"}]}"
+}
+
+### Eliminar tipo
+DELETE {{baseUrl}}/api/catalog/item-types/{{typeId}}
+X-Tenant-Id: {{tenantId}}

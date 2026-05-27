@@ -8,7 +8,7 @@ Content-Type: application/json
   "password": "Test1234!"
 }
 
-### Login
+### Login (stores access_token and refresh_token)
 POST http://localhost:8080/api/auth/login
 Content-Type: application/json
 
@@ -17,21 +17,42 @@ Content-Type: application/json
   "password": "Test1234!"
 }
 
-### Get user by ID (after login, replace TOKEN and UUID)
-GET http://localhost:8080/api/users/UUID
-Authorization: Bearer TOKEN
+> {%
+    client.global.set("access_token", response.body.accessToken);
+    client.global.set("refresh_token", response.body.refreshToken);
+%}
+
+### Get current user (requires token from Login)
+GET http://localhost:8080/api/auth/me
+Authorization: Bearer {{access_token}}
+
+### Refresh access token
+POST http://localhost:8080/api/auth/refresh
+Content-Type: application/json
+
+{
+  "refreshToken": "{{refresh_token}}"
+}
+
+### Logout (revokes session)
+POST http://localhost:8080/api/auth/logout
+Authorization: Bearer {{access_token}}
+
+### Get user by ID (replace UUID)
+GET http://localhost:8080/api/users/REPLACE_WITH_UUID
+Authorization: Bearer {{access_token}}
 
 ### Update user (replace UUID)
 PUT http://localhost:8080/api/users
 Content-Type: application/json
-Authorization: Bearer TOKEN
+Authorization: Bearer {{access_token}}
 
 {
-  "id": "UUID",
+  "id": "REPLACE_WITH_UUID",
   "username": "updateduser",
   "email": "updated@example.com"
 }
 
 ### Delete user (replace UUID)
-DELETE http://localhost:8080/api/users/UUID
-Authorization: Bearer TOKEN
+DELETE http://localhost:8080/api/users/REPLACE_WITH_UUID
+Authorization: Bearer {{access_token}}

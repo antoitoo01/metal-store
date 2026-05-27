@@ -1,0 +1,46 @@
+### 1. Registrar
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "username": "admin",
+  "email": "taller@ejemplo.com",
+  "password": "Test1234!",
+  "tenantName": "Mi Taller"
+}
+
+> {%
+    client.global.set("accessToken", response.body.accessToken);
+    client.global.set("tenantId", response.body.tenantId);
+    client.log("tenantId: " + response.body.tenantId);
+%}
+
+### 2. Login
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "taller@ejemplo.com",
+  "password": "Test1234!"
+}
+
+> {%
+    client.global.set("accessToken", response.body.accessToken);
+    client.log("accessToken: " + response.body.accessToken);
+%}
+
+### 3. Me
+GET {{baseUrl}}/api/auth/me
+Authorization: Bearer {{accessToken}}
+
+### 4. Refresh
+POST {{baseUrl}}/api/auth/refresh
+Content-Type: application/json
+
+{
+  "refreshToken": "{{refreshToken}}"
+}
+
+### 5. Logout
+POST {{baseUrl}}/api/auth/logout
+Authorization: Bearer {{accessToken}}

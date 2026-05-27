@@ -33,6 +33,9 @@
 |---|---|---|---|
 | `/api/auth/register` | POST | None | Creates user in Supabase + local `users` table, returns JWT |
 | `/api/auth/login` | POST | None | Authenticates via Supabase, returns JWT + user info |
+| `/api/auth/me` | GET | JWT | Returns current authenticated user |
+| `/api/auth/refresh` | POST | None | Refresh access token using refresh token |
+| `/api/auth/logout` | POST | JWT | Revoke session |
 | `/api/users/{id}` | GET | Future | Find user by ID |
 | `/api/users` | PUT | Future | Update user |
 | `/api/users/{id}` | DELETE | Future | Delete user |

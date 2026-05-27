@@ -24,6 +24,7 @@ dependencies {
 	implementation("org.jetbrains.kotlin:kotlin-reflect")
 	implementation("tools.jackson.module:jackson-module-kotlin")
 	implementation("org.springframework.boot:spring-boot-starter-oauth2-resource-server")
+	implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.1")
 	runtimeOnly("com.h2database:h2")
 	runtimeOnly("org.postgresql:postgresql")
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
@@ -48,6 +49,22 @@ allOpen {
 	annotation("jakarta.persistence.Embeddable")
 }
 
+val mockitoAgent by configurations.creating {
+	isCanBeConsumed = false
+	isCanBeResolved = true
+}
+dependencies {
+	mockitoAgent("org.mockito:mockito-core") { isTransitive = false }
+}
+
 tasks.withType<Test> {
 	useJUnitPlatform()
+	jvmArgs(
+		"-XX:+EnableDynamicAgentLoading",
+		"-javaagent:${mockitoAgent.singleFile}"
+	)
+	testLogging {
+		events("passed", "failed", "skipped")
+		showStandardStreams = true
+	}
 }

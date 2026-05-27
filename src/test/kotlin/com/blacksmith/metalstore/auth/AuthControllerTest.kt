@@ -3,7 +3,9 @@ package com.blacksmith.metalstore.auth
 import com.blacksmith.metalstore.auth.client.SupabaseAuthClient
 import com.blacksmith.metalstore.auth.domain.dto.request.RegisterRequest
 import com.blacksmith.metalstore.auth.domain.entity.Role
+import com.blacksmith.metalstore.auth.domain.entity.Tenant
 import com.blacksmith.metalstore.auth.domain.entity.UserState
+import com.blacksmith.metalstore.auth.repository.TenantRepository
 import com.blacksmith.metalstore.auth.repository.UserRepository
 import com.blacksmith.metalstore.auth.service.AuthService
 import org.junit.jupiter.api.BeforeEach
@@ -15,6 +17,7 @@ import org.mockito.Mockito.verify
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.context.ActiveProfiles
+import java.time.LocalDateTime
 import java.util.UUID
 
 @SpringBootTest
@@ -24,20 +27,26 @@ class AuthControllerTest {
     @Autowired
     private lateinit var userRepository: UserRepository
 
+    @Autowired
+    private lateinit var tenantRepository: TenantRepository
+
     private lateinit var supabaseAuthClient: SupabaseAuthClient
     private lateinit var authService: AuthService
 
+    private val tenantId = UUID.randomUUID()
     private val userUuid = UUID.randomUUID()
     private val email = "test@example.com"
     private val password = "Test1234!"
     private val accessToken = "test-access-token"
     private val refreshToken = "test-refresh-token"
+    private val tenantName = "Test Taller"
 
     @BeforeEach
     fun setUp() {
         userRepository.deleteAll()
+        tenantRepository.deleteAll()
         supabaseAuthClient = mock(SupabaseAuthClient::class.java)
-        authService = AuthService(supabaseAuthClient, userRepository)
+        authService = AuthService(supabaseAuthClient, userRepository, tenantRepository)
     }
 
     @Test
@@ -55,17 +64,20 @@ class AuthControllerTest {
         )
 
         val response = authService.register(
-            RegisterRequest(username = "testuser", email = email, password = password)
+            RegisterRequest(username = "testuser", tenantName = tenantName, email = email, password = password)
         )
 
         assert(response.accessToken == accessToken)
         assert(response.refreshToken == refreshToken)
         assert(response.email == email)
-        assert(response.role == Role.USER)
+        assert(response.role == Role.TENANT_OWNER)
+        assert(response.tenantName == tenantName)
 
         val savedUser = userRepository.findById(userUuid)
         assert(savedUser.isPresent)
         assert(savedUser.get().email == email)
+        assert(savedUser.get().role == Role.TENANT_OWNER)
+        assert(savedUser.get().tenantId == response.tenantId)
     }
 
     @Test
@@ -83,7 +95,7 @@ class AuthControllerTest {
         )
 
         authService.register(
-            RegisterRequest(username = "testuser", email = email, password = password)
+            RegisterRequest(username = "testuser", tenantName = tenantName, email = email, password = password)
         )
 
         val response = authService.login(email, password)
@@ -107,13 +119,14 @@ class AuthControllerTest {
         )
 
         authService.register(
-            RegisterRequest(username = "testuser", email = email, password = password)
+            RegisterRequest(username = "testuser", tenantName = tenantName, email = email, password = password)
         )
 
         val response = authService.me(userUuid)
 
         assert(response.email == email)
         assert(response.username == "testuser")
+        assert(response.tenantName == tenantName)
     }
 
     @Test

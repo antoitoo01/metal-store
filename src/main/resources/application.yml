@@ -5,7 +5,7 @@ spring:
   application:
     name: metal-store
   profiles:
-    active: dev
+    active: prod
 
   jpa:
     hibernate:

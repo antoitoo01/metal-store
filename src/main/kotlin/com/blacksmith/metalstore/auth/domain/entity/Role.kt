@@ -1,7 +1,8 @@
 package com.blacksmith.metalstore.auth.domain.entity
 
 enum class Role {
-    USER,
+    TENANT_OWNER,
     ADMIN,
-    STAFF
+    STAFF,
+    USER
 }
