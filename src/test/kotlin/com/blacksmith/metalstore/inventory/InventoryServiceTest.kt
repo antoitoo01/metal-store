@@ -1,10 +1,12 @@
 package com.blacksmith.metalstore.inventory
 
+import com.blacksmith.metalstore.auth.audit.AuditLogger
 import com.blacksmith.metalstore.inventory.application.InventoryService
 import com.blacksmith.metalstore.inventory.domain.entity.InventoryItem
 import com.blacksmith.metalstore.inventory.domain.repository.InventoryItemRepository
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.mockito.Mockito.mock
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.data.domain.PageRequest
@@ -26,7 +28,7 @@ class InventoryServiceTest {
     @BeforeEach
     fun setUp() {
         repo.deleteAll()
-        service = InventoryService(repo)
+        service = InventoryService(repo, mock(AuditLogger::class.java))
     }
 
     @Test

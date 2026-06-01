@@ -1,5 +1,6 @@
 package com.blacksmith.metalstore.billing
 
+import com.blacksmith.metalstore.auth.audit.AuditLogger
 import com.blacksmith.metalstore.billing.application.BillingService
 import com.blacksmith.metalstore.billing.domain.entity.*
 import com.blacksmith.metalstore.billing.domain.repository.InvoiceLineRepository
@@ -7,6 +8,7 @@ import com.blacksmith.metalstore.billing.domain.repository.InvoiceRepository
 import com.blacksmith.metalstore.billing.domain.repository.PriceListRepository
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.mockito.Mockito.mock
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.data.domain.PageRequest
@@ -34,7 +36,7 @@ class BillingServiceTest {
         priceListRepo.deleteAll()
         invoiceRepo.deleteAll()
         invoiceLineRepo.deleteAll()
-        service = BillingService(priceListRepo, invoiceRepo, invoiceLineRepo)
+        service = BillingService(priceListRepo, invoiceRepo, invoiceLineRepo, mock(AuditLogger::class.java))
     }
 
     @Test

@@ -1,5 +1,6 @@
 package com.blacksmith.metalstore.inventory.application
 
+import com.blacksmith.metalstore.auth.audit.AuditLogger
 import com.blacksmith.metalstore.inventory.domain.entity.InventoryItem
 import com.blacksmith.metalstore.inventory.domain.entity.assertValidSource
 import com.blacksmith.metalstore.inventory.domain.repository.InventoryItemRepository
@@ -12,7 +13,8 @@ import java.util.UUID
 @Service
 @Transactional
 class InventoryService(
-    private val repo: InventoryItemRepository
+    private val repo: InventoryItemRepository,
+    private val audit: AuditLogger
 ) {
     @Transactional(readOnly = true)
     fun findAll(tenantId: UUID, pageable: Pageable): Page<InventoryItem> =
@@ -24,7 +26,15 @@ class InventoryService(
 
     fun create(item: InventoryItem): InventoryItem {
         require(item.assertValidSource()) { "InventoryItem must reference either a profile or an item (exclusive)" }
-        return repo.save(item)
+        val saved = repo.save(item)
+        audit.log(AuditLogger.AuditEvent(
+            action = "INVENTORY_CREATED",
+            entityType = "InventoryItem",
+            entityId = saved.id.toString(),
+            tenantId = saved.tenantId.toString(),
+            details = mapOf("profileId" to saved.profileId?.toString(), "quantity" to saved.quantity.toString())
+        ))
+        return saved
     }
 
     fun update(tenantId: UUID, id: UUID, updated: InventoryItem): InventoryItem? {
@@ -36,12 +46,26 @@ class InventoryService(
             supplier = updated.supplier ?: existing.supplier,
             notes = updated.notes ?: existing.notes
         )
-        return repo.save(merged)
+        val saved = repo.save(merged)
+        audit.log(AuditLogger.AuditEvent(
+            action = "INVENTORY_UPDATED",
+            entityType = "InventoryItem",
+            entityId = saved.id.toString(),
+            tenantId = tenantId.toString(),
+            details = mapOf("quantity" to saved.quantity.toString())
+        ))
+        return saved
     }
 
     fun delete(tenantId: UUID, id: UUID): Boolean {
         val item = repo.findById(id).filter { it.tenantId == tenantId }.orElse(null) ?: return false
         repo.delete(item)
+        audit.log(AuditLogger.AuditEvent(
+            action = "INVENTORY_DELETED",
+            entityType = "InventoryItem",
+            entityId = id.toString(),
+            tenantId = tenantId.toString()
+        ))
         return true
     }
 }

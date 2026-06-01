@@ -1,5 +1,6 @@
 package com.blacksmith.metalstore.auth.service
 
+import com.blacksmith.metalstore.auth.audit.AuditLogger
 import com.blacksmith.metalstore.auth.client.SupabaseAuthClient
 import com.blacksmith.metalstore.auth.domain.dto.request.RegisterRequest
 import com.blacksmith.metalstore.auth.domain.dto.response.LoginResponse
@@ -20,7 +21,8 @@ import java.util.UUID
 class AuthService(
     private val supabase: SupabaseAuthClient,
     private val userRepository: UserRepository,
-    private val tenantRepository: TenantRepository
+    private val tenantRepository: TenantRepository,
+    private val audit: AuditLogger
 ) {
     @Transactional
     fun register(request: RegisterRequest): LoginResponse {
@@ -42,6 +44,15 @@ class AuthService(
         userRepository.save(user)
 
         val login = supabase.signIn(request.email, request.password)
+
+        audit.log(AuditLogger.AuditEvent(
+            action = "REGISTER",
+            entityType = "User",
+            entityId = user.id.toString(),
+            tenantId = tenant.id.toString(),
+            details = mapOf("email" to email, "username" to request.username)
+        ))
+
         return buildLoginResponse(login, user, tenant.name)
     }
 
@@ -56,8 +67,23 @@ class AuthService(
         return if (user != null) {
             val tenant = tenantRepository.findById(user.tenantId)
                 .orElseThrow { UserNotFoundException("Tenant not found") }
+
+            audit.log(AuditLogger.AuditEvent(
+                action = "LOGIN_SUCCESS",
+                entityType = "User",
+                entityId = user.id.toString(),
+                tenantId = user.tenantId.toString(),
+                details = mapOf("email" to email)
+            ))
+
             buildLoginResponse(supabaseResponse, user, tenant.name)
         } else {
+            audit.warn(AuditLogger.AuditEvent(
+                action = "LOGIN_FAILED",
+                entityType = "User",
+                details = mapOf("email" to email)
+            ))
+
             LoginResponse(
                 accessToken = supabaseResponse.getValue("access_token") as String,
                 refreshToken = supabaseResponse["refresh_token"] as? String,

@@ -1,5 +1,6 @@
 package com.blacksmith.metalstore.billing.application
 
+import com.blacksmith.metalstore.auth.audit.AuditLogger
 import com.blacksmith.metalstore.billing.domain.entity.Invoice
 import com.blacksmith.metalstore.billing.domain.entity.InvoiceLine
 import com.blacksmith.metalstore.billing.domain.entity.InvoiceStatus
@@ -20,18 +21,35 @@ import java.util.UUID
 class BillingService(
     private val priceListRepo: PriceListRepository,
     private val invoiceRepo: InvoiceRepository,
-    private val invoiceLineRepo: InvoiceLineRepository
+    private val invoiceLineRepo: InvoiceLineRepository,
+    private val audit: AuditLogger
 ) {
     // ── Price List ──────────────────────────────────────────────
     @Transactional(readOnly = true)
     fun listPrices(tenantId: UUID, pageable: Pageable): Page<PriceListItem> =
         priceListRepo.findByTenantId(tenantId, pageable)
 
-    fun upsertPrice(item: PriceListItem): PriceListItem = priceListRepo.save(item)
+    fun upsertPrice(item: PriceListItem): PriceListItem {
+        val saved = priceListRepo.save(item)
+        audit.log(AuditLogger.AuditEvent(
+            action = "PRICE_UPSERT",
+            entityType = "PriceListItem",
+            entityId = saved.id.toString(),
+            tenantId = saved.tenantId.toString(),
+            details = mapOf("profileId" to (saved.profileId?.toString()), "unitPrice" to saved.unitPrice.toString())
+        ))
+        return saved
+    }
 
     fun deletePrice(tenantId: UUID, id: UUID): Boolean {
         val p = priceListRepo.findById(id).filter { it.tenantId == tenantId }.orElse(null) ?: return false
         priceListRepo.delete(p)
+        audit.log(AuditLogger.AuditEvent(
+            action = "PRICE_DELETE",
+            entityType = "PriceListItem",
+            entityId = id.toString(),
+            tenantId = tenantId.toString()
+        ))
         return true
     }
 
@@ -57,7 +75,15 @@ class BillingService(
             customerVat = customerVat,
             status = InvoiceStatus.DRAFT
         )
-        return invoiceRepo.save(invoice)
+        val saved = invoiceRepo.save(invoice)
+        audit.log(AuditLogger.AuditEvent(
+            action = "INVOICE_CREATED",
+            entityType = "Invoice",
+            entityId = saved.id.toString(),
+            tenantId = tenantId.toString(),
+            details = mapOf("number" to number, "customerName" to customerName)
+        ))
+        return saved
     }
 
     fun addLine(tenantId: UUID, invoiceId: UUID, line: InvoiceLine): InvoiceLine? {
@@ -67,6 +93,13 @@ class BillingService(
         val lineWithTotal = line.copy(invoiceId = invoiceId, totalPrice = computedTotal)
         val saved = invoiceLineRepo.save(lineWithTotal)
         recalcTotals(invoiceId)
+        audit.log(AuditLogger.AuditEvent(
+            action = "INVOICE_LINE_ADDED",
+            entityType = "InvoiceLine",
+            entityId = saved.id.toString(),
+            tenantId = tenantId.toString(),
+            details = mapOf("invoiceId" to invoiceId.toString(), "quantity" to saved.quantity.toString(), "unitPrice" to saved.unitPrice.toString())
+        ))
         return saved
     }
 
@@ -76,6 +109,13 @@ class BillingService(
         val line = invoiceLineRepo.findById(lineId).filter { it.invoiceId == invoiceId }.orElse(null) ?: return false
         invoiceLineRepo.delete(line)
         recalcTotals(invoiceId)
+        audit.log(AuditLogger.AuditEvent(
+            action = "INVOICE_LINE_REMOVED",
+            entityType = "InvoiceLine",
+            entityId = lineId.toString(),
+            tenantId = tenantId.toString(),
+            details = mapOf("invoiceId" to invoiceId.toString())
+        ))
         return true
     }
 
@@ -83,21 +123,45 @@ class BillingService(
         val invoice = invoiceRepo.findById(invoiceId).filter { it.tenantId == tenantId }.orElse(null) ?: return null
         if (invoice.status != InvoiceStatus.DRAFT) return null
         invoice.status = InvoiceStatus.ISSUED
-        return invoiceRepo.save(invoice)
+        val saved = invoiceRepo.save(invoice)
+        audit.log(AuditLogger.AuditEvent(
+            action = "INVOICE_ISSUED",
+            entityType = "Invoice",
+            entityId = invoiceId.toString(),
+            tenantId = tenantId.toString(),
+            details = mapOf("number" to invoice.invoiceNumber)
+        ))
+        return saved
     }
 
     fun markPaid(tenantId: UUID, invoiceId: UUID): Invoice? {
         val invoice = invoiceRepo.findById(invoiceId).filter { it.tenantId == tenantId }.orElse(null) ?: return null
         if (invoice.status != InvoiceStatus.ISSUED) return null
         invoice.status = InvoiceStatus.PAID
-        return invoiceRepo.save(invoice)
+        val saved = invoiceRepo.save(invoice)
+        audit.log(AuditLogger.AuditEvent(
+            action = "INVOICE_PAID",
+            entityType = "Invoice",
+            entityId = invoiceId.toString(),
+            tenantId = tenantId.toString(),
+            details = mapOf("number" to invoice.invoiceNumber)
+        ))
+        return saved
     }
 
     fun cancel(tenantId: UUID, invoiceId: UUID): Invoice? {
         val invoice = invoiceRepo.findById(invoiceId).filter { it.tenantId == tenantId }.orElse(null) ?: return null
         if (invoice.status == InvoiceStatus.PAID) return null
         invoice.status = InvoiceStatus.CANCELLED
-        return invoiceRepo.save(invoice)
+        val saved = invoiceRepo.save(invoice)
+        audit.log(AuditLogger.AuditEvent(
+            action = "INVOICE_CANCELLED",
+            entityType = "Invoice",
+            entityId = invoiceId.toString(),
+            tenantId = tenantId.toString(),
+            details = mapOf("number" to invoice.invoiceNumber)
+        ))
+        return saved
     }
 
     // ── Internal ────────────────────────────────────────────────

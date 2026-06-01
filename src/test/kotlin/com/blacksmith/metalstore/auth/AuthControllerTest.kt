@@ -1,5 +1,6 @@
 package com.blacksmith.metalstore.auth
 
+import com.blacksmith.metalstore.auth.audit.AuditLogger
 import com.blacksmith.metalstore.auth.client.SupabaseAuthClient
 import com.blacksmith.metalstore.auth.domain.dto.request.RegisterRequest
 import com.blacksmith.metalstore.auth.domain.entity.Role
@@ -46,7 +47,7 @@ class AuthControllerTest {
         userRepository.deleteAll()
         tenantRepository.deleteAll()
         supabaseAuthClient = mock(SupabaseAuthClient::class.java)
-        authService = AuthService(supabaseAuthClient, userRepository, tenantRepository)
+        authService = AuthService(supabaseAuthClient, userRepository, tenantRepository, mock(AuditLogger::class.java))
     }
 
     @Test
