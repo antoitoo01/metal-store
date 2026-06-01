@@ -11,6 +11,14 @@ spring:
     hibernate:
       ddl-auto: update
 
+cors:
+  allowed-origins: "*"
+
+rate-limiting:
+  default-limit: 100
+  default-window-seconds: 60
+  excluded-paths: /api/health
+
 supabase:
   url: ${SUPABASE_URL:}
   publishable-key: ${SUPABASE_PUBLISHABLE_KEY:}

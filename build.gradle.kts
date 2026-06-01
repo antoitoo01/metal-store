@@ -25,6 +25,7 @@ dependencies {
 	implementation("tools.jackson.module:jackson-module-kotlin")
 	implementation("org.springframework.boot:spring-boot-starter-oauth2-resource-server")
 	implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.1")
+	implementation("com.bucket4j:bucket4j_jdk17-core:8.19.0")
 	runtimeOnly("com.h2database:h2")
 	runtimeOnly("org.postgresql:postgresql")
 	testImplementation("org.springframework.boot:spring-boot-starter-test")

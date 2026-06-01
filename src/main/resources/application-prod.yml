@@ -8,3 +8,11 @@ spring:
       hibernate.order_inserts: true
       hibernate.order_updates: true
 
+cors:
+  allowed-origins: ${CORS_ALLOWED_ORIGINS:https://metalstore.miweb.com}
+
+logging:
+  level:
+    com.blacksmith.metalstore: INFO
+    org.springframework.security: WARN
+

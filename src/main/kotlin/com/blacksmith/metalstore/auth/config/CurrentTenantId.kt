@@ -4,6 +4,7 @@ import com.blacksmith.metalstore.auth.exception.InvalidTenantIdException
 import com.blacksmith.metalstore.auth.exception.MissingTenantIdException
 import com.blacksmith.metalstore.auth.repository.UserRepository
 import jakarta.servlet.http.HttpServletRequest
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Configuration
 import org.springframework.core.MethodParameter
 import org.springframework.security.core.context.SecurityContextHolder
@@ -62,14 +63,17 @@ class CurrentTenantIdArgumentResolver(
 }
 
 @Configuration
-class WebConfig(private val resolver: CurrentTenantIdArgumentResolver) : WebMvcConfigurer {
+class WebConfig(
+    private val resolver: CurrentTenantIdArgumentResolver,
+    @Value("\${cors.allowed-origins}") private val allowedOrigins: String
+) : WebMvcConfigurer {
     override fun addArgumentResolvers(resolvers: MutableList<HandlerMethodArgumentResolver>) {
         resolvers.add(resolver)
     }
 
     override fun addCorsMappings(registry: CorsRegistry) {
         registry.addMapping("/api/**")
-            .allowedOrigins("*")
+            .allowedOrigins(*allowedOrigins.split(",").toTypedArray())
             .allowedMethods("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS")
             .allowedHeaders("*")
     }

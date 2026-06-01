@@ -3,6 +3,7 @@ package com.blacksmith.metalstore.auth.exception
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
 import org.springframework.http.ProblemDetail
+import org.springframework.http.converter.HttpMessageNotReadableException
 import org.springframework.web.bind.MethodArgumentNotValidException
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.RestControllerAdvice
@@ -36,6 +37,12 @@ class GlobalExceptionHandler {
     fun handleInvalidTenantId(ex: InvalidTenantIdException): ProblemDetail {
         log.warn("Invalid tenant ID: {}", ex.message)
         return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, ex.message ?: "Invalid tenant ID")
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException::class)
+    fun handleMessageNotReadable(ex: HttpMessageNotReadableException): ProblemDetail {
+        log.warn("Malformed request body: {}", ex.message)
+        return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, "Malformed request body")
     }
 
     @ExceptionHandler(IllegalArgumentException::class)

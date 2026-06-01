@@ -1,0 +1,42 @@
+<configuration>
+
+    <springProfile name="dev,test">
+        <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+            <encoder>
+                <pattern>%d{HH:mm:ss.SSS} %-5level [%X{clientIp}] %logger{36} - %msg%n</pattern>
+            </encoder>
+        </appender>
+
+        <logger name="AUDIT" level="INFO" />
+
+        <root level="INFO">
+            <appender-ref ref="CONSOLE" />
+        </root>
+    </springProfile>
+
+    <springProfile name="prod">
+        <appender name="JSON" class="ch.qos.logback.core.ConsoleAppender">
+            <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+                <pattern>{"timestamp":"%d{yyyy-MM-dd'T'HH:mm:ss.SSS'Z'}","level":"%p","logger":"%logger","thread":"%t","clientIp":"%X{clientIp}","method":"%X{method}","path":"%X{path}","marker":"%marker","message":"%msg"}%n</pattern>
+            </encoder>
+        </appender>
+
+        <appender name="AUDIT_JSON" class="ch.qos.logback.core.ConsoleAppender">
+            <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+                <pattern>{"timestamp":"%d{yyyy-MM-dd'T'HH:mm:ss.SSS'Z'}","type":"audit","logger":"%logger","message":"%msg"}%n</pattern>
+            </encoder>
+        </appender>
+
+        <logger name="AUDIT" level="INFO" additivity="false">
+            <appender-ref ref="AUDIT_JSON" />
+        </logger>
+
+        <root level="WARN">
+            <appender-ref ref="JSON" />
+        </root>
+
+        <logger name="com.blacksmith.metalstore" level="INFO" />
+        <logger name="org.springframework.security" level="WARN" />
+    </springProfile>
+
+</configuration>
