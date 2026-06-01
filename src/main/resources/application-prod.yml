@@ -16,3 +16,7 @@ logging:
     com.blacksmith.metalstore: INFO
     org.springframework.security: WARN
 
+app:
+  storage:
+    bucket-name: catalog-images
+

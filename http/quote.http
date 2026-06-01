@@ -1,0 +1,81 @@
+### Login
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "{{email}}",
+  "password": "{{password}}"
+}
+
+> {%
+    client.global.set("jwt", response.body.accessToken);
+%}
+
+### Listar presupuestos (paginado, scope tenant)
+GET {{baseUrl}}/api/quotes
+Authorization: Bearer {{jwt}}
+
+### Crear presupuesto en borrador
+POST {{baseUrl}}/api/quotes
+Authorization: Bearer {{jwt}}
+Content-Type: application/json
+
+{
+  "clientId": null,
+  "customerName": "Cliente Ejemplo",
+  "customerVat": "ESB12345678",
+  "customerAddress": "Av. del Acero, 100, 08001 Barcelona",
+  "validUntil": "2026-07-01",
+  "notes": "Presupuesto para estructura metalica"
+}
+
+> {%
+    client.global.set("quoteId", response.body.id);
+%}
+
+### Obtener presupuesto por ID
+GET {{baseUrl}}/api/quotes/{{quoteId}}
+Authorization: Bearer {{jwt}}
+
+### Anadir linea al presupuesto
+POST {{baseUrl}}/api/quotes/{{quoteId}}/lines
+Authorization: Bearer {{jwt}}
+Content-Type: application/json
+
+{
+  "lineNumber": 1,
+  "profileId": "00000000-0000-0000-0000-000000000000",
+  "itemId": null,
+  "description": "IPE 300 - 12m - Acero S275",
+  "quantity": 15,
+  "unitPrice": 125.50,
+  "vatRate": 21.00
+}
+
+> {%
+    client.global.set("lineId", response.body.id);
+%}
+
+### Ver lineas del presupuesto
+GET {{baseUrl}}/api/quotes/{{quoteId}}/lines
+Authorization: Bearer {{jwt}}
+
+### Eliminar linea del presupuesto
+DELETE {{baseUrl}}/api/quotes/{{quoteId}}/lines/{{lineId}}
+Authorization: Bearer {{jwt}}
+
+### Emitir presupuesto (DRAFT a ISSUED)
+POST {{baseUrl}}/api/quotes/{{quoteId}}/issue
+Authorization: Bearer {{jwt}}
+
+### Aceptar presupuesto (ISSUED a ACCEPTED)
+POST {{baseUrl}}/api/quotes/{{quoteId}}/accept
+Authorization: Bearer {{jwt}}
+
+### Rechazar presupuesto (ISSUED a REJECTED)
+POST {{baseUrl}}/api/quotes/{{quoteId}}/reject
+Authorization: Bearer {{jwt}}
+
+### Cancelar presupuesto (DRAFT a CANCELLED)
+POST {{baseUrl}}/api/quotes/{{quoteId}}/cancel
+Authorization: Bearer {{jwt}}

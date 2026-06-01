@@ -1,0 +1,68 @@
+### Login
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "{{email}}",
+  "password": "{{password}}"
+}
+
+> {%
+    client.global.set("jwt", response.body.accessToken);
+%}
+
+### Listar clientes (paginado)
+GET {{baseUrl}}/api/clients
+Authorization: Bearer {{jwt}}
+
+### Buscar clientes por nombre
+GET {{baseUrl}}/api/clients?q=Taller
+Authorization: Bearer {{jwt}}
+
+### Crear cliente
+POST {{baseUrl}}/api/clients
+Authorization: Bearer {{jwt}}
+Content-Type: application/json
+
+{
+  "name": "Taller Lopez",
+  "email": "info@tallerlopez.com",
+  "phone": "+34 666 123 456",
+  "address": "Calle del Hierro, 42, 28001 Madrid",
+  "vatNumber": "ESB12345678",
+  "notes": "Cliente habitual, descuento 5%"
+}
+
+> {%
+    client.global.set("clientId", response.body.id);
+%}
+
+### Obtener cliente por ID
+GET {{baseUrl}}/api/clients/{{clientId}}
+Authorization: Bearer {{jwt}}
+
+### Actualizar cliente
+PUT {{baseUrl}}/api/clients/{{clientId}}
+Authorization: Bearer {{jwt}}
+Content-Type: application/json
+
+{
+  "name": "Taller Lopez - Metalurgia SL",
+  "email": "admin@tallerlopez.com",
+  "phone": "+34 666 123 456",
+  "address": "Calle del Hierro, 42, 28001 Madrid",
+  "vatNumber": "ESB12345678",
+  "notes": "Telefono actualizado"
+}
+
+### Desactivar cliente
+POST {{baseUrl}}/api/clients/{{clientId}}/deactivate
+Authorization: Bearer {{jwt}}
+
+### Reactivar cliente
+POST {{baseUrl}}/api/clients/{{clientId}}/activate
+Authorization: Bearer {{jwt}}
+
+### Eliminar cliente
+DELETE {{baseUrl}}/api/clients/{{clientId}}
+Authorization: Bearer {{jwt}}

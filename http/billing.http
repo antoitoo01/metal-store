@@ -1,0 +1,92 @@
+### Login
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "{{email}}",
+  "password": "{{password}}"
+}
+
+> {%
+    client.global.set("jwt", response.body.accessToken);
+%}
+
+### Listar precios (scope tenant)
+GET {{baseUrl}}/api/billing/prices
+Authorization: Bearer {{jwt}}
+
+### Crear o actualizar precio (requiere profileId o itemId)
+POST {{baseUrl}}/api/billing/prices
+Authorization: Bearer {{jwt}}
+Content-Type: application/json
+
+{
+  "profileId": "00000000-0000-0000-0000-000000000000",
+  "itemId": null,
+  "unitPrice": 150.00,
+  "validFrom": null,
+  "validTo": null,
+  "notes": "Precio especial para perfil IPE 300"
+}
+
+### Eliminar precio
+DELETE {{baseUrl}}/api/billing/prices/00000000-0000-0000-0000-000000000000
+Authorization: Bearer {{jwt}}
+
+### Listar facturas
+GET {{baseUrl}}/api/billing/invoices
+Authorization: Bearer {{jwt}}
+
+### Crear factura borrador
+POST {{baseUrl}}/api/billing/invoices
+Authorization: Bearer {{jwt}}
+Content-Type: application/x-www-form-urlencoded
+
+customerName=Cliente Ejemplo&customerVat=ESB12345678
+
+> {%
+    client.global.set("invoiceId", response.body.id);
+%}
+
+### Obtener factura por ID
+GET {{baseUrl}}/api/billing/invoices/{{invoiceId}}
+Authorization: Bearer {{jwt}}
+
+### Anadir linea a factura
+POST {{baseUrl}}/api/billing/invoices/{{invoiceId}}/lines
+Authorization: Bearer {{jwt}}
+Content-Type: application/json
+
+{
+  "lineNumber": 1,
+  "profileId": "00000000-0000-0000-0000-000000000000",
+  "itemId": null,
+  "description": "IPE 300 - 12m",
+  "quantity": 10,
+  "unitPrice": 145.00,
+  "vatRate": 21.00
+}
+
+> {%
+    client.global.set("invoiceLineId", response.body.id);
+%}
+
+### Ver lineas de factura
+GET {{baseUrl}}/api/billing/invoices/{{invoiceId}}/lines
+Authorization: Bearer {{jwt}}
+
+### Eliminar linea de factura
+DELETE {{baseUrl}}/api/billing/invoices/{{invoiceId}}/lines/{{invoiceLineId}}
+Authorization: Bearer {{jwt}}
+
+### Emitir factura (DRAFT a ISSUED)
+POST {{baseUrl}}/api/billing/invoices/{{invoiceId}}/issue
+Authorization: Bearer {{jwt}}
+
+### Marcar como pagada (ISSUED a PAID)
+POST {{baseUrl}}/api/billing/invoices/{{invoiceId}}/pay
+Authorization: Bearer {{jwt}}
+
+### Cancelar factura (solo desde DRAFT o ISSUED)
+POST {{baseUrl}}/api/billing/invoices/{{invoiceId}}/cancel
+Authorization: Bearer {{jwt}}

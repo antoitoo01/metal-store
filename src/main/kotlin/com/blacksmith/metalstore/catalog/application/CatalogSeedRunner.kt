@@ -1,5 +1,7 @@
 package com.blacksmith.metalstore.catalog.application
 
+import com.blacksmith.metalstore.auth.config.SupabaseProperties
+import com.blacksmith.metalstore.catalog.config.StorageProperties
 import com.blacksmith.metalstore.catalog.domain.entity.*
 import com.blacksmith.metalstore.catalog.domain.repository.*
 import tools.jackson.core.type.TypeReference
@@ -9,8 +11,12 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.CommandLineRunner
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.core.io.ClassPathResource
+import org.springframework.http.HttpEntity
+import org.springframework.http.HttpHeaders
+import org.springframework.http.HttpMethod
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
+import org.springframework.web.client.RestTemplate
 import java.math.BigDecimal
 
 @Component
@@ -20,6 +26,8 @@ class CatalogSeedRunner(
     private val profileRepo: CatalogProfileRepository,
     private val itemRepo: CatalogItemRepository,
     private val mapper: ObjectMapper,
+    private val supabase: SupabaseProperties? = null,
+    private val storageProps: StorageProperties? = null,
     @Value("\${app.seed.catalog.force:false}")
     private val force: Boolean = false
 ) : CommandLineRunner {
@@ -44,6 +52,7 @@ class CatalogSeedRunner(
         seedEuroProfiles("data/euro/chs_profiles_euro.json")
         seedEuroProfiles("data/euro/rhs_profiles_euro.json")
         seedEuroProfiles("data/euro/shs_profiles_euro.json")
+        ensureStorageBucket()
         log.info("Catalog seeding complete: ${profileRepo.count()} profiles")
     }
 
@@ -202,6 +211,43 @@ class CatalogSeedRunner(
             section.startsWith("RHS") -> "RHS"
             section.startsWith("SHS") -> "SHS"
             else -> null
+        }
+    }
+
+    private fun ensureStorageBucket() {
+        if (supabase == null || supabase.url.isBlank()) return
+        val bucket = storageProps?.bucketName ?: "catalog-images"
+        try {
+            val rest = RestTemplate()
+            val headers = HttpHeaders().apply {
+                set("Authorization", "Bearer ${supabase.secretKey}")
+                set("Content-Type", "application/json")
+            }
+            val existing = rest.exchange(
+                "${supabase.url}/storage/v1/bucket/$bucket",
+                HttpMethod.GET,
+                HttpEntity(null, headers),
+                Map::class.java
+            )
+            log.info("Storage bucket '$bucket' already exists")
+        } catch (_: Exception) {
+            try {
+                val rest = RestTemplate()
+                val headers = HttpHeaders().apply {
+                    set("Authorization", "Bearer ${supabase.secretKey}")
+                    set("Content-Type", "application/json")
+                }
+                val body = mapOf("name" to bucket, "public" to true)
+                rest.exchange(
+                    "${supabase.url}/storage/v1/bucket",
+                    HttpMethod.POST,
+                    HttpEntity(body, headers),
+                    Map::class.java
+                )
+                log.info("Storage bucket '$bucket' created")
+            } catch (e: Exception) {
+                log.warn("Could not create storage bucket '$bucket': ${e.message}")
+            }
         }
     }
 

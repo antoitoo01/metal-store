@@ -1,0 +1,72 @@
+### Health check
+GET {{baseUrl}}/api/health
+
+### Registrar nuevo usuario (crea tenant automáticamente)
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "{{email}}",
+  "password": "{{password}}",
+  "username": "{{username}}",
+  "tenantName": "Mi Taller"
+}
+
+> {%
+    client.global.set("jwt", response.body.accessToken);
+    client.global.set("refreshToken", response.body.refreshToken);
+%}
+
+### Login
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "{{email}}",
+  "password": "{{password}}"
+}
+
+> {%
+    client.global.set("jwt", response.body.accessToken);
+    client.global.set("refreshToken", response.body.refreshToken);
+%}
+
+### Obtener mi perfil (JWT requerido)
+GET {{baseUrl}}/api/auth/me
+Authorization: Bearer {{jwt}}
+
+### Refrescar token
+POST {{baseUrl}}/api/auth/refresh
+Content-Type: application/json
+
+{
+  "refreshToken": "{{refreshToken}}"
+}
+
+> {%
+    client.global.set("jwt", response.body.accessToken);
+    client.global.set("refreshToken", response.body.refreshToken);
+%}
+
+### Logout (revoca sesion en Supabase)
+POST {{baseUrl}}/api/auth/logout
+Authorization: Bearer {{jwt}}
+
+### Obtener usuario por ID
+GET {{baseUrl}}/api/users/{{userId}}
+Authorization: Bearer {{jwt}}
+
+### Actualizar mi perfil
+PUT {{baseUrl}}/api/users
+Authorization: Bearer {{jwt}}
+Content-Type: application/json
+
+{
+  "id": "{{userId}}",
+  "username": "usuario_actualizado",
+  "email": "{{email}}"
+}
+
+### Eliminar usuario (solo admin)
+DELETE {{baseUrl}}/api/users/{{userId}}
+Authorization: Bearer {{jwt}}

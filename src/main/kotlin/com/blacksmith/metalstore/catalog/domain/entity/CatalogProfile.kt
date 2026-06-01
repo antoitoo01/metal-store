@@ -23,5 +23,8 @@ abstract class CatalogProfile(
     val weightKgM: BigDecimal? = null,
 
     @Column(precision = 10, scale = 4)
-    val areaCm2: BigDecimal? = null
+    val areaCm2: BigDecimal? = null,
+
+    @Column(name = "image_path")
+    var imagePath: String? = null
 )

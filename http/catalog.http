@@ -1,0 +1,137 @@
+### Login
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "{{email}}",
+  "password": "{{password}}"
+}
+
+> {%
+    client.global.set("jwt", response.body.accessToken);
+%}
+
+### Listar todas las familias
+GET {{baseUrl}}/api/catalog/families
+Authorization: Bearer {{jwt}}
+
+### Listar familias por norma
+GET {{baseUrl}}/api/catalog/families?standard=AISC
+Authorization: Bearer {{jwt}}
+
+### Listar perfiles (paginado, 20 por pagina)
+GET {{baseUrl}}/api/catalog/profiles
+Authorization: Bearer {{jwt}}
+
+### Buscar perfiles por texto
+GET {{baseUrl}}/api/catalog/profiles?q=IPE&page=0&size=10
+Authorization: Bearer {{jwt}}
+
+### Filtrar perfiles por norma
+GET {{baseUrl}}/api/catalog/profiles?standard=AISC
+Authorization: Bearer {{jwt}}
+
+### Filtrar perfiles por tipo de forma y norma
+GET {{baseUrl}}/api/catalog/profiles?shapeType=H&standard=AISC
+Authorization: Bearer {{jwt}}
+
+### Filtrar perfiles por codigo de familia
+GET {{baseUrl}}/api/catalog/profiles?familyCode=W
+Authorization: Bearer {{jwt}}
+
+### Busqueda combinada de perfiles
+GET {{baseUrl}}/api/catalog/profiles?q=IPE&standard=EURO&page=0&size=5
+Authorization: Bearer {{jwt}}
+
+### Obtener perfil por ID (reemplazar UUID)
+GET {{baseUrl}}/api/catalog/profiles/00000000-0000-0000-0000-000000000000
+Authorization: Bearer {{jwt}}
+
+### Listar items de catalogo
+GET {{baseUrl}}/api/catalog/items
+Authorization: Bearer {{jwt}}
+
+### Buscar items por texto
+GET {{baseUrl}}/api/catalog/items?q=Hex
+Authorization: Bearer {{jwt}}
+
+### Filtrar items por tipo
+GET {{baseUrl}}/api/catalog/items?itemType=FASTENER
+Authorization: Bearer {{jwt}}
+
+### Busqueda combinada de items
+GET {{baseUrl}}/api/catalog/items?q=Hex&itemType=FASTENER
+Authorization: Bearer {{jwt}}
+
+### Obtener item por ID (reemplazar UUID)
+GET {{baseUrl}}/api/catalog/items/00000000-0000-0000-0000-000000000000
+Authorization: Bearer {{jwt}}
+
+### Listar tipos de item (paginado, scope tenant)
+GET {{baseUrl}}/api/catalog/item-types
+Authorization: Bearer {{jwt}}
+
+### Obtener tipo de item por ID
+GET {{baseUrl}}/api/catalog/item-types/00000000-0000-0000-0000-000000000000
+Authorization: Bearer {{jwt}}
+
+### Crear tipo de item
+POST {{baseUrl}}/api/catalog/item-types
+Authorization: Bearer {{jwt}}
+Content-Type: application/json
+
+{
+  "name": "Tornilleria",
+  "description": "Tornillos, tuercas, arandelas",
+  "schemaDefinition": null
+}
+
+### Actualizar tipo de item
+PUT {{baseUrl}}/api/catalog/item-types/00000000-0000-0000-0000-000000000000
+Authorization: Bearer {{jwt}}
+Content-Type: application/json
+
+{
+  "name": "Tornilleria - Inoxidable",
+  "description": "Tornilleria en acero inoxidable",
+  "schemaDefinition": null
+}
+
+### Eliminar tipo de item
+DELETE {{baseUrl}}/api/catalog/item-types/00000000-0000-0000-0000-000000000000
+Authorization: Bearer {{jwt}}
+
+### Subir imagen a perfil (multipart, reemplazar UUID)
+POST {{baseUrl}}/api/catalog/profiles/00000000-0000-0000-0000-000000000000/image
+Authorization: Bearer {{jwt}}
+Content-Type: multipart/form-data; boundary=boundary
+
+--boundary
+Content-Disposition: form-data; name="file"; filename="perfil.jpg"
+Content-Type: image/jpeg
+
+< ./test-image.jpg
+--boundary--
+
+### Eliminar imagen de perfil
+DELETE {{baseUrl}}/api/catalog/profiles/00000000-0000-0000-0000-000000000000/image
+Authorization: Bearer {{jwt}}
+
+### Subir imagen a item (multipart, reemplazar UUID)
+POST {{baseUrl}}/api/catalog/items/00000000-0000-0000-0000-000000000000/image
+Authorization: Bearer {{jwt}}
+Content-Type: multipart/form-data; boundary=boundary
+
+--boundary
+Content-Disposition: form-data; name="file"; filename="item.jpg"
+Content-Type: image/jpeg
+
+< ./test-image.jpg
+--boundary--
+
+### Eliminar imagen de item
+DELETE {{baseUrl}}/api/catalog/items/00000000-0000-0000-0000-000000000000/image
+Authorization: Bearer {{jwt}}
+
+### Servir imagen (GET público)
+GET {{baseUrl}}/api/images/profiles/test-image.jpg

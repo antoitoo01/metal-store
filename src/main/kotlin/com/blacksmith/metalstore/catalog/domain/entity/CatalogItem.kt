@@ -33,5 +33,8 @@ data class CatalogItem(
     val estimatedPriceKg: BigDecimal = BigDecimal.ZERO,
 
     @Column(columnDefinition = "TEXT")
-    val metadata: String? = null
+    val metadata: String? = null,
+
+    @Column(name = "image_path")
+    var imagePath: String? = null
 )

@@ -1,0 +1,56 @@
+### Login
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "{{email}}",
+  "password": "{{password}}"
+}
+
+> {%
+    client.global.set("jwt", response.body.accessToken);
+%}
+
+### Listar inventario (paginado, scope tenant)
+GET {{baseUrl}}/api/inventory
+Authorization: Bearer {{jwt}}
+
+### Crear item de inventario (referencia a perfil o item)
+POST {{baseUrl}}/api/inventory
+Authorization: Bearer {{jwt}}
+Content-Type: application/json
+
+{
+  "profileId": "00000000-0000-0000-0000-000000000000",
+  "itemId": null,
+  "quantity": 150.00,
+  "location": "Almacen A - Estante 12",
+  "costPriceEur": 98.50,
+  "supplier": "Aceros Martinez SL",
+  "notes": "Lote 2026-001"
+}
+
+> {%
+    client.global.set("invId", response.body.id);
+%}
+
+### Obtener item de inventario por ID
+GET {{baseUrl}}/api/inventory/{{invId}}
+Authorization: Bearer {{jwt}}
+
+### Actualizar item de inventario
+PUT {{baseUrl}}/api/inventory/{{invId}}
+Authorization: Bearer {{jwt}}
+Content-Type: application/json
+
+{
+  "quantity": 99.00,
+  "location": "Almacen B - Estante 5",
+  "costPriceEur": 95.00,
+  "supplier": "Aceros Martinez SL",
+  "notes": "Ajuste por inventario fisico"
+}
+
+### Eliminar item de inventario
+DELETE {{baseUrl}}/api/inventory/{{invId}}
+Authorization: Bearer {{jwt}}
