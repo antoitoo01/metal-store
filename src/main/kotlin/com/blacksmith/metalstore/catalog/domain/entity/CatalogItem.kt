@@ -3,9 +3,7 @@ package com.blacksmith.metalstore.catalog.domain.entity
 import com.blacksmith.metalstore.shared.BaseEntity
 import jakarta.persistence.*
 import java.math.BigDecimal
-import java.sql.Types
 import java.util.UUID
-import org.hibernate.annotations.JdbcTypeCode
 
 @Entity
 @Table(name = "catalog_items")
@@ -20,8 +18,9 @@ data class CatalogItem(
 
     val sku: String? = null,
 
-    @JdbcTypeCode(Types.VARCHAR)
-    @Column(nullable = false, columnDefinition = "TEXT")
+    @field:Lob
+    @field:Access(AccessType.FIELD)
+    @field:Column(nullable = false, columnDefinition = "TEXT")
     val designation: String,
 
     @Column(columnDefinition = "TEXT")

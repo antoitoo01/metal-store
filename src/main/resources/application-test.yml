@@ -4,6 +4,8 @@ spring:
     url: jdbc:h2:mem:testdb
 
   jpa:
+    hibernate:
+      ddl-auto: create
     properties:
       hibernate:
         nationalization-support: false
