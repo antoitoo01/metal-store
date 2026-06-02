@@ -14,7 +14,7 @@ abstract class CatalogProfile(
     val id: UUID = UUID.randomUUID(),
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "family_id", nullable = false)
+    @JoinColumn(nullable = false)
     val family: CatalogFamily,
 
     @Column(nullable = false)
@@ -26,6 +26,5 @@ abstract class CatalogProfile(
     @Column(precision = 10, scale = 4)
     val areaCm2: BigDecimal? = null,
 
-    @Column(name = "image_path")
     var imagePath: String? = null
 ) : BaseEntity()

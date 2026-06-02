@@ -11,7 +11,6 @@ data class CatalogItem(
     @Id
     val id: UUID = UUID.randomUUID(),
 
-    @Column(name = "type_id")
     val typeId: UUID? = null,
 
     @Column(nullable = false, length = 30)
@@ -36,6 +35,5 @@ data class CatalogItem(
     @Column(columnDefinition = "TEXT")
     val metadata: String? = null,
 
-    @Column(name = "image_path")
     var imagePath: String? = null
 ) : BaseEntity()

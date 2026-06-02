@@ -11,9 +11,9 @@ import java.util.UUID
 @Table(
     name = "price_list",
     indexes = [
-        Index(name = "idx_price_tenant", columnList = "tenantId"),
-        Index(name = "idx_price_profile", columnList = "profileId"),
-        Index(name = "idx_price_item", columnList = "itemId")
+        Index(name = "idx_price_tenant", columnList = "tenant_id"),
+        Index(name = "idx_price_profile", columnList = "profile_id"),
+        Index(name = "idx_price_item", columnList = "item_id")
     ]
 )
 data class PriceListItem(
@@ -45,7 +45,7 @@ enum class InvoiceStatus {
 @Table(
     name = "invoices",
     indexes = [
-        Index(name = "idx_invoice_tenant", columnList = "tenantId"),
+        Index(name = "idx_invoice_tenant", columnList = "tenant_id"),
         Index(name = "idx_invoice_status", columnList = "status")
     ]
 )
@@ -88,7 +88,7 @@ data class Invoice(
 @Table(
     name = "invoice_lines",
     indexes = [
-        Index(name = "idx_line_invoice", columnList = "invoiceId")
+        Index(name = "idx_line_invoice", columnList = "invoice_id")
     ]
 )
 data class InvoiceLine(

@@ -24,10 +24,8 @@ data class InventoryItem(
     @Column(nullable = false)
     val tenantId: UUID,
 
-    @Column(name = "profile_id")
     val profileId: UUID? = null,
 
-    @Column(name = "item_id")
     val itemId: UUID? = null,
 
     @field:Positive

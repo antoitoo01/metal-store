@@ -10,8 +10,8 @@ enum class ClientStatus { ACTIVE, INACTIVE }
 @Table(
     name = "clients",
     indexes = [
-        Index(name = "idx_client_tenant", columnList = "tenantId"),
-        Index(name = "idx_client_name", columnList = "tenantId, name")
+        Index(name = "idx_client_tenant", columnList = "tenant_id"),
+        Index(name = "idx_client_name", columnList = "tenant_id, name")
     ]
 )
 data class Client(

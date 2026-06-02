@@ -15,7 +15,7 @@ enum class QuoteStatus {
 @Table(
     name = "quotes",
     indexes = [
-        Index(name = "idx_quote_tenant", columnList = "tenantId"),
+        Index(name = "idx_quote_tenant", columnList = "tenant_id"),
         Index(name = "idx_quote_status", columnList = "status")
     ]
 )
@@ -60,7 +60,7 @@ data class Quote(
 @Table(
     name = "quote_lines",
     indexes = [
-        Index(name = "idx_qline_quote", columnList = "quoteId")
+        Index(name = "idx_qline_quote", columnList = "quote_id")
     ]
 )
 data class QuoteLine(

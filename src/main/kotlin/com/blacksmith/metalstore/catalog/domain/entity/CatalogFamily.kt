@@ -16,7 +16,7 @@ data class CatalogFamily(
     @Column(nullable = false, length = 10)
     val code: String,
 
-    @Column(nullable = false, length = 10, name = "shape_type")
+    @Column(nullable = false, length = 10)
     val shapeType: String,
 
     @Column(length = 100)

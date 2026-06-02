@@ -7,7 +7,7 @@ import java.util.UUID
 @Entity
 @Table(
     name = "catalog_item_types",
-    indexes = [Index(name = "idx_itemtype_tenant", columnList = "tenantId")]
+    indexes = [Index(name = "idx_itemtype_tenant", columnList = "tenant_id")]
 )
 data class CatalogItemType(
     @Id
