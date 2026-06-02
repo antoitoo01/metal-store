@@ -18,7 +18,6 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.security.access.AccessDeniedException
 import org.springframework.test.context.ActiveProfiles
-import java.time.LocalDateTime
 import java.util.UUID
 
 @SpringBootTest
@@ -49,9 +48,9 @@ class UserServiceTest {
         val tenant = Tenant(id = tenantId, name = "Test Taller", slug = "test-taller")
         tenantRepository.save(tenant)
 
-        userRepository.save(User(id = ownerId, tenantId = tenantId, username = "owner", email = "owner@test.com", role = Role.USER, createdDate = LocalDateTime.now(), lastModifiedDate = LocalDateTime.now()))
-        userRepository.save(User(id = otherId, tenantId = tenantId, username = "other", email = "other@test.com", role = Role.USER, createdDate = LocalDateTime.now(), lastModifiedDate = LocalDateTime.now()))
-        userRepository.save(User(id = adminId, tenantId = tenantId, username = "admin", email = "admin@test.com", role = Role.ADMIN, createdDate = LocalDateTime.now(), lastModifiedDate = LocalDateTime.now()))
+        userRepository.save(User(id = ownerId, tenantId = tenantId, username = "owner", email = "owner@test.com", role = Role.USER))
+        userRepository.save(User(id = otherId, tenantId = tenantId, username = "other", email = "other@test.com", role = Role.USER))
+        userRepository.save(User(id = adminId, tenantId = tenantId, username = "admin", email = "admin@test.com", role = Role.ADMIN))
     }
 
     @Test

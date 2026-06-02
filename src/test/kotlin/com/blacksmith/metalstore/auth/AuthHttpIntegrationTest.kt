@@ -20,7 +20,6 @@ import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.*
-import java.time.LocalDateTime
 import java.util.UUID
 
 @SpringBootTest
@@ -87,9 +86,7 @@ class AuthHttpIntegrationTest {
             username = "httptest",
             email = email,
             role = Role.USER,
-            status = UserState.ACTIVE,
-            createdDate = LocalDateTime.now(),
-            lastModifiedDate = LocalDateTime.now()
+            status = UserState.ACTIVE
         )
         userRepository.save(user)
 

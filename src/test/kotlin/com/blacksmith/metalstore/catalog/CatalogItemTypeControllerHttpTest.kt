@@ -17,7 +17,6 @@ import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.*
-import java.time.LocalDateTime
 import java.util.UUID
 
 @SpringBootTest
@@ -126,8 +125,7 @@ class CatalogItemTypeControllerHttpTest {
     fun `tenant resolved from JWT when auth present`() {
         userRepo.save(User(
             id = userId, tenantId = tenantId, username = "jwtuser",
-            email = "jwt@test.com", role = Role.USER, status = UserState.ACTIVE,
-            createdDate = LocalDateTime.now(), lastModifiedDate = LocalDateTime.now()
+            email = "jwt@test.com", role = Role.USER, status = UserState.ACTIVE
         ))
         repo.save(CatalogItemType(tenantId = tenantId, name = "JWT Type"))
 

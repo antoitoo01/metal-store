@@ -1,5 +1,6 @@
 package com.blacksmith.metalstore.catalog.domain.entity
 
+import com.blacksmith.metalstore.shared.BaseEntity
 import jakarta.persistence.*
 import java.math.BigDecimal
 import java.util.UUID
@@ -27,4 +28,4 @@ abstract class CatalogProfile(
 
     @Column(name = "image_path")
     var imagePath: String? = null
-)
+) : BaseEntity()

@@ -5,5 +5,6 @@ import org.springframework.boot.context.properties.ConfigurationProperties
 @ConfigurationProperties(prefix = "app.storage")
 data class StorageProperties(
     var bucketName: String = "catalog-images",
-    var uploadDir: String = "uploads"
+    var uploadDir: String = "uploads",
+    var baseUrl: String = "http://localhost:8080"
 )

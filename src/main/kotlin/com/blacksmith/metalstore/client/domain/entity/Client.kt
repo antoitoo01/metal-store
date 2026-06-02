@@ -1,7 +1,7 @@
 package com.blacksmith.metalstore.client.domain.entity
 
+import com.blacksmith.metalstore.shared.BaseEntity
 import jakarta.persistence.*
-import java.time.LocalDateTime
 import java.util.UUID
 
 enum class ClientStatus { ACTIVE, INACTIVE }
@@ -38,11 +38,5 @@ data class Client(
 
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
-    val status: ClientStatus = ClientStatus.ACTIVE,
-
-    @Column(nullable = false, updatable = false)
-    val createdDate: LocalDateTime = LocalDateTime.now(),
-
-    @Column(nullable = false)
-    val lastModifiedDate: LocalDateTime = LocalDateTime.now()
-)
+    val status: ClientStatus = ClientStatus.ACTIVE
+) : BaseEntity()

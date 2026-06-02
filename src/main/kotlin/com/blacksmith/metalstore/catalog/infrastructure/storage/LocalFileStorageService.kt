@@ -1,6 +1,6 @@
 package com.blacksmith.metalstore.catalog.infrastructure.storage
 
-import org.springframework.beans.factory.annotation.Value
+import com.blacksmith.metalstore.catalog.config.StorageProperties
 import org.springframework.context.annotation.Profile
 import org.springframework.stereotype.Service
 import java.net.URLDecoder
@@ -12,17 +12,17 @@ import java.nio.file.Path
 @Service
 @Profile("dev", "test")
 class LocalFileStorageService(
-    @Value("\${app.storage.upload-dir:uploads}") uploadDir: String,
-    @Value("\${server.port:8080}") private val serverPort: Int
+    private val properties: StorageProperties
 ) : ImageStorageService {
 
-    private val basePath: Path = Path.of(uploadDir).toAbsolutePath().normalize()
+    private val basePath: Path = Path.of(properties.uploadDir).toAbsolutePath().normalize()
+    private val baseUrl: String = properties.baseUrl.trimEnd('/')
 
     override fun save(namespace: String, filename: String, bytes: ByteArray, contentType: String): String {
         val dir = basePath.resolve(namespace)
         Files.createDirectories(dir)
         Files.write(dir.resolve(filename), bytes)
-        return "http://localhost:$serverPort/api/images/$namespace/${URLEncoder.encode(filename, StandardCharsets.UTF_8)}"
+        return "$baseUrl/api/images/$namespace/${URLEncoder.encode(filename, StandardCharsets.UTF_8)}"
     }
 
     override fun delete(imageUrl: String) {
@@ -37,7 +37,7 @@ class LocalFileStorageService(
     }
 
     private fun extractPath(imageUrl: String): String? {
-        val prefix = "http://localhost:$serverPort/api/images/"
+        val prefix = "$baseUrl/api/images/"
         if (!imageUrl.startsWith(prefix)) return null
         val encoded = imageUrl.removePrefix(prefix)
         return URLDecoder.decode(encoded, StandardCharsets.UTF_8)

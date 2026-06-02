@@ -8,7 +8,6 @@ import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import java.time.LocalDateTime
 import java.util.UUID
 
 @Service
@@ -47,8 +46,7 @@ class ClientService(
             address = updated.address ?: existing.address,
             vatNumber = updated.vatNumber ?: existing.vatNumber,
             notes = updated.notes ?: existing.notes,
-            status = updated.status,
-            lastModifiedDate = LocalDateTime.now()
+            status = updated.status
         )
         val saved = repo.save(merged)
         audit.log(AuditLogger.AuditEvent(
@@ -75,14 +73,14 @@ class ClientService(
 
     fun activate(tenantId: UUID, id: UUID): Client? {
         val client = repo.findById(id).filter { it.tenantId == tenantId }.orElse(null) ?: return null
-        val saved = repo.save(client.copy(status = ClientStatus.ACTIVE, lastModifiedDate = LocalDateTime.now()))
+        val saved = repo.save(client.copy(status = ClientStatus.ACTIVE))
         audit.log(AuditLogger.AuditEvent(action = "CLIENT_ACTIVATED", entityType = "Client", entityId = id.toString(), tenantId = tenantId.toString()))
         return saved
     }
 
     fun deactivate(tenantId: UUID, id: UUID): Client? {
         val client = repo.findById(id).filter { it.tenantId == tenantId }.orElse(null) ?: return null
-        val saved = repo.save(client.copy(status = ClientStatus.INACTIVE, lastModifiedDate = LocalDateTime.now()))
+        val saved = repo.save(client.copy(status = ClientStatus.INACTIVE))
         audit.log(AuditLogger.AuditEvent(action = "CLIENT_DEACTIVATED", entityType = "Client", entityId = id.toString(), tenantId = tenantId.toString()))
         return saved
     }

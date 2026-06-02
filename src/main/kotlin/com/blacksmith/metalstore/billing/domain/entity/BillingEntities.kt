@@ -1,5 +1,6 @@
 package com.blacksmith.metalstore.billing.domain.entity
 
+import com.blacksmith.metalstore.shared.BaseEntity
 import jakarta.persistence.*
 import jakarta.validation.constraints.Positive
 import java.math.BigDecimal
@@ -34,7 +35,7 @@ data class PriceListItem(
     val validTo: LocalDate? = null,
 
     val notes: String? = null
-)
+) : BaseEntity()
 
 enum class InvoiceStatus {
     DRAFT, ISSUED, PAID, CANCELLED
@@ -81,7 +82,7 @@ data class Invoice(
     val total: BigDecimal = BigDecimal.ZERO,
 
     val notes: String? = null
-)
+) : BaseEntity()
 
 @Entity
 @Table(
@@ -119,4 +120,4 @@ data class InvoiceLine(
 
     @Column(nullable = false, precision = 14, scale = 4)
     val totalPrice: BigDecimal
-)
+) : BaseEntity()

@@ -1,7 +1,7 @@
 package com.blacksmith.metalstore.catalog.domain.entity
 
+import com.blacksmith.metalstore.shared.BaseEntity
 import jakarta.persistence.*
-import java.time.LocalDateTime
 import java.util.UUID
 
 @Entity
@@ -22,8 +22,5 @@ data class CatalogItemType(
     val description: String? = null,
 
     @Column(columnDefinition = "TEXT")
-    val schemaDefinition: String? = null,
-
-    @Column(nullable = false, updatable = false)
-    val createdAt: LocalDateTime = LocalDateTime.now()
-)
+    val schemaDefinition: String? = null
+) : BaseEntity()

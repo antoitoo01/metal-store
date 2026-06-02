@@ -1,7 +1,7 @@
 package com.blacksmith.metalstore.auth.domain.entity
 
+import com.blacksmith.metalstore.shared.BaseEntity
 import jakarta.persistence.*
-import java.time.LocalDateTime
 import java.util.UUID
 
 @Entity
@@ -17,11 +17,5 @@ data class Tenant(
     var slug: String,
 
     @Column(columnDefinition = "TEXT")
-    var settings: String? = null,
-
-    @Column(nullable = false, updatable = false)
-    val createdDate: LocalDateTime = LocalDateTime.now(),
-
-    @Column(nullable = false)
-    var lastModifiedDate: LocalDateTime = LocalDateTime.now()
-)
+    var settings: String? = null
+) : BaseEntity()

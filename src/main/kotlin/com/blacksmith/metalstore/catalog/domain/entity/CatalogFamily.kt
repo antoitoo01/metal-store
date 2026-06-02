@@ -1,5 +1,6 @@
 package com.blacksmith.metalstore.catalog.domain.entity
 
+import com.blacksmith.metalstore.shared.BaseEntity
 import jakarta.persistence.*
 import java.util.UUID
 
@@ -20,4 +21,4 @@ data class CatalogFamily(
 
     @Column(length = 100)
     val description: String? = null
-)
+) : BaseEntity()

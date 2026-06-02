@@ -1,6 +1,7 @@
 package com.blacksmith.metalstore.catalog.controller
 
 import com.blacksmith.metalstore.catalog.application.CatalogImageService
+import com.blacksmith.metalstore.catalog.config.StorageProperties
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
@@ -15,8 +16,11 @@ import java.util.UUID
 @RestController
 @Tag(name = "Catalog", description = "Imágenes de catálogo")
 class CatalogImageController(
-    private val imageService: CatalogImageService
+    private val imageService: CatalogImageService,
+    private val storageProperties: StorageProperties
 ) {
+    private val baseUrl: String = storageProperties.baseUrl.trimEnd('/')
+
     @PostMapping("/api/catalog/profiles/{id}/image", consumes = [MediaType.MULTIPART_FORM_DATA_VALUE])
     @Operation(summary = "Subir imagen de perfil", description = "Sube una imagen para un perfil de catálogo.")
     @ApiResponses(value = [
@@ -62,7 +66,7 @@ class CatalogImageController(
         ApiResponse(responseCode = "404", description = "Recurso no encontrado")
     ])
     fun serveImage(@PathVariable namespace: String, @PathVariable filename: String): ResponseEntity<ByteArray> {
-        val url = "http://localhost:8080/api/images/$namespace/$filename"
+        val url = "$baseUrl/api/images/$namespace/$filename"
         val bytes = imageService.loadImage(url) ?: return ResponseEntity.notFound().build()
         val contentType = guessContentType(filename)
         return ResponseEntity.ok().contentType(MediaType.parseMediaType(contentType)).body(bytes)

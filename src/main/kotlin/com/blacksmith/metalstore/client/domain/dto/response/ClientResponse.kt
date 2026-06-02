@@ -35,17 +35,17 @@ data class ClientResponse(
     val status: ClientStatus,
 
     @field:Schema(description = "Fecha de creación", example = "2026-01-15T10:30:00")
-    val createdDate: LocalDateTime,
+    val createdAt: LocalDateTime,
 
     @field:Schema(description = "Fecha de última modificación", example = "2026-05-20T14:45:00")
-    val lastModifiedDate: LocalDateTime
+    val updatedAt: LocalDateTime
 ) {
     companion object {
         fun from(e: Client) = ClientResponse(
             id = e.id, tenantId = e.tenantId, name = e.name, email = e.email,
             phone = e.phone, address = e.address, vatNumber = e.vatNumber,
-            notes = e.notes, status = e.status, createdDate = e.createdDate,
-            lastModifiedDate = e.lastModifiedDate
+            notes = e.notes, status = e.status, createdAt = e.createdAt,
+            updatedAt = e.updatedAt
         )
     }
 }

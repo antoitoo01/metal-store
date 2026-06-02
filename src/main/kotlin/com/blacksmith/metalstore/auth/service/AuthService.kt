@@ -14,7 +14,6 @@ import com.blacksmith.metalstore.auth.repository.TenantRepository
 import com.blacksmith.metalstore.auth.repository.UserRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import java.time.LocalDateTime
 import java.util.UUID
 
 @Service
@@ -37,9 +36,7 @@ class AuthService(
             username = request.username,
             email = email,
             role = Role.TENANT_OWNER,
-            status = UserState.ACTIVE,
-            createdDate = LocalDateTime.now(),
-            lastModifiedDate = LocalDateTime.now()
+            status = UserState.ACTIVE
         )
         userRepository.save(user)
 
@@ -141,9 +138,7 @@ class AuthService(
         val slug = generateUniqueSlug(name)
         val tenant = Tenant(
             name = name,
-            slug = slug,
-            createdDate = LocalDateTime.now(),
-            lastModifiedDate = LocalDateTime.now()
+            slug = slug
         )
         return tenantRepository.save(tenant)
     }

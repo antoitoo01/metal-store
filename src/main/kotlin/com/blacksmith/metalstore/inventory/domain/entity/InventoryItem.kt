@@ -1,5 +1,6 @@
 package com.blacksmith.metalstore.inventory.domain.entity
 
+import com.blacksmith.metalstore.shared.BaseEntity
 import jakarta.persistence.*
 import jakarta.validation.constraints.Positive
 import jakarta.validation.constraints.PositiveOrZero
@@ -46,7 +47,7 @@ data class InventoryItem(
 
     @Column(columnDefinition = "TEXT")
     val notes: String? = null
-)
+) : BaseEntity()
 
 fun InventoryItem.assertValidSource(): Boolean =
     (profileId != null) xor (itemId != null)

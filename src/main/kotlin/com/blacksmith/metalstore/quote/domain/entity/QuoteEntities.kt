@@ -1,5 +1,6 @@
 package com.blacksmith.metalstore.quote.domain.entity
 
+import com.blacksmith.metalstore.shared.BaseEntity
 import jakarta.persistence.*
 import jakarta.validation.constraints.Positive
 import java.math.BigDecimal
@@ -53,7 +54,7 @@ data class Quote(
     val total: BigDecimal = BigDecimal.ZERO,
 
     val notes: String? = null
-)
+) : BaseEntity()
 
 @Entity
 @Table(
@@ -91,4 +92,4 @@ data class QuoteLine(
 
     @Column(nullable = false, precision = 14, scale = 4)
     val totalPrice: BigDecimal
-)
+) : BaseEntity()
