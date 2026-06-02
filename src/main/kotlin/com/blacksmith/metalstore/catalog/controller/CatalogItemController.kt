@@ -7,14 +7,21 @@ import org.springframework.data.domain.Pageable
 import org.springframework.data.web.PageableDefault
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
+import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.responses.ApiResponse
+import io.swagger.v3.oas.annotations.responses.ApiResponses
+import io.swagger.v3.oas.annotations.tags.Tag
 import java.util.UUID
 
 @RestController
 @RequestMapping("/api/catalog/items")
+@Tag(name = "Catalog", description = "Ítems de catálogo")
 class CatalogItemController(
     private val repo: CatalogItemRepository
 ) {
     @GetMapping
+    @Operation(summary = "Listar ítems", description = "Retorna una lista paginada de ítems de catálogo.")
+    @ApiResponse(responseCode = "200", description = "Operación exitosa")
     fun list(
         @RequestParam q: String? = null,
         @RequestParam itemType: String? = null,
@@ -27,6 +34,11 @@ class CatalogItemController(
     }
 
     @GetMapping("/{id}")
+    @Operation(summary = "Obtener ítem por ID", description = "Retorna un ítem de catálogo por su UUID.")
+    @ApiResponses(value = [
+        ApiResponse(responseCode = "200", description = "Operación exitosa"),
+        ApiResponse(responseCode = "404", description = "Recurso no encontrado")
+    ])
     fun getById(@PathVariable id: UUID): ResponseEntity<CatalogItem> {
         val item = repo.findById(id).orElse(null) ?: return ResponseEntity.notFound().build()
         return ResponseEntity.ok(item)

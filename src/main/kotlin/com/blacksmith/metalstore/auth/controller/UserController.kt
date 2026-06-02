@@ -9,19 +9,35 @@ import org.springframework.http.ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.security.oauth2.jwt.Jwt
 import org.springframework.web.bind.annotation.*
+import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.responses.ApiResponse
+import io.swagger.v3.oas.annotations.responses.ApiResponses
+import io.swagger.v3.oas.annotations.tags.Tag
 import java.util.*
 
 @RestController
 @RequestMapping("/api/users")
+@Tag(name = "Auth", description = "Gestión de usuarios")
 class UserController(private val userService: UserService) {
 
     @GetMapping("/{id}")
+    @Operation(summary = "Obtener usuario por ID", description = "Retorna los datos de un usuario por su UUID.")
+    @ApiResponses(value = [
+        ApiResponse(responseCode = "200", description = "Operación exitosa"),
+        ApiResponse(responseCode = "404", description = "Recurso no encontrado")
+    ])
     fun getById(@PathVariable id: UUID): ResponseEntity<UserResponse> {
         val user = userService.findById(id)
         return ResponseEntity.ok(user.toResponse())
     }
 
     @PutMapping
+    @Operation(summary = "Actualizar usuario", description = "Actualiza los datos del usuario autenticado.")
+    @ApiResponses(value = [
+        ApiResponse(responseCode = "200", description = "Operación exitosa"),
+        ApiResponse(responseCode = "400", description = "Solicitud inválida"),
+        ApiResponse(responseCode = "401", description = "No autorizado")
+    ])
     fun update(
         @Valid @RequestBody request: UpdateUserRequest,
         @AuthenticationPrincipal jwt: Jwt?
@@ -33,6 +49,12 @@ class UserController(private val userService: UserService) {
     }
 
     @DeleteMapping("/{id}")
+    @Operation(summary = "Eliminar usuario", description = "Elimina un usuario por su UUID.")
+    @ApiResponses(value = [
+        ApiResponse(responseCode = "204", description = "Sin contenido"),
+        ApiResponse(responseCode = "401", description = "No autorizado"),
+        ApiResponse(responseCode = "404", description = "Recurso no encontrado")
+    ])
     fun deleteById(
         @PathVariable id: UUID,
         @AuthenticationPrincipal jwt: Jwt?
