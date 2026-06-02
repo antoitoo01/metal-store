@@ -3,7 +3,9 @@ package com.blacksmith.metalstore.catalog.domain.entity
 import com.blacksmith.metalstore.shared.BaseEntity
 import jakarta.persistence.*
 import java.math.BigDecimal
+import java.sql.Types
 import java.util.UUID
+import org.hibernate.annotations.JdbcTypeCode
 
 @Entity
 @Inheritance(strategy = InheritanceType.JOINED)
@@ -17,6 +19,7 @@ abstract class CatalogProfile(
     @JoinColumn(nullable = false)
     val family: CatalogFamily,
 
+    @JdbcTypeCode(Types.VARCHAR)
     @Column(nullable = false, columnDefinition = "TEXT")
     val designation: String,
 
