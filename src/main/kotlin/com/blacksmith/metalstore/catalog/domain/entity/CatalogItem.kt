@@ -18,7 +18,7 @@ data class CatalogItem(
 
     val sku: String? = null,
 
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "TEXT")
     val designation: String,
 
     @Column(columnDefinition = "TEXT")
