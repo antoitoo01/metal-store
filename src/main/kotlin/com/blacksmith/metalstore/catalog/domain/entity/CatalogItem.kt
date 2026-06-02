@@ -18,7 +18,6 @@ data class CatalogItem(
 
     val sku: String? = null,
 
-    @field:Lob
     @field:Access(AccessType.FIELD)
     @field:Column(nullable = false, columnDefinition = "TEXT")
     val designation: String,

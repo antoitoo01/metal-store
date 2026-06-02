@@ -17,7 +17,6 @@ abstract class CatalogProfile(
     @JoinColumn(nullable = false)
     val family: CatalogFamily,
 
-    @field:Lob
     @field:Access(AccessType.FIELD)
     @field:Column(nullable = false, columnDefinition = "TEXT")
     val designation: String,
