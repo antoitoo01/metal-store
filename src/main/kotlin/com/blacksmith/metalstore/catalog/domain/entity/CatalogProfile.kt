@@ -2,6 +2,8 @@ package com.blacksmith.metalstore.catalog.domain.entity
 
 import com.blacksmith.metalstore.shared.BaseEntity
 import jakarta.persistence.*
+import org.hibernate.annotations.JdbcTypeCode
+import org.hibernate.type.SqlTypes
 import java.math.BigDecimal
 import java.util.UUID
 
@@ -18,6 +20,7 @@ abstract class CatalogProfile(
     val family: CatalogFamily,
 
     @field:Access(AccessType.FIELD)
+    @field:JdbcTypeCode(SqlTypes.LONGVARCHAR)
     @field:Column(nullable = false, columnDefinition = "TEXT")
     val designation: String,
 
