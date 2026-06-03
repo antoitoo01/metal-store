@@ -21,8 +21,8 @@ data class CatalogItem(
     val sku: String? = null,
 
     @field:Access(AccessType.FIELD)
-    @field:JdbcTypeCode(SqlTypes.LONGVARCHAR)
-    @field:Column(nullable = false, columnDefinition = "TEXT")
+    @field:JdbcTypeCode(SqlTypes.VARCHAR)
+    @field:Column(nullable = false, length = 65535)
     val designation: String,
 
     @Column(columnDefinition = "TEXT")

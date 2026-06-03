@@ -20,8 +20,8 @@ abstract class CatalogProfile(
     val family: CatalogFamily,
 
     @field:Access(AccessType.FIELD)
-    @field:JdbcTypeCode(SqlTypes.LONGVARCHAR)
-    @field:Column(nullable = false, columnDefinition = "TEXT")
+    @field:JdbcTypeCode(SqlTypes.VARCHAR)
+    @field:Column(nullable = false, length = 65535)
     val designation: String,
 
     @Column(precision = 10, scale = 4)
