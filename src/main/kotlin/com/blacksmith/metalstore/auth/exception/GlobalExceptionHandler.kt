@@ -4,6 +4,8 @@ import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
 import org.springframework.http.ProblemDetail
 import org.springframework.http.converter.HttpMessageNotReadableException
+import org.springframework.web.HttpMediaTypeNotSupportedException
+import org.springframework.web.HttpRequestMethodNotSupportedException
 import org.springframework.web.bind.MethodArgumentNotValidException
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.RestControllerAdvice
@@ -64,6 +66,18 @@ class GlobalExceptionHandler {
     fun handleAccessDenied(ex: org.springframework.security.access.AccessDeniedException): ProblemDetail {
         log.warn("Access denied: {}", ex.message)
         return ProblemDetail.forStatusAndDetail(HttpStatus.FORBIDDEN, ex.message ?: "Access Denied")
+    }
+
+    @ExceptionHandler(HttpMediaTypeNotSupportedException::class)
+    fun handleMediaTypeNotSupported(ex: HttpMediaTypeNotSupportedException): ProblemDetail {
+        log.warn("Media type not supported: {}", ex.contentType)
+        return ProblemDetail.forStatusAndDetail(HttpStatus.UNSUPPORTED_MEDIA_TYPE, "Content-Type '${ex.contentType}' is not supported")
+    }
+
+    @ExceptionHandler(HttpRequestMethodNotSupportedException::class)
+    fun handleMethodNotSupported(ex: HttpRequestMethodNotSupportedException): ProblemDetail {
+        log.warn("Method not supported: {} {}", ex.method, ex.message)
+        return ProblemDetail.forStatusAndDetail(HttpStatus.METHOD_NOT_ALLOWED, "Method not allowed")
     }
 
     @ExceptionHandler(Exception::class)

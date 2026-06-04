@@ -5,7 +5,7 @@ set -euo pipefail
 # Run this on the Oracle Cloud VM (Ubuntu 24.04).
 # Usage:
 #   scp scripts/deploy.sh metal-store-*.jar ubuntu@<ip>:~
-#   ssh ubuntu@<ip> 'bash deploy.sh'
+#   ssh ubuntu@<ip> 'SUPABASE_URL=... SUPABASE_DB_URL=... bash deploy.sh'
 # ─────────────────────────────────────────────────────────────────────────────
 
 # ─── Config ─────────────────────────────────────────────────────────────────
@@ -13,13 +13,19 @@ JAR_FILE="${1:-metal-store-0.0.1-SNAPSHOT.jar}"
 APP_USER="${APP_USER:-metalstore}"
 APP_DIR="/opt/metal-store"
 LOG_DIR="/var/log/metal-store"
-DUCKDNS_DOMAIN="${DUCKDNS_DOMAIN:-}"   # e.g. "taller"
-DUCKDNS_TOKEN="${DUCKDNS_TOKEN:-}"     # token from duckdns.org
+DUCKDNS_DOMAIN="${DUCKDNS_DOMAIN:-metalstore}"
+DUCKDNS_TOKEN="${DUCKDNS_TOKEN:-DUCKDNS_TOKEN not set}"
 # ─────────────────────────────────────────────────────────────────────────────
 
 echo "=== 1. System update & deps ==="
 sudo apt-get update -y
-sudo apt-get install -y openjdk-25-jre-headless certbot curl
+sudo apt-get install -y wget curl gpg
+
+# Install JDK 24 via Adoptium (Temurin) — reliable for any JDK version
+wget -qO - https://packages.adoptium.net/artifactory/api/gpg/key/public | sudo gpg --dearmor -o /etc/apt/keyrings/adoptium.gpg
+echo "deb [signed-by=/etc/apt/keyrings/adoptium.gpg] https://packages.adoptium.net/artifactory/deb noble main" | sudo tee /etc/apt/sources.list.d/adoptium.list
+sudo apt-get update -y
+sudo apt-get install -y temurin-24-jre certbot
 
 echo "=== 2. Create user ==="
 sudo id -u "$APP_USER" &>/dev/null || sudo useradd -m -s /bin/bash "$APP_USER"
@@ -44,6 +50,7 @@ SPRING_PROFILES_ACTIVE=prod
 CORS_ALLOWED_ORIGINS=${CORS_ALLOWED_ORIGINS:-https://metalstore.miweb.com}
 EOF
 sudo chown "$APP_USER:$APP_USER" "$APP_DIR/.env"
+sudo chmod 600 "$APP_DIR/.env"
 
 echo "=== 6. Create systemd service ==="
 sudo tee /etc/systemd/system/metal-store.service > /dev/null <<SERVICE

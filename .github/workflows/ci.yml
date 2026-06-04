@@ -1,5 +1,5 @@
-name: CI
-run-name: CI ${{ github.head_ref || github.ref_name }}
+name: CI/CD
+run-name: CI/CD ${{ github.head_ref || github.ref_name }}
 
 on:
   pull_request:
@@ -27,3 +27,39 @@ jobs:
         run: ./gradlew build
         env:
           SPRING_PROFILES_ACTIVE: test
+
+      - name: Upload JAR artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-jar
+          path: build/libs/metal-store-*.jar
+
+  deploy:
+    needs: build
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download JAR artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: app-jar
+
+      - name: Deploy to Oracle Cloud
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.VM_HOST }}
+          username: ${{ secrets.VM_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          source: "metal-store-0.0.1-SNAPSHOT.jar"
+          target: /tmp
+
+      - name: Restart service
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.VM_HOST }}
+          username: ${{ secrets.VM_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            sudo cp /tmp/metal-store-0.0.1-SNAPSHOT.jar /opt/metal-store/app.jar
+            sudo systemctl restart metal-store
