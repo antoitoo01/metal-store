@@ -20,9 +20,8 @@ data class CatalogItem(
 
     val sku: String? = null,
 
-    @field:Access(AccessType.FIELD)
-    @field:JdbcTypeCode(SqlTypes.VARCHAR)
-    @field:Column(nullable = false, length = 65535)
+    @JdbcTypeCode(SqlTypes.VARCHAR)
+    @Column(nullable = false, length = 65535)
     val designation: String,
 
     @Column(columnDefinition = "TEXT")
