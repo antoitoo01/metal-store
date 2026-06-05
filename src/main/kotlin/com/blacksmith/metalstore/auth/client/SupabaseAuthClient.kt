@@ -64,9 +64,15 @@ class SupabaseAuthClient(
             )
             response.body ?: throw UserNotFoundException("Empty response from Supabase")
         } catch (e: HttpClientErrorException) {
+            val supabaseMessage = try {
+                @Suppress("UNCHECKED_CAST")
+                (e.responseBodyAsString.let { body ->
+                    com.fasterxml.jackson.databind.ObjectMapper().readTree(body).get("error_description")?.asText()
+                })
+            } catch (_: Exception) { null } ?: e.responseBodyAsString
             throw when (e.statusCode.value()) {
-                400, 401 -> UserNotFoundException("Invalid login credentials")
-                422 -> UserNotFoundException("Invalid email format")
+                400, 401 -> UserNotFoundException("Invalid login credentials: $supabaseMessage")
+                422 -> UserNotFoundException("Invalid email format: $supabaseMessage")
                 429 -> UserNotFoundException("Too many requests")
                 else -> UserNotFoundException(e.responseBodyAsString)
             }
