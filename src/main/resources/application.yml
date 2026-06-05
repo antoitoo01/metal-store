@@ -16,7 +16,7 @@ spring:
       max-file-size: 5MB
 
 cors:
-  allowed-origins: "*"
+  allowed-origins: "http://localhost:4200"
 
 rate-limiting:
   default-limit: 100

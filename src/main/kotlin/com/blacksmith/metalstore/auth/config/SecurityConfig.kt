@@ -32,7 +32,11 @@ class SecurityConfig {
 
     @Bean
     @Profile("prod")
-    fun prodSecurityFilterChain(http: HttpSecurity, jwtDecoder: JwtDecoder): SecurityFilterChain {
+    fun prodSecurityFilterChain(
+        http: HttpSecurity,
+        jwtDecoder: JwtDecoder,
+        cookieResolver: CookieBearerTokenResolver,
+    ): SecurityFilterChain {
         http
             .csrf { it.disable() }
             .sessionManagement { it.sessionCreationPolicy(SessionCreationPolicy.STATELESS) }
@@ -42,6 +46,7 @@ class SecurityConfig {
                     .anyRequest().authenticated()
             }
             .oauth2ResourceServer { oauth2 ->
+                oauth2.bearerTokenResolver(cookieResolver)
                 oauth2.jwt { it.decoder(jwtDecoder) }
             }
         return http.build()

@@ -76,5 +76,6 @@ class WebConfig(
             .allowedOrigins(*allowedOrigins.split(",").toTypedArray())
             .allowedMethods("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS")
             .allowedHeaders("*")
+            .allowCredentials(true)
     }
 }

@@ -6,7 +6,11 @@ import com.blacksmith.metalstore.auth.domain.dto.request.RegisterRequest
 import com.blacksmith.metalstore.auth.domain.dto.response.LoginResponse
 import com.blacksmith.metalstore.auth.domain.dto.response.UserResponse
 import com.blacksmith.metalstore.auth.service.AuthService
+import jakarta.servlet.http.Cookie
+import jakarta.servlet.http.HttpServletRequest
+import jakarta.servlet.http.HttpServletResponse
 import jakarta.validation.Valid
+import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal
@@ -31,8 +35,15 @@ class AuthController(
         ApiResponse(responseCode = "201", description = "Usuario registrado exitosamente"),
         ApiResponse(responseCode = "400", description = "Solicitud inválida")
     ])
-    fun register(@Valid @RequestBody request: RegisterRequest): LoginResponse =
-        authService.register(request)
+    fun register(
+        @Valid @RequestBody body: RegisterRequest,
+        httpRequest: HttpServletRequest,
+        httpResponse: HttpServletResponse,
+    ): LoginResponse {
+        val result = authService.register(body)
+        setAuthCookie(httpResponse, result.accessToken, result.expiresIn, httpRequest.isSecure)
+        return result
+    }
 
     @PostMapping("/login")
     @Operation(summary = "Iniciar sesión", description = "Autentica al usuario mediante Supabase Auth y retorna JWT.")
@@ -40,8 +51,15 @@ class AuthController(
         ApiResponse(responseCode = "200", description = "Operación exitosa"),
         ApiResponse(responseCode = "401", description = "No autorizado")
     ])
-    fun login(@Valid @RequestBody request: LoginRequest): LoginResponse =
-        authService.login(request.email, request.password)
+    fun login(
+        @Valid @RequestBody body: LoginRequest,
+        httpRequest: HttpServletRequest,
+        httpResponse: HttpServletResponse,
+    ): LoginResponse {
+        val result = authService.login(body.email, body.password)
+        setAuthCookie(httpResponse, result.accessToken, result.expiresIn, httpRequest.isSecure)
+        return result
+    }
 
     @GetMapping("/me")
     @Operation(summary = "Obtener usuario actual", description = "Retorna el usuario autenticado mediante el JWT.")
@@ -60,8 +78,15 @@ class AuthController(
         ApiResponse(responseCode = "200", description = "Operación exitosa"),
         ApiResponse(responseCode = "400", description = "Solicitud inválida")
     ])
-    fun refresh(@Valid @RequestBody request: RefreshTokenRequest): LoginResponse =
-        authService.refresh(request.refreshToken)
+    fun refresh(
+        @Valid @RequestBody body: RefreshTokenRequest,
+        httpRequest: HttpServletRequest,
+        httpResponse: HttpServletResponse,
+    ): LoginResponse {
+        val result = authService.refresh(body.refreshToken)
+        setAuthCookie(httpResponse, result.accessToken, result.expiresIn, httpRequest.isSecure)
+        return result
+    }
 
     @PostMapping("/logout")
     @ResponseStatus(HttpStatus.NO_CONTENT)
@@ -70,7 +95,31 @@ class AuthController(
         ApiResponse(responseCode = "204", description = "Sin contenido"),
         ApiResponse(responseCode = "401", description = "No autorizado")
     ])
-    fun logout(@RequestHeader("Authorization") authHeader: String) {
-        authService.logout(authHeader.removePrefix("Bearer "))
+    fun logout(httpRequest: HttpServletRequest, httpResponse: HttpServletResponse) {
+        val token = httpRequest.cookies?.firstOrNull { it.name == "access_token" }?.value
+            ?: httpRequest.getHeader(HttpHeaders.AUTHORIZATION)?.removePrefix("Bearer ")
+            ?: return
+        authService.logout(token)
+        clearAuthCookie(httpResponse, httpRequest.isSecure)
+    }
+
+    private fun setAuthCookie(response: HttpServletResponse, token: String, maxAge: Int, secure: Boolean) {
+        val cookie = Cookie("access_token", token).apply {
+            isHttpOnly = true
+            this@apply.secure = secure
+            path = "/"
+            this.maxAge = maxAge
+        }
+        response.addCookie(cookie)
+    }
+
+    private fun clearAuthCookie(response: HttpServletResponse, secure: Boolean) {
+        val cookie = Cookie("access_token", null).apply {
+            isHttpOnly = true
+            this@apply.secure = secure
+            path = "/"
+            maxAge = 0
+        }
+        response.addCookie(cookie)
     }
 }
