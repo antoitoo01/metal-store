@@ -3,6 +3,8 @@ package com.blacksmith.metalstore.auth.client
 import com.blacksmith.metalstore.auth.config.SupabaseProperties
 import com.blacksmith.metalstore.auth.exception.UserAlreadyExistsException
 import com.blacksmith.metalstore.auth.exception.UserNotFoundException
+import com.blacksmith.metalstore.shared.exception.ApiException
+import com.blacksmith.metalstore.shared.exception.ErrorCode
 import org.springframework.core.ParameterizedTypeReference
 import org.springframework.http.HttpEntity
 import org.springframework.http.HttpHeaders
@@ -10,13 +12,14 @@ import org.springframework.http.HttpMethod
 import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Service
 import org.springframework.web.client.HttpClientErrorException
+import org.springframework.web.client.ResourceAccessException
 import org.springframework.web.client.RestTemplate
 
 @Service
 class SupabaseAuthClient(
-    private val props: SupabaseProperties
+    private val props: SupabaseProperties,
+    private val rest: RestTemplate = RestTemplate()
 ) {
-    private val rest = RestTemplate()
 
     fun signUp(email: String, password: String, username: String?): Map<String, Any?> {
         val headers = HttpHeaders().apply {
@@ -62,20 +65,16 @@ class SupabaseAuthClient(
                 HttpEntity(body, headers),
                 object : ParameterizedTypeReference<Map<String, Any?>>() {}
             )
-            response.body ?: throw UserNotFoundException("Empty response from Supabase")
+            response.body ?: throw ApiException(ErrorCode.EXTERNAL_SERVICE_ERROR, "Empty response from Supabase")
         } catch (e: HttpClientErrorException) {
-            val supabaseMessage = try {
-                @Suppress("UNCHECKED_CAST")
-                (e.responseBodyAsString.let { body ->
-                    com.fasterxml.jackson.databind.ObjectMapper().readTree(body).get("error_description")?.asText()
-                })
-            } catch (_: Exception) { null } ?: e.responseBodyAsString
             throw when (e.statusCode.value()) {
-                400, 401 -> UserNotFoundException("Invalid login credentials: $supabaseMessage")
-                422 -> UserNotFoundException("Invalid email format: $supabaseMessage")
-                429 -> UserNotFoundException("Too many requests")
-                else -> UserNotFoundException(e.responseBodyAsString)
+                400, 401 -> ApiException(ErrorCode.INVALID_CREDENTIALS, "Invalid login credentials")
+                422 -> ApiException(ErrorCode.VALIDATION_ERROR, "Invalid email format")
+                429 -> ApiException(ErrorCode.RATE_LIMIT_EXCEEDED, "Too many requests")
+                else -> ApiException(ErrorCode.EXTERNAL_SERVICE_ERROR, e.responseBodyAsString)
             }
+        } catch (e: ResourceAccessException) {
+            throw ApiException(ErrorCode.SERVICE_UNAVAILABLE, "Authentication service is unavailable")
         }
     }
 
@@ -101,17 +100,21 @@ class SupabaseAuthClient(
         val body = mapOf("refresh_token" to refreshToken)
         return try {
             val response: ResponseEntity<Map<String, Any?>> = rest.exchange(
-                "${props.url}/auth/v1/token?grant_type=refresh_token",
+                "${props.url}/auth/v1/token?grant_type=password",
                 HttpMethod.POST,
                 HttpEntity(body, headers),
                 object : ParameterizedTypeReference<Map<String, Any?>>() {}
             )
-            response.body ?: throw UserNotFoundException("Invalid refresh token")
+            response.body ?: throw ApiException(ErrorCode.EXTERNAL_SERVICE_ERROR, "Empty response from Supabase")
         } catch (e: HttpClientErrorException) {
             throw when (e.statusCode.value()) {
-                400 -> UserNotFoundException("Invalid refresh token")
-                else -> UserNotFoundException(e.responseBodyAsString)
+                400, 401 -> ApiException(ErrorCode.INVALID_CREDENTIALS, "Invalid login credentials")
+                422 -> ApiException(ErrorCode.VALIDATION_ERROR, "Invalid email format")
+                429 -> ApiException(ErrorCode.RATE_LIMIT_EXCEEDED, "Too many requests")
+                else -> ApiException(ErrorCode.EXTERNAL_SERVICE_ERROR, e.responseBodyAsString)
             }
+        } catch (e: ResourceAccessException) {
+            throw ApiException(ErrorCode.SERVICE_UNAVAILABLE, "Authentication service is unavailable")
         }
     }
 

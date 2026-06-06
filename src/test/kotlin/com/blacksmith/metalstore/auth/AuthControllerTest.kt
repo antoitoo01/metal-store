@@ -9,6 +9,8 @@ import com.blacksmith.metalstore.auth.domain.entity.UserState
 import com.blacksmith.metalstore.auth.repository.TenantRepository
 import com.blacksmith.metalstore.auth.repository.UserRepository
 import com.blacksmith.metalstore.auth.service.AuthService
+import com.blacksmith.metalstore.shared.exception.ApiException
+import com.blacksmith.metalstore.shared.exception.ErrorCode
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.mockito.ArgumentMatchers.anyString
@@ -151,5 +153,31 @@ class AuthControllerTest {
         authService.logout(accessToken)
 
         verify(supabaseAuthClient).signOut(accessToken)
+    }
+
+    @Test
+    fun `login throws INVALID_CREDENTIALS when credentials are wrong`() {
+        `when`(supabaseAuthClient.signIn(anyString(), anyString()))
+            .thenThrow(ApiException(ErrorCode.INVALID_CREDENTIALS, "Invalid login credentials"))
+
+        try {
+            authService.login("wrong@test.com", "wrong")
+            assert(false) { "Expected ApiException" }
+        } catch (e: ApiException) {
+            assert(e.errorCode == ErrorCode.INVALID_CREDENTIALS)
+        }
+    }
+
+    @Test
+    fun `login throws SERVICE_UNAVAILABLE when Supabase is down`() {
+        `when`(supabaseAuthClient.signIn(anyString(), anyString()))
+            .thenThrow(ApiException(ErrorCode.SERVICE_UNAVAILABLE, "Authentication service is unavailable"))
+
+        try {
+            authService.login("test@test.com", "pass")
+            assert(false) { "Expected ApiException" }
+        } catch (e: ApiException) {
+            assert(e.errorCode == ErrorCode.SERVICE_UNAVAILABLE)
+        }
     }
 }

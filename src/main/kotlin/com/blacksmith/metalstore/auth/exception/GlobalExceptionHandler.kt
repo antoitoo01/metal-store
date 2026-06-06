@@ -1,5 +1,7 @@
 package com.blacksmith.metalstore.auth.exception
 
+import com.blacksmith.metalstore.shared.exception.ApiException
+import com.blacksmith.metalstore.shared.exception.ErrorCode
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
 import org.springframework.http.ProblemDetail
@@ -9,6 +11,7 @@ import org.springframework.web.HttpRequestMethodNotSupportedException
 import org.springframework.web.bind.MethodArgumentNotValidException
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.RestControllerAdvice
+import org.springframework.web.client.ResourceAccessException
 
 @RestControllerAdvice
 class GlobalExceptionHandler {
@@ -17,28 +20,22 @@ class GlobalExceptionHandler {
         private val log = LoggerFactory.getLogger(GlobalExceptionHandler::class.java)
     }
 
-    @ExceptionHandler(UserNotFoundException::class)
-    fun handleUserNotFound(ex: UserNotFoundException): ProblemDetail {
-        log.warn("User not found: {}", ex.message)
-        return ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, ex.message ?: "User not found")
+    @ExceptionHandler(ApiException::class)
+    fun handleApiException(ex: ApiException): ProblemDetail {
+        log.warn("API error [{}]: {}", ex.errorCode.name, ex.message)
+        val problem = ProblemDetail.forStatusAndDetail(ex.errorCode.httpStatus, ex.message)
+        problem.setProperty("code", ex.errorCode.name)
+        return problem
     }
 
-    @ExceptionHandler(UserAlreadyExistsException::class)
-    fun handleUserAlreadyExists(ex: UserAlreadyExistsException): ProblemDetail {
-        log.warn("User already exists: {}", ex.message)
-        return ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.message ?: "User already exists")
-    }
-
-    @ExceptionHandler(MissingTenantIdException::class)
-    fun handleMissingTenantId(ex: MissingTenantIdException): ProblemDetail {
-        log.warn("Missing tenant ID: {}", ex.message)
-        return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, ex.message ?: "Missing tenant ID")
-    }
-
-    @ExceptionHandler(InvalidTenantIdException::class)
-    fun handleInvalidTenantId(ex: InvalidTenantIdException): ProblemDetail {
-        log.warn("Invalid tenant ID: {}", ex.message)
-        return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, ex.message ?: "Invalid tenant ID")
+    @ExceptionHandler(ResourceAccessException::class)
+    fun handleResourceAccess(ex: ResourceAccessException): ProblemDetail {
+        log.error("External service unavailable: {}", ex.message)
+        val problem = ProblemDetail.forStatusAndDetail(
+            HttpStatus.SERVICE_UNAVAILABLE, "External service is temporarily unavailable"
+        )
+        problem.setProperty("code", ErrorCode.SERVICE_UNAVAILABLE.name)
+        return problem
     }
 
     @ExceptionHandler(HttpMessageNotReadableException::class)
