@@ -17,6 +17,13 @@ spring:
         dialect: org.hibernate.dialect.PostgreSQLDialect
     open-in-view: false
 
+  devtools:
+    restart:
+      enabled: true
+      additional-paths: build/classes/kotlin
+      poll-interval: 1s
+      quiet-period: 400ms
+
 app:
   storage:
     upload-dir: uploads
