@@ -9,6 +9,8 @@ import com.blacksmith.metalstore.auth.exception.UserNotFoundException
 import com.blacksmith.metalstore.auth.repository.UserRepository
 import org.springframework.security.access.AccessDeniedException
 import org.springframework.stereotype.Service
+import org.springframework.data.domain.Page
+import org.springframework.data.domain.Pageable
 import org.springframework.transaction.annotation.Transactional
 import java.util.*
 
@@ -17,6 +19,11 @@ class UserService(
     private val userRepository: UserRepository,
     private val supabase: SupabaseAuthClient
 ) {
+    @Transactional(readOnly = true)
+    fun findAll(tenantId: UUID, pageable: Pageable, q: String? = null): Page<User> =
+        if (q.isNullOrBlank()) userRepository.findByTenantId(tenantId, pageable)
+        else userRepository.findByTenantIdAndUsernameContainingIgnoreCaseOrEmailContainingIgnoreCase(tenantId, q, q, pageable)
+
     @Transactional(readOnly = true)
     fun findById(id: UUID): User {
         return userRepository.findById(id)

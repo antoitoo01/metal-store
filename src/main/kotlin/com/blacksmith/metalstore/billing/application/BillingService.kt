@@ -55,8 +55,9 @@ class BillingService(
 
     // ── Invoices ────────────────────────────────────────────────
     @Transactional(readOnly = true)
-    fun listInvoices(tenantId: UUID, pageable: Pageable): Page<Invoice> =
-        invoiceRepo.findByTenantIdOrderByIssueDateDesc(tenantId, pageable)
+    fun listInvoices(tenantId: UUID, pageable: Pageable, q: String? = null): Page<Invoice> =
+        if (q.isNullOrBlank()) invoiceRepo.findByTenantIdOrderByIssueDateDesc(tenantId, pageable)
+        else invoiceRepo.searchByTenantId(tenantId, q, pageable)
 
     @Transactional(readOnly = true)
     fun findInvoice(tenantId: UUID, invoiceId: UUID): Invoice? =

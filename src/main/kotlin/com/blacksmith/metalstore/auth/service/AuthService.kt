@@ -53,7 +53,7 @@ class AuthService(
         return buildLoginResponse(login, user, tenant.name)
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     fun login(email: String, password: String): LoginResponse {
         val supabaseResponse = supabase.signIn(email, password)
         @Suppress("UNCHECKED_CAST")
@@ -61,7 +61,7 @@ class AuthService(
         val supabaseId = UUID.fromString(supabaseUser.getValue("id") as String)
         val user = userRepository.findById(supabaseId).orElse(null)
 
-        return if (user != null) {
+        if (user != null) {
             val tenant = tenantRepository.findById(user.tenantId)
                 .orElseThrow { UserNotFoundException("Tenant not found") }
 
@@ -73,27 +73,36 @@ class AuthService(
                 details = mapOf("email" to email)
             ))
 
-            buildLoginResponse(supabaseResponse, user, tenant.name)
-        } else {
-            audit.warn(AuditLogger.AuditEvent(
-                action = "LOGIN_FAILED",
-                entityType = "User",
-                details = mapOf("email" to email)
-            ))
-
-            LoginResponse(
-                accessToken = supabaseResponse.getValue("access_token") as String,
-                refreshToken = supabaseResponse["refresh_token"] as? String,
-                expiresIn = (supabaseResponse["expires_in"] as? Int) ?: 3600,
-                email = email,
-                role = Role.USER,
-                tenantId = UUID(0, 0),
-                tenantName = ""
-            )
+            return buildLoginResponse(supabaseResponse, user, tenant.name)
         }
+
+        audit.warn(AuditLogger.AuditEvent(
+            action = "LOGIN_AUTO_CREATE",
+            entityType = "User",
+            details = mapOf("email" to email)
+        ))
+
+        val supabaseEmail = supabaseUser.getValue("email") as String
+        val supabaseUsername = (supabaseUser["user_metadata"] as? Map<String, Any?>)?.get("username") as? String
+
+        val name = supabaseUsername ?: supabaseEmail.substringBefore("@")
+        val slug = generateUniqueSlug(name)
+        val tenant = tenantRepository.save(Tenant(name = name, slug = slug))
+
+        val newUser = User(
+            id = supabaseId,
+            tenantId = tenant.id,
+            username = supabaseUsername,
+            email = supabaseEmail,
+            role = Role.TENANT_OWNER,
+            status = UserState.ACTIVE
+        )
+        userRepository.save(newUser)
+
+        return buildLoginResponse(supabaseResponse, newUser, tenant.name)
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     fun refresh(refreshToken: String): LoginResponse {
         val response = supabase.refreshToken(refreshToken)
         @Suppress("UNCHECKED_CAST")
@@ -101,21 +110,30 @@ class AuthService(
         val userId = UUID.fromString(supabaseUser.getValue("id") as String)
         val user = userRepository.findById(userId).orElse(null)
 
-        return if (user != null) {
+        if (user != null) {
             val tenant = tenantRepository.findById(user.tenantId)
                 .orElseThrow { UserNotFoundException("Tenant not found") }
-            buildLoginResponse(response, user, tenant.name)
-        } else {
-            LoginResponse(
-                accessToken = response.getValue("access_token") as String,
-                refreshToken = response["refresh_token"] as? String,
-                expiresIn = (response["expires_in"] as? Int) ?: 3600,
-                email = supabaseUser.getValue("email") as String,
-                role = Role.USER,
-                tenantId = UUID(0, 0),
-                tenantName = ""
-            )
+            return buildLoginResponse(response, user, tenant.name)
         }
+
+        val supabaseEmail = supabaseUser.getValue("email") as String
+        val supabaseUsername = (supabaseUser["user_metadata"] as? Map<String, Any?>)?.get("username") as? String
+
+        val name = supabaseUsername ?: supabaseEmail.substringBefore("@")
+        val slug = generateUniqueSlug(name)
+        val tenant = tenantRepository.save(Tenant(name = name, slug = slug))
+
+        val newUser = User(
+            id = userId,
+            tenantId = tenant.id,
+            username = supabaseUsername,
+            email = supabaseEmail,
+            role = Role.TENANT_OWNER,
+            status = UserState.ACTIVE
+        )
+        userRepository.save(newUser)
+
+        return buildLoginResponse(response, newUser, tenant.name)
     }
 
     @Transactional(readOnly = true)

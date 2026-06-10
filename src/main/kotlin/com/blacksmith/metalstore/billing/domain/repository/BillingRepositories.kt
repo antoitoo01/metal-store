@@ -7,6 +7,8 @@ import com.blacksmith.metalstore.billing.domain.entity.PriceListItem
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.data.jpa.repository.Query
+import org.springframework.data.repository.query.Param
 import org.springframework.stereotype.Repository
 import java.util.UUID
 
@@ -22,6 +24,15 @@ interface InvoiceRepository : JpaRepository<Invoice, UUID> {
     fun findByTenantIdOrderByIssueDateDesc(tenantId: UUID, pageable: Pageable): Page<Invoice>
     fun findByTenantIdAndStatus(tenantId: UUID, status: InvoiceStatus): List<Invoice>
     fun countByTenantId(tenantId: UUID): Long
+
+    @Query("""
+        SELECT i FROM Invoice i
+        WHERE i.tenantId = :tenantId
+        AND (LOWER(i.customerName) LIKE LOWER(CONCAT('%', :q, '%'))
+          OR LOWER(i.invoiceNumber) LIKE LOWER(CONCAT('%', :q, '%')))
+        ORDER BY i.issueDate DESC
+    """)
+    fun searchByTenantId(@Param("tenantId") tenantId: UUID, @Param("q") q: String, pageable: Pageable): Page<Invoice>
 }
 
 @Repository

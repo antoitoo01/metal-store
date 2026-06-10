@@ -3,7 +3,11 @@ package com.blacksmith.metalstore.auth.controller
 import com.blacksmith.metalstore.auth.domain.dto.request.UpdateUserRequest
 import com.blacksmith.metalstore.auth.domain.dto.response.UserResponse
 import com.blacksmith.metalstore.auth.service.UserService
+import com.blacksmith.metalstore.auth.config.CurrentTenantId
 import jakarta.validation.Valid
+import org.springframework.data.domain.Page
+import org.springframework.data.domain.Pageable
+import org.springframework.data.web.PageableDefault
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal
@@ -19,6 +23,18 @@ import java.util.*
 @RequestMapping("/api/users")
 @Tag(name = "Auth", description = "Gestión de usuarios")
 class UserController(private val userService: UserService) {
+
+    @GetMapping
+    @Operation(summary = "Listar usuarios", description = "Retorna una lista paginada de usuarios del tenant.")
+    @ApiResponses(value = [
+        ApiResponse(responseCode = "200", description = "Operación exitosa")
+    ])
+    fun list(
+        @CurrentTenantId tenantId: UUID,
+        @PageableDefault(size = 20) pageable: Pageable,
+        @RequestParam(name = "q", required = false) q: String?
+    ): Page<UserResponse> =
+        userService.findAll(tenantId, pageable, q).map { it.toResponse() }
 
     @GetMapping("/{id}")
     @Operation(summary = "Obtener usuario por ID", description = "Retorna los datos de un usuario por su UUID.")

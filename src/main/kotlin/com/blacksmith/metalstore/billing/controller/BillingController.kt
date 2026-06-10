@@ -61,8 +61,8 @@ class BillingController(
     @GetMapping("/invoices")
     @Operation(summary = "Listar facturas", description = "Retorna una lista paginada de facturas.")
     @ApiResponse(responseCode = "200", description = "Operación exitosa")
-    fun listInvoices(@CurrentTenantId tenantId: UUID, @PageableDefault(size = 20) pageable: Pageable): Page<InvoiceResponse> =
-        service.listInvoices(tenantId, pageable).map { InvoiceResponse.from(it) }
+    fun listInvoices(@CurrentTenantId tenantId: UUID, @PageableDefault(size = 20) pageable: Pageable, @RequestParam(name = "q", required = false) q: String?): Page<InvoiceResponse> =
+        service.listInvoices(tenantId, pageable, q).map { InvoiceResponse.from(it) }
 
     @GetMapping("/invoices/{id}")
     @Operation(summary = "Obtener factura por ID", description = "Retorna los datos de una factura por su UUID.")
