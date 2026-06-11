@@ -3,6 +3,8 @@ package com.blacksmith.metalstore.billing.controller
 import com.blacksmith.metalstore.auth.config.CurrentTenantId
 import com.blacksmith.metalstore.billing.application.BillingService
 import com.blacksmith.metalstore.billing.domain.dto.request.CreateLineRequest
+import com.blacksmith.metalstore.billing.domain.dto.request.PriceUpdateRequest
+import com.blacksmith.metalstore.billing.domain.dto.request.UpdateInvoiceRequest
 import com.blacksmith.metalstore.billing.domain.dto.request.UpsertPriceRequest
 import com.blacksmith.metalstore.billing.domain.dto.response.InvoiceResponse
 import com.blacksmith.metalstore.billing.domain.dto.response.LineResponse
@@ -57,6 +59,22 @@ class BillingController(
         else ResponseEntity.notFound().build()
     }
 
+    @PutMapping("/prices/{id}")
+    @Operation(summary = "Actualizar precio", description = "Actualiza los campos de un precio existente.")
+    @ApiResponses(value = [
+        ApiResponse(responseCode = "200", description = "Operación exitosa"),
+        ApiResponse(responseCode = "404", description = "Recurso no encontrado")
+    ])
+    fun updatePrice(
+        @CurrentTenantId tenantId: UUID,
+        @PathVariable id: UUID,
+        @RequestBody request: PriceUpdateRequest
+    ): ResponseEntity<PriceResponse> {
+        val updated = service.updatePrice(tenantId, id, request.unitPrice, request.validFrom, request.validTo, request.notes)
+            ?: return ResponseEntity.notFound().build()
+        return ResponseEntity.ok(PriceResponse.from(updated))
+    }
+
     // ── Invoices ────────────────────────────────────────────────
     @GetMapping("/invoices")
     @Operation(summary = "Listar facturas", description = "Retorna una lista paginada de facturas.")
@@ -73,6 +91,23 @@ class BillingController(
     fun getInvoice(@CurrentTenantId tenantId: UUID, @PathVariable id: UUID): ResponseEntity<InvoiceResponse> {
         val inv = service.findInvoice(tenantId, id) ?: return ResponseEntity.notFound().build()
         return ResponseEntity.ok(InvoiceResponse.from(inv))
+    }
+
+    @PutMapping("/invoices/{id}")
+    @Operation(summary = "Actualizar factura", description = "Actualiza los datos de cabecera de una factura en estado DRAFT.")
+    @ApiResponses(value = [
+        ApiResponse(responseCode = "200", description = "Operación exitosa"),
+        ApiResponse(responseCode = "400", description = "Solicitud inválida o no está en DRAFT"),
+        ApiResponse(responseCode = "404", description = "Recurso no encontrado")
+    ])
+    fun updateInvoice(
+        @CurrentTenantId tenantId: UUID,
+        @PathVariable id: UUID,
+        @Valid @RequestBody request: UpdateInvoiceRequest
+    ): ResponseEntity<InvoiceResponse> {
+        val updated = service.update(tenantId, id, request.customerName, request.customerVat, request.customerAddress, request.notes)
+            ?: return ResponseEntity.badRequest().build()
+        return ResponseEntity.ok(InvoiceResponse.from(updated))
     }
 
     @GetMapping("/invoices/{id}/lines")

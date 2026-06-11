@@ -13,6 +13,7 @@ import java.util.UUID
 interface QuoteRepository : JpaRepository<Quote, UUID> {
     fun findByTenantIdOrderByIssueDateDesc(tenantId: UUID, pageable: Pageable): Page<Quote>
     fun findByTenantIdAndStatus(tenantId: UUID, status: QuoteStatus): List<Quote>
+    fun findByTenantIdAndClientIdOrderByIssueDateDesc(tenantId: UUID, clientId: UUID, pageable: Pageable): Page<Quote>
     fun countByTenantId(tenantId: UUID): Long
 }
 

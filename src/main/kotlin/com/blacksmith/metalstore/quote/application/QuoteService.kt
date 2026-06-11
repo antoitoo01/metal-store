@@ -26,6 +26,10 @@ class QuoteService(
         quoteRepo.findByTenantIdOrderByIssueDateDesc(tenantId, pageable)
 
     @Transactional(readOnly = true)
+    fun listQuotesByClient(tenantId: UUID, clientId: UUID, pageable: Pageable): Page<Quote> =
+        quoteRepo.findByTenantIdAndClientIdOrderByIssueDateDesc(tenantId, clientId, pageable)
+
+    @Transactional(readOnly = true)
     fun findQuote(tenantId: UUID, quoteId: UUID): Quote? =
         quoteRepo.findById(quoteId).filter { it.tenantId == tenantId }.orElse(null)
 
@@ -147,6 +151,27 @@ class QuoteService(
         quoteRepo.findById(quoteId).ifPresent { q ->
             quoteRepo.save(q.copy(subtotal = subtotal, vatTotal = vatTotal, total = total))
         }
+    }
+
+    fun update(tenantId: UUID, quoteId: UUID, customerName: String?, customerVat: String?, customerAddress: String?, validUntil: LocalDate?, notes: String?): Quote? {
+        val quote = quoteRepo.findById(quoteId).filter { it.tenantId == tenantId }.orElse(null) ?: return null
+        if (quote.status != QuoteStatus.DRAFT) return null
+        val merged = quote.copy(
+            customerName = customerName ?: quote.customerName,
+            customerVat = customerVat ?: quote.customerVat,
+            customerAddress = customerAddress ?: quote.customerAddress,
+            validUntil = validUntil ?: quote.validUntil,
+            notes = notes ?: quote.notes
+        )
+        val saved = quoteRepo.save(merged)
+        audit.log(AuditLogger.AuditEvent(
+            action = "QUOTE_UPDATED",
+            entityType = "Quote",
+            entityId = quoteId.toString(),
+            tenantId = tenantId.toString(),
+            details = mapOf("number" to quote.quoteNumber)
+        ))
+        return saved
     }
 
     private fun nextQuoteNumber(tenantId: UUID): String {

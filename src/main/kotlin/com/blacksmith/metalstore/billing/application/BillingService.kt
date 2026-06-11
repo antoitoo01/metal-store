@@ -53,6 +53,25 @@ class BillingService(
         return true
     }
 
+    fun updatePrice(tenantId: UUID, priceId: UUID, unitPrice: BigDecimal?, validFrom: LocalDate?, validTo: LocalDate?, notes: String?): PriceListItem? {
+        val existing = priceListRepo.findById(priceId).filter { it.tenantId == tenantId }.orElse(null) ?: return null
+        val merged = existing.copy(
+            unitPrice = unitPrice ?: existing.unitPrice,
+            validFrom = validFrom ?: existing.validFrom,
+            validTo = validTo ?: existing.validTo,
+            notes = notes ?: existing.notes
+        )
+        val saved = priceListRepo.save(merged)
+        audit.log(AuditLogger.AuditEvent(
+            action = "PRICE_UPDATED",
+            entityType = "PriceListItem",
+            entityId = priceId.toString(),
+            tenantId = tenantId.toString(),
+            details = mapOf("unitPrice" to saved.unitPrice.toString())
+        ))
+        return saved
+    }
+
     // ── Invoices ────────────────────────────────────────────────
     @Transactional(readOnly = true)
     fun listInvoices(tenantId: UUID, pageable: Pageable, q: String? = null): Page<Invoice> =
@@ -166,6 +185,26 @@ class BillingService(
     }
 
     // ── Internal ────────────────────────────────────────────────
+    fun update(tenantId: UUID, invoiceId: UUID, customerName: String?, customerVat: String?, customerAddress: String?, notes: String?): Invoice? {
+        val invoice = invoiceRepo.findById(invoiceId).filter { it.tenantId == tenantId }.orElse(null) ?: return null
+        if (invoice.status != InvoiceStatus.DRAFT) return null
+        val merged = invoice.copy(
+            customerName = customerName ?: invoice.customerName,
+            customerVat = customerVat ?: invoice.customerVat,
+            customerAddress = customerAddress ?: invoice.customerAddress,
+            notes = notes ?: invoice.notes
+        )
+        val saved = invoiceRepo.save(merged)
+        audit.log(AuditLogger.AuditEvent(
+            action = "INVOICE_UPDATED",
+            entityType = "Invoice",
+            entityId = invoiceId.toString(),
+            tenantId = tenantId.toString(),
+            details = mapOf("number" to invoice.invoiceNumber)
+        ))
+        return saved
+    }
+
     private fun recalcTotals(invoiceId: UUID) {
         val lines = invoiceLineRepo.findByInvoiceId(invoiceId)
         val subtotal = lines.sumOf { it.totalPrice }

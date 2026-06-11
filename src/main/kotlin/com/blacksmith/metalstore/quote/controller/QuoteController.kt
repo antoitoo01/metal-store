@@ -4,6 +4,7 @@ import com.blacksmith.metalstore.auth.config.CurrentTenantId
 import com.blacksmith.metalstore.quote.application.QuoteService
 import com.blacksmith.metalstore.quote.domain.dto.request.CreateQuoteLineRequest
 import com.blacksmith.metalstore.quote.domain.dto.request.CreateQuoteRequest
+import com.blacksmith.metalstore.quote.domain.dto.request.UpdateQuoteRequest
 import com.blacksmith.metalstore.quote.domain.dto.response.QuoteLineResponse
 import com.blacksmith.metalstore.quote.domain.dto.response.QuoteResponse
 import jakarta.validation.Valid
@@ -28,8 +29,11 @@ class QuoteController(
     @GetMapping
     @Operation(summary = "Listar cotizaciones", description = "Retorna una lista paginada de cotizaciones.")
     @ApiResponse(responseCode = "200", description = "Operación exitosa")
-    fun list(@CurrentTenantId tenantId: UUID, @PageableDefault(size = 20) pageable: Pageable): Page<QuoteResponse> =
-        service.listQuotes(tenantId, pageable).map { QuoteResponse.from(it) }
+    fun list(@CurrentTenantId tenantId: UUID, @PageableDefault(size = 20) pageable: Pageable, @RequestParam(name = "clientId", required = false) clientId: UUID?): Page<QuoteResponse> {
+        val quotes = if (clientId != null) service.listQuotesByClient(tenantId, clientId, pageable)
+            else service.listQuotes(tenantId, pageable)
+        return quotes.map { QuoteResponse.from(it) }
+    }
 
     @GetMapping("/{id}")
     @Operation(summary = "Obtener cotización por ID", description = "Retorna los datos de una cotización por su UUID.")
@@ -55,6 +59,23 @@ class QuoteController(
     ): QuoteResponse {
         val quote = service.createDraft(tenantId, request.toEntity(tenantId, ""))
         return QuoteResponse.from(quote)
+    }
+
+    @PutMapping("/{id}")
+    @Operation(summary = "Actualizar cotización", description = "Actualiza los datos de cabecera de una cotización en estado DRAFT.")
+    @ApiResponses(value = [
+        ApiResponse(responseCode = "200", description = "Operación exitosa"),
+        ApiResponse(responseCode = "400", description = "Solicitud inválida o no está en DRAFT"),
+        ApiResponse(responseCode = "404", description = "Recurso no encontrado")
+    ])
+    fun update(
+        @CurrentTenantId tenantId: UUID,
+        @PathVariable id: UUID,
+        @Valid @RequestBody request: UpdateQuoteRequest
+    ): ResponseEntity<QuoteResponse> {
+        val updated = service.update(tenantId, id, request.customerName, request.customerVat, request.customerAddress, request.validUntil, request.notes)
+            ?: return ResponseEntity.badRequest().build()
+        return ResponseEntity.ok(QuoteResponse.from(updated))
     }
 
     @GetMapping("/{id}/lines")
