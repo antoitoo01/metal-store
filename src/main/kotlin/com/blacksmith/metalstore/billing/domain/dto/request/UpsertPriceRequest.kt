@@ -27,8 +27,8 @@ data class UpsertPriceRequest(
     @field:Schema(description = "Notas internas sobre el precio (opcional)", example = "Precio especial para cliente VIP")
     val notes: String? = null
 ) {
-    fun toEntity(tenantId: UUID) = PriceListItem(
-        tenantId = tenantId,
+    fun toEntity(organizationId: UUID) = PriceListItem(
+        organizationId = organizationId,
         profileId = profileId,
         itemId = itemId,
         unitPrice = unitPrice,

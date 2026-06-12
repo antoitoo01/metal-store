@@ -28,7 +28,7 @@ class BillingServiceTest {
     private lateinit var invoiceLineRepo: InvoiceLineRepository
 
     private lateinit var service: BillingService
-    private val tenantId = UUID.randomUUID()
+    private val organizationId = UUID.randomUUID()
     private val profileId = UUID.randomUUID()
 
     @BeforeEach
@@ -42,22 +42,22 @@ class BillingServiceTest {
     @Test
     fun `create and list price list items`() {
         val price = service.upsertPrice(
-            PriceListItem(tenantId = tenantId, profileId = profileId, unitPrice = BigDecimal("150.00"))
+            PriceListItem(organizationId = organizationId, profileId = profileId, unitPrice = BigDecimal("150.00"))
         )
         assert(price.id != null)
-        assert(service.listPrices(tenantId, PageRequest.of(0, 100)).totalElements == 1L)
+        assert(service.listPrices(organizationId, PageRequest.of(0, 100)).totalElements == 1L)
     }
 
     @Test
     fun `create draft invoice`() {
-        val inv = service.createDraft(tenantId, "Cliente Test", "B12345678")
+        val inv = service.createDraft(organizationId, "Cliente Test", "B12345678")
         assert(inv.status == InvoiceStatus.DRAFT)
         assert(inv.invoiceNumber.startsWith("FAC-"))
     }
 
     @Test
     fun `add line to draft recalculates totals`() {
-        val inv = service.createDraft(tenantId)
+        val inv = service.createDraft(organizationId)
         val line = InvoiceLine(
             invoiceId = inv.id,
             lineNumber = 1,
@@ -67,44 +67,44 @@ class BillingServiceTest {
             unitPrice = BigDecimal("2.50"),
             totalPrice = BigDecimal("375.00")
         )
-        service.addLine(tenantId, inv.id, line)
+        service.addLine(organizationId, inv.id, line)
 
-        val updated = service.findInvoice(tenantId, inv.id)!!
+        val updated = service.findInvoice(organizationId, inv.id)!!
         assert(updated.subtotal.compareTo(BigDecimal("375.00")) == 0)
         assert(updated.total > BigDecimal.ZERO)
     }
 
     @Test
     fun `issue invoice changes status`() {
-        val inv = service.createDraft(tenantId)
-        val issued = service.issue(tenantId, inv.id)!!
+        val inv = service.createDraft(organizationId)
+        val issued = service.issue(organizationId, inv.id)!!
         assert(issued.status == InvoiceStatus.ISSUED)
     }
 
     @Test
     fun `cannot add lines to issued invoice`() {
-        val inv = service.createDraft(tenantId)
-        service.issue(tenantId, inv.id)
+        val inv = service.createDraft(organizationId)
+        service.issue(organizationId, inv.id)
         val line = InvoiceLine(
             invoiceId = inv.id, lineNumber = 1, description = "Test",
             quantity = BigDecimal.ONE, unitPrice = BigDecimal.TEN, totalPrice = BigDecimal.TEN
         )
-        val result = service.addLine(tenantId, inv.id, line)
+        val result = service.addLine(organizationId, inv.id, line)
         assert(result == null)
     }
 
     @Test
     fun `mark paid transitions from issued`() {
-        val inv = service.createDraft(tenantId)
-        service.issue(tenantId, inv.id)
-        val paid = service.markPaid(tenantId, inv.id)!!
+        val inv = service.createDraft(organizationId)
+        service.issue(organizationId, inv.id)
+        val paid = service.markPaid(organizationId, inv.id)!!
         assert(paid.status == InvoiceStatus.PAID)
     }
 
     @Test
     fun `cancel transitions from draft`() {
-        val inv = service.createDraft(tenantId)
-        val cancelled = service.cancel(tenantId, inv.id)!!
+        val inv = service.createDraft(organizationId)
+        val cancelled = service.cancel(organizationId, inv.id)!!
         assert(cancelled.status == InvoiceStatus.CANCELLED)
     }
 }

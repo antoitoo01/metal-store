@@ -12,7 +12,7 @@ import java.util.UUID
 @Table(
     name = "inventory_items",
     indexes = [
-        Index(name = "idx_inventory_tenant", columnList = "tenant_id"),
+        Index(name = "idx_inventory_tenant", columnList = "organization_id"),
         Index(name = "idx_inventory_profile", columnList = "profile_id"),
         Index(name = "idx_inventory_item", columnList = "item_id")
     ]
@@ -22,7 +22,7 @@ data class InventoryItem(
     val id: UUID = UUID.randomUUID(),
 
     @Column(nullable = false)
-    val tenantId: UUID,
+    val organizationId: UUID,
 
     val profileId: UUID? = null,
 

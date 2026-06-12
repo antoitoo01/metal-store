@@ -35,8 +35,8 @@ class SupabaseStorageIntegrationTest {
 
     @BeforeAll
     fun setup() {
-        assumeTrue(props.url.isNotBlank()) { "SUPABASE_URL not set — skipping real storage integration tests" }
-        assumeTrue(props.secretKey.isNotBlank()) { "SUPABASE_SECRET_KEY not set — skipping" }
+        assumeTrue(props.url.isNotBlank()) { "SUPABASE_URL not set â€” skipping real storage integration tests" }
+        assumeTrue(props.secretKey.isNotBlank()) { "SUPABASE_SECRET_KEY not set â€” skipping" }
         storage = SupabaseFileStorageService(props, "catalog-images")
     }
 

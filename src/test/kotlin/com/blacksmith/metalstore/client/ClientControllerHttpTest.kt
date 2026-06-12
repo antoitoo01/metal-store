@@ -25,8 +25,8 @@ class ClientControllerHttpTest {
     @Autowired
     private lateinit var repo: ClientRepository
 
-    private val tenantId = UUID.randomUUID()
-    private val otherTenantId = UUID.randomUUID()
+    private val organizationId = UUID.randomUUID()
+    private val otherOrganizationId = UUID.randomUUID()
 
     @BeforeEach
     fun setUp() {
@@ -34,13 +34,13 @@ class ClientControllerHttpTest {
     }
 
     @Test
-    fun `list returns paginated clients for tenant`() {
-        repo.save(Client(tenantId = tenantId, name = "Cliente A"))
-        repo.save(Client(tenantId = tenantId, name = "Cliente B"))
-        repo.save(Client(tenantId = otherTenantId, name = "Otro Cliente"))
+    fun `list returns paginated clients for organization`() {
+        repo.save(Client(organizationId = organizationId, name = "Cliente A"))
+        repo.save(Client(organizationId = organizationId, name = "Cliente B"))
+        repo.save(Client(organizationId = otherOrganizationId, name = "Otro Cliente"))
 
         mockMvc.perform(get("/api/clients")
-            .header("X-Tenant-Id", tenantId.toString()))
+            .header("X-Organization-Id", organizationId.toString()))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.page.totalElements").value(2))
             .andExpect(jsonPath("$.content.length()").value(2))
@@ -48,36 +48,36 @@ class ClientControllerHttpTest {
 
     @Test
     fun `list filters by query param`() {
-        repo.save(Client(tenantId = tenantId, name = "Taller Pérez"))
-        repo.save(Client(tenantId = tenantId, name = "Herrería García"))
+        repo.save(Client(organizationId = organizationId, name = "Taller PÃ©rez"))
+        repo.save(Client(organizationId = organizationId, name = "HerrerÃ­a GarcÃ­a"))
 
         mockMvc.perform(get("/api/clients")
-            .param("q", "Pérez")
-            .header("X-Tenant-Id", tenantId.toString()))
+            .param("q", "PÃ©rez")
+            .header("X-Organization-Id", organizationId.toString()))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.page.totalElements").value(1))
     }
 
     @Test
-    fun `create stores client with tenant`() {
-        val body = """{"name":"Taller López","email":"lopez@test.com","phone":"123456789"}"""
+    fun `create stores client with organization`() {
+        val body = """{"name":"Taller LÃ³pez","email":"lopez@test.com","phone":"123456789"}"""
 
         mockMvc.perform(post("/api/clients")
-            .header("X-Tenant-Id", tenantId.toString())
+            .header("X-Organization-Id", organizationId.toString())
             .contentType(MediaType.APPLICATION_JSON)
             .content(body))
             .andExpect(status().isCreated)
-            .andExpect(jsonPath("$.name").value("Taller López"))
+            .andExpect(jsonPath("$.name").value("Taller LÃ³pez"))
             .andExpect(jsonPath("$.email").value("lopez@test.com"))
-            .andExpect(jsonPath("$.tenantId").value(tenantId.toString()))
+            .andExpect(jsonPath("$.organizationId").value(organizationId.toString()))
     }
 
     @Test
     fun `get returns client by id`() {
-        val client = repo.save(Client(tenantId = tenantId, name = "Test"))
+        val client = repo.save(Client(organizationId = organizationId, name = "Test"))
 
         mockMvc.perform(get("/api/clients/{id}", client.id)
-            .header("X-Tenant-Id", tenantId.toString()))
+            .header("X-Organization-Id", organizationId.toString()))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.id").value(client.id.toString()))
     }
@@ -85,16 +85,16 @@ class ClientControllerHttpTest {
     @Test
     fun `get returns 404 for non-existent id`() {
         mockMvc.perform(get("/api/clients/{id}", UUID.randomUUID())
-            .header("X-Tenant-Id", tenantId.toString()))
+            .header("X-Organization-Id", organizationId.toString()))
             .andExpect(status().isNotFound)
     }
 
     @Test
     fun `delete removes client`() {
-        val client = repo.save(Client(tenantId = tenantId, name = "Test"))
+        val client = repo.save(Client(organizationId = organizationId, name = "Test"))
 
         mockMvc.perform(delete("/api/clients/{id}", client.id)
-            .header("X-Tenant-Id", tenantId.toString()))
+            .header("X-Organization-Id", organizationId.toString()))
             .andExpect(status().isNoContent)
 
         assert(repo.findById(client.id).isEmpty)
@@ -102,11 +102,11 @@ class ClientControllerHttpTest {
 
     @Test
     fun `update modifies client`() {
-        val client = repo.save(Client(tenantId = tenantId, name = "Original"))
+        val client = repo.save(Client(organizationId = organizationId, name = "Original"))
         val body = """{"name":"Updated"}"""
 
         mockMvc.perform(put("/api/clients/{id}", client.id)
-            .header("X-Tenant-Id", tenantId.toString())
+            .header("X-Organization-Id", organizationId.toString())
             .contentType(MediaType.APPLICATION_JSON)
             .content(body))
             .andExpect(status().isOk)
@@ -115,15 +115,15 @@ class ClientControllerHttpTest {
 
     @Test
     fun `activate toggles client status`() {
-        val client = repo.save(Client(tenantId = tenantId, name = "Test"))
+        val client = repo.save(Client(organizationId = organizationId, name = "Test"))
 
         mockMvc.perform(post("/api/clients/{id}/deactivate", client.id)
-            .header("X-Tenant-Id", tenantId.toString()))
+            .header("X-Organization-Id", organizationId.toString()))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.status").value("INACTIVE"))
 
         mockMvc.perform(post("/api/clients/{id}/activate", client.id)
-            .header("X-Tenant-Id", tenantId.toString()))
+            .header("X-Organization-Id", organizationId.toString()))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.status").value("ACTIVE"))
     }

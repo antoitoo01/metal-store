@@ -14,25 +14,25 @@ import java.util.UUID
 
 @Repository
 interface PriceListRepository : JpaRepository<PriceListItem, UUID> {
-    fun findByTenantId(tenantId: UUID, pageable: Pageable): Page<PriceListItem>
-    fun findByTenantIdAndProfileId(tenantId: UUID, profileId: UUID): List<PriceListItem>
-    fun findByTenantIdAndItemId(tenantId: UUID, itemId: UUID): List<PriceListItem>
+    fun findByOrganizationId(organizationId: UUID, pageable: Pageable): Page<PriceListItem>
+    fun findByOrganizationIdAndProfileId(organizationId: UUID, profileId: UUID): List<PriceListItem>
+    fun findByOrganizationIdAndItemId(organizationId: UUID, itemId: UUID): List<PriceListItem>
 }
 
 @Repository
 interface InvoiceRepository : JpaRepository<Invoice, UUID> {
-    fun findByTenantIdOrderByIssueDateDesc(tenantId: UUID, pageable: Pageable): Page<Invoice>
-    fun findByTenantIdAndStatus(tenantId: UUID, status: InvoiceStatus): List<Invoice>
-    fun countByTenantId(tenantId: UUID): Long
+    fun findByOrganizationIdOrderByIssueDateDesc(organizationId: UUID, pageable: Pageable): Page<Invoice>
+    fun findByOrganizationIdAndStatus(organizationId: UUID, status: InvoiceStatus): List<Invoice>
+    fun countByOrganizationId(organizationId: UUID): Long
 
     @Query("""
         SELECT i FROM Invoice i
-        WHERE i.tenantId = :tenantId
+        WHERE i.organizationId = :organizationId
         AND (LOWER(i.customerName) LIKE LOWER(CONCAT('%', :q, '%'))
           OR LOWER(i.invoiceNumber) LIKE LOWER(CONCAT('%', :q, '%')))
         ORDER BY i.issueDate DESC
     """)
-    fun searchByTenantId(@Param("tenantId") tenantId: UUID, @Param("q") q: String, pageable: Pageable): Page<Invoice>
+    fun searchByOrganizationId(@Param("organizationId") organizationId: UUID, @Param("q") q: String, pageable: Pageable): Page<Invoice>
 }
 
 @Repository

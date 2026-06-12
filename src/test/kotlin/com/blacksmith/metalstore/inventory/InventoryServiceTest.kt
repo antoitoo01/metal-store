@@ -22,7 +22,7 @@ class InventoryServiceTest {
     private lateinit var repo: InventoryItemRepository
 
     private lateinit var service: InventoryService
-    private val tenantId = UUID.randomUUID()
+    private val organizationId = UUID.randomUUID()
     private val profileId = UUID.randomUUID()
 
     @BeforeEach
@@ -34,7 +34,7 @@ class InventoryServiceTest {
     @Test
     fun `create and find inventory item`() {
         val item = InventoryItem(
-            tenantId = tenantId,
+            organizationId = organizationId,
             profileId = profileId,
             quantity = BigDecimal("150.00"),
             location = "Estante A1",
@@ -45,36 +45,36 @@ class InventoryServiceTest {
         assert(saved.id != null)
         assert(saved.quantity == BigDecimal("150.00"))
 
-        val found = service.findById(tenantId, saved.id)
+        val found = service.findById(organizationId, saved.id)
         assert(found != null)
         assert(found!!.supplier == "Aceros S.A.")
     }
 
     @Test
-    fun `findAll returns only items for the given tenant`() {
+    fun `findAll returns only items for the given organization`() {
         val otherTenant = UUID.randomUUID()
-        repo.save(InventoryItem(tenantId = tenantId, profileId = profileId, quantity = BigDecimal.ONE))
-        repo.save(InventoryItem(tenantId = otherTenant, profileId = profileId, quantity = BigDecimal.ONE))
+        repo.save(InventoryItem(organizationId = organizationId, profileId = profileId, quantity = BigDecimal.ONE))
+        repo.save(InventoryItem(organizationId = otherTenant, profileId = profileId, quantity = BigDecimal.ONE))
 
-        val items = service.findAll(tenantId, PageRequest.of(0, 100))
+        val items = service.findAll(organizationId, PageRequest.of(0, 100))
         assert(items.totalElements == 1L)
     }
 
     @Test
-    fun `delete removes item for the correct tenant`() {
+    fun `delete removes item for the correct organization`() {
         val item = service.create(
-            InventoryItem(tenantId = tenantId, profileId = profileId, quantity = BigDecimal.ONE)
+            InventoryItem(organizationId = organizationId, profileId = profileId, quantity = BigDecimal.ONE)
         )
-        val deleted = service.delete(tenantId, item.id)
+        val deleted = service.delete(organizationId, item.id)
         assert(deleted)
         assert(repo.findById(item.id).isEmpty)
     }
 
     @Test
-    fun `delete returns false for wrong tenant`() {
+    fun `delete returns false for wrong organization`() {
         val otherTenant = UUID.randomUUID()
         val item = service.create(
-            InventoryItem(tenantId = tenantId, profileId = profileId, quantity = BigDecimal.ONE)
+            InventoryItem(organizationId = organizationId, profileId = profileId, quantity = BigDecimal.ONE)
         )
         val deleted = service.delete(otherTenant, item.id)
         assert(!deleted)

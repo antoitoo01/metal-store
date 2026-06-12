@@ -26,8 +26,8 @@ class InventoryControllerHttpTest {
     @Autowired
     private lateinit var repo: InventoryItemRepository
 
-    private val tenantId = UUID.randomUUID()
-    private val otherTenantId = UUID.randomUUID()
+    private val organizationId = UUID.randomUUID()
+    private val otherOrganizationId = UUID.randomUUID()
     private val profileId = UUID.randomUUID()
 
     @BeforeEach
@@ -36,37 +36,37 @@ class InventoryControllerHttpTest {
     }
 
     @Test
-    fun `list returns paginated items for tenant`() {
-        repo.save(InventoryItem(tenantId = tenantId, profileId = profileId, quantity = BigDecimal.ONE))
-        repo.save(InventoryItem(tenantId = tenantId, profileId = profileId, quantity = BigDecimal.TEN))
-        repo.save(InventoryItem(tenantId = otherTenantId, profileId = profileId, quantity = BigDecimal.ONE))
+    fun `list returns paginated items for organization`() {
+        repo.save(InventoryItem(organizationId = organizationId, profileId = profileId, quantity = BigDecimal.ONE))
+        repo.save(InventoryItem(organizationId = organizationId, profileId = profileId, quantity = BigDecimal.TEN))
+        repo.save(InventoryItem(organizationId = otherOrganizationId, profileId = profileId, quantity = BigDecimal.ONE))
 
         mockMvc.perform(get("/api/inventory")
-            .header("X-Tenant-Id", tenantId.toString()))
+            .header("X-Organization-Id", organizationId.toString()))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.page.totalElements").value(2))
             .andExpect(jsonPath("$.content.length()").value(2))
     }
 
     @Test
-    fun `create stores item with tenant`() {
-        val body = """{"tenantId":"$tenantId","profileId":"$profileId","quantity":150.00,"location":"Estante A1"}"""
+    fun `create stores item with organization`() {
+        val body = """{"organizationId":"$organizationId","profileId":"$profileId","quantity":150.00,"location":"Estante A1"}"""
 
         mockMvc.perform(post("/api/inventory")
-            .header("X-Tenant-Id", tenantId.toString())
+            .header("X-Organization-Id", organizationId.toString())
             .contentType(MediaType.APPLICATION_JSON)
             .content(body))
             .andExpect(status().isCreated)
-            .andExpect(jsonPath("$.tenantId").value(tenantId.toString()))
+            .andExpect(jsonPath("$.organizationId").value(organizationId.toString()))
             .andExpect(jsonPath("$.quantity").value(150.00))
     }
 
     @Test
     fun `get returns item by id`() {
-        val item = repo.save(InventoryItem(tenantId = tenantId, profileId = profileId, quantity = BigDecimal.ONE))
+        val item = repo.save(InventoryItem(organizationId = organizationId, profileId = profileId, quantity = BigDecimal.ONE))
 
         mockMvc.perform(get("/api/inventory/{id}", item.id)
-            .header("X-Tenant-Id", tenantId.toString()))
+            .header("X-Organization-Id", organizationId.toString()))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.id").value(item.id.toString()))
     }
@@ -74,16 +74,16 @@ class InventoryControllerHttpTest {
     @Test
     fun `get returns 404 for non-existent id`() {
         mockMvc.perform(get("/api/inventory/{id}", UUID.randomUUID())
-            .header("X-Tenant-Id", tenantId.toString()))
+            .header("X-Organization-Id", organizationId.toString()))
             .andExpect(status().isNotFound)
     }
 
     @Test
     fun `delete removes item`() {
-        val item = repo.save(InventoryItem(tenantId = tenantId, profileId = profileId, quantity = BigDecimal.ONE))
+        val item = repo.save(InventoryItem(organizationId = organizationId, profileId = profileId, quantity = BigDecimal.ONE))
 
         mockMvc.perform(delete("/api/inventory/{id}", item.id)
-            .header("X-Tenant-Id", tenantId.toString()))
+            .header("X-Organization-Id", organizationId.toString()))
             .andExpect(status().isNoContent)
 
         assert(repo.findById(item.id).isEmpty)
@@ -91,11 +91,11 @@ class InventoryControllerHttpTest {
 
     @Test
     fun `update modifies item`() {
-        val item = repo.save(InventoryItem(tenantId = tenantId, profileId = profileId, quantity = BigDecimal.ONE))
-        val body = """{"tenantId":"$tenantId","quantity":99.00}"""
+        val item = repo.save(InventoryItem(organizationId = organizationId, profileId = profileId, quantity = BigDecimal.ONE))
+        val body = """{"organizationId":"$organizationId","quantity":99.00}"""
 
         mockMvc.perform(put("/api/inventory/{id}", item.id)
-            .header("X-Tenant-Id", tenantId.toString())
+            .header("X-Organization-Id", organizationId.toString())
             .contentType(MediaType.APPLICATION_JSON)
             .content(body))
             .andExpect(status().isOk)

@@ -11,10 +11,10 @@ import java.util.UUID
 
 @Repository
 interface QuoteRepository : JpaRepository<Quote, UUID> {
-    fun findByTenantIdOrderByIssueDateDesc(tenantId: UUID, pageable: Pageable): Page<Quote>
-    fun findByTenantIdAndStatus(tenantId: UUID, status: QuoteStatus): List<Quote>
-    fun findByTenantIdAndClientIdOrderByIssueDateDesc(tenantId: UUID, clientId: UUID, pageable: Pageable): Page<Quote>
-    fun countByTenantId(tenantId: UUID): Long
+    fun findByOrganizationIdOrderByIssueDateDesc(organizationId: UUID, pageable: Pageable): Page<Quote>
+    fun findByOrganizationIdAndStatus(organizationId: UUID, status: QuoteStatus): List<Quote>
+    fun findByOrganizationIdAndClientIdOrderByIssueDateDesc(organizationId: UUID, clientId: UUID, pageable: Pageable): Page<Quote>
+    fun countByOrganizationId(organizationId: UUID): Long
 }
 
 @Repository

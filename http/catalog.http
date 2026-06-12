@@ -67,7 +67,7 @@ Authorization: Bearer {{jwt}}
 GET {{baseUrl}}/api/catalog/items/00000000-0000-0000-0000-000000000000
 Authorization: Bearer {{jwt}}
 
-### Listar tipos de item (paginado, scope tenant)
+### Listar tipos de item (paginado, scope organization)
 GET {{baseUrl}}/api/catalog/item-types
 Authorization: Bearer {{jwt}}
 

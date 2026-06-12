@@ -14,8 +14,8 @@ data class UpdateTypeRequest(
     @field:Schema(description = "Definición del esquema JSON de atributos (opcional)", example = "{\"perfil\":\"string\",\"longitud\":\"number\",\"peso\":\"number\"}")
     val schemaDefinition: String? = null
 ) {
-    fun toEntity(tenantId: UUID) = CatalogItemType(
-        tenantId = tenantId,
+    fun toEntity(organizationId: UUID) = CatalogItemType(
+        organizationId = organizationId,
         name = name,
         description = description,
         schemaDefinition = schemaDefinition

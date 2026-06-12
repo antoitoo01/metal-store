@@ -26,8 +26,8 @@ class BillingService(
 ) {
     // ── Price List ──────────────────────────────────────────────
     @Transactional(readOnly = true)
-    fun listPrices(tenantId: UUID, pageable: Pageable): Page<PriceListItem> =
-        priceListRepo.findByTenantId(tenantId, pageable)
+    fun listPrices(organizationId: UUID, pageable: Pageable): Page<PriceListItem> =
+        priceListRepo.findByOrganizationId(organizationId, pageable)
 
     fun upsertPrice(item: PriceListItem): PriceListItem {
         val saved = priceListRepo.save(item)
@@ -35,26 +35,26 @@ class BillingService(
             action = "PRICE_UPSERT",
             entityType = "PriceListItem",
             entityId = saved.id.toString(),
-            tenantId = saved.tenantId.toString(),
+            organizationId = saved.organizationId.toString(),
             details = mapOf("profileId" to (saved.profileId?.toString()), "unitPrice" to saved.unitPrice.toString())
         ))
         return saved
     }
 
-    fun deletePrice(tenantId: UUID, id: UUID): Boolean {
-        val p = priceListRepo.findById(id).filter { it.tenantId == tenantId }.orElse(null) ?: return false
+    fun deletePrice(organizationId: UUID, id: UUID): Boolean {
+        val p = priceListRepo.findById(id).filter { it.organizationId == organizationId }.orElse(null) ?: return false
         priceListRepo.delete(p)
         audit.log(AuditLogger.AuditEvent(
             action = "PRICE_DELETE",
             entityType = "PriceListItem",
             entityId = id.toString(),
-            tenantId = tenantId.toString()
+            organizationId = organizationId.toString()
         ))
         return true
     }
 
-    fun updatePrice(tenantId: UUID, priceId: UUID, unitPrice: BigDecimal?, validFrom: LocalDate?, validTo: LocalDate?, notes: String?): PriceListItem? {
-        val existing = priceListRepo.findById(priceId).filter { it.tenantId == tenantId }.orElse(null) ?: return null
+    fun updatePrice(organizationId: UUID, priceId: UUID, unitPrice: BigDecimal?, validFrom: LocalDate?, validTo: LocalDate?, notes: String?): PriceListItem? {
+        val existing = priceListRepo.findById(priceId).filter { it.organizationId == organizationId }.orElse(null) ?: return null
         val merged = existing.copy(
             unitPrice = unitPrice ?: existing.unitPrice,
             validFrom = validFrom ?: existing.validFrom,
@@ -66,7 +66,7 @@ class BillingService(
             action = "PRICE_UPDATED",
             entityType = "PriceListItem",
             entityId = priceId.toString(),
-            tenantId = tenantId.toString(),
+            organizationId = organizationId.toString(),
             details = mapOf("unitPrice" to saved.unitPrice.toString())
         ))
         return saved
@@ -74,22 +74,22 @@ class BillingService(
 
     // ── Invoices ────────────────────────────────────────────────
     @Transactional(readOnly = true)
-    fun listInvoices(tenantId: UUID, pageable: Pageable, q: String? = null): Page<Invoice> =
-        if (q.isNullOrBlank()) invoiceRepo.findByTenantIdOrderByIssueDateDesc(tenantId, pageable)
-        else invoiceRepo.searchByTenantId(tenantId, q, pageable)
+    fun listInvoices(organizationId: UUID, pageable: Pageable, q: String? = null): Page<Invoice> =
+        if (q.isNullOrBlank()) invoiceRepo.findByOrganizationIdOrderByIssueDateDesc(organizationId, pageable)
+        else invoiceRepo.searchByOrganizationId(organizationId, q, pageable)
 
     @Transactional(readOnly = true)
-    fun findInvoice(tenantId: UUID, invoiceId: UUID): Invoice? =
-        invoiceRepo.findById(invoiceId).filter { it.tenantId == tenantId }.orElse(null)
+    fun findInvoice(organizationId: UUID, invoiceId: UUID): Invoice? =
+        invoiceRepo.findById(invoiceId).filter { it.organizationId == organizationId }.orElse(null)
 
     @Transactional(readOnly = true)
     fun getLines(invoiceId: UUID): List<InvoiceLine> =
         invoiceLineRepo.findByInvoiceIdOrderByLineNumber(invoiceId)
 
-    fun createDraft(tenantId: UUID, customerName: String? = null, customerVat: String? = null): Invoice {
-        val number = nextInvoiceNumber(tenantId)
+    fun createDraft(organizationId: UUID, customerName: String? = null, customerVat: String? = null): Invoice {
+        val number = nextInvoiceNumber(organizationId)
         val invoice = Invoice(
-            tenantId = tenantId,
+            organizationId = organizationId,
             invoiceNumber = number,
             customerName = customerName,
             customerVat = customerVat,
@@ -100,14 +100,14 @@ class BillingService(
             action = "INVOICE_CREATED",
             entityType = "Invoice",
             entityId = saved.id.toString(),
-            tenantId = tenantId.toString(),
+            organizationId = organizationId.toString(),
             details = mapOf("number" to number, "customerName" to customerName)
         ))
         return saved
     }
 
-    fun addLine(tenantId: UUID, invoiceId: UUID, line: InvoiceLine): InvoiceLine? {
-        val invoice = invoiceRepo.findById(invoiceId).filter { it.tenantId == tenantId }.orElse(null) ?: return null
+    fun addLine(organizationId: UUID, invoiceId: UUID, line: InvoiceLine): InvoiceLine? {
+        val invoice = invoiceRepo.findById(invoiceId).filter { it.organizationId == organizationId }.orElse(null) ?: return null
         if (invoice.status != InvoiceStatus.DRAFT) return null
         val computedTotal = line.quantity * line.unitPrice
         val lineWithTotal = line.copy(invoiceId = invoiceId, totalPrice = computedTotal)
@@ -117,14 +117,14 @@ class BillingService(
             action = "INVOICE_LINE_ADDED",
             entityType = "InvoiceLine",
             entityId = saved.id.toString(),
-            tenantId = tenantId.toString(),
+            organizationId = organizationId.toString(),
             details = mapOf("invoiceId" to invoiceId.toString(), "quantity" to saved.quantity.toString(), "unitPrice" to saved.unitPrice.toString())
         ))
         return saved
     }
 
-    fun removeLine(tenantId: UUID, invoiceId: UUID, lineId: UUID): Boolean {
-        val invoice = invoiceRepo.findById(invoiceId).filter { it.tenantId == tenantId }.orElse(null) ?: return false
+    fun removeLine(organizationId: UUID, invoiceId: UUID, lineId: UUID): Boolean {
+        val invoice = invoiceRepo.findById(invoiceId).filter { it.organizationId == organizationId }.orElse(null) ?: return false
         if (invoice.status != InvoiceStatus.DRAFT) return false
         val line = invoiceLineRepo.findById(lineId).filter { it.invoiceId == invoiceId }.orElse(null) ?: return false
         invoiceLineRepo.delete(line)
@@ -133,14 +133,14 @@ class BillingService(
             action = "INVOICE_LINE_REMOVED",
             entityType = "InvoiceLine",
             entityId = lineId.toString(),
-            tenantId = tenantId.toString(),
+            organizationId = organizationId.toString(),
             details = mapOf("invoiceId" to invoiceId.toString())
         ))
         return true
     }
 
-    fun issue(tenantId: UUID, invoiceId: UUID): Invoice? {
-        val invoice = invoiceRepo.findById(invoiceId).filter { it.tenantId == tenantId }.orElse(null) ?: return null
+    fun issue(organizationId: UUID, invoiceId: UUID): Invoice? {
+        val invoice = invoiceRepo.findById(invoiceId).filter { it.organizationId == organizationId }.orElse(null) ?: return null
         if (invoice.status != InvoiceStatus.DRAFT) return null
         invoice.status = InvoiceStatus.ISSUED
         val saved = invoiceRepo.save(invoice)
@@ -148,14 +148,14 @@ class BillingService(
             action = "INVOICE_ISSUED",
             entityType = "Invoice",
             entityId = invoiceId.toString(),
-            tenantId = tenantId.toString(),
+            organizationId = organizationId.toString(),
             details = mapOf("number" to invoice.invoiceNumber)
         ))
         return saved
     }
 
-    fun markPaid(tenantId: UUID, invoiceId: UUID): Invoice? {
-        val invoice = invoiceRepo.findById(invoiceId).filter { it.tenantId == tenantId }.orElse(null) ?: return null
+    fun markPaid(organizationId: UUID, invoiceId: UUID): Invoice? {
+        val invoice = invoiceRepo.findById(invoiceId).filter { it.organizationId == organizationId }.orElse(null) ?: return null
         if (invoice.status != InvoiceStatus.ISSUED) return null
         invoice.status = InvoiceStatus.PAID
         val saved = invoiceRepo.save(invoice)
@@ -163,14 +163,14 @@ class BillingService(
             action = "INVOICE_PAID",
             entityType = "Invoice",
             entityId = invoiceId.toString(),
-            tenantId = tenantId.toString(),
+            organizationId = organizationId.toString(),
             details = mapOf("number" to invoice.invoiceNumber)
         ))
         return saved
     }
 
-    fun cancel(tenantId: UUID, invoiceId: UUID): Invoice? {
-        val invoice = invoiceRepo.findById(invoiceId).filter { it.tenantId == tenantId }.orElse(null) ?: return null
+    fun cancel(organizationId: UUID, invoiceId: UUID): Invoice? {
+        val invoice = invoiceRepo.findById(invoiceId).filter { it.organizationId == organizationId }.orElse(null) ?: return null
         if (invoice.status == InvoiceStatus.PAID) return null
         invoice.status = InvoiceStatus.CANCELLED
         val saved = invoiceRepo.save(invoice)
@@ -178,15 +178,15 @@ class BillingService(
             action = "INVOICE_CANCELLED",
             entityType = "Invoice",
             entityId = invoiceId.toString(),
-            tenantId = tenantId.toString(),
+            organizationId = organizationId.toString(),
             details = mapOf("number" to invoice.invoiceNumber)
         ))
         return saved
     }
 
     // ── Internal ────────────────────────────────────────────────
-    fun update(tenantId: UUID, invoiceId: UUID, customerName: String?, customerVat: String?, customerAddress: String?, notes: String?): Invoice? {
-        val invoice = invoiceRepo.findById(invoiceId).filter { it.tenantId == tenantId }.orElse(null) ?: return null
+    fun update(organizationId: UUID, invoiceId: UUID, customerName: String?, customerVat: String?, customerAddress: String?, notes: String?): Invoice? {
+        val invoice = invoiceRepo.findById(invoiceId).filter { it.organizationId == organizationId }.orElse(null) ?: return null
         if (invoice.status != InvoiceStatus.DRAFT) return null
         val merged = invoice.copy(
             customerName = customerName ?: invoice.customerName,
@@ -199,7 +199,7 @@ class BillingService(
             action = "INVOICE_UPDATED",
             entityType = "Invoice",
             entityId = invoiceId.toString(),
-            tenantId = tenantId.toString(),
+            organizationId = organizationId.toString(),
             details = mapOf("number" to invoice.invoiceNumber)
         ))
         return saved
@@ -215,9 +215,9 @@ class BillingService(
         }
     }
 
-    private fun nextInvoiceNumber(tenantId: UUID): String {
+    private fun nextInvoiceNumber(organizationId: UUID): String {
         val year = LocalDate.now().year
-        val count = invoiceRepo.countByTenantId(tenantId) + 1
-        return "FAC-$year-${tenantId.toString().take(8).uppercase()}-$count"
+        val count = invoiceRepo.countByOrganizationId(organizationId) + 1
+        return "FAC-$year-${organizationId.toString().take(8).uppercase()}-$count"
     }
 }

@@ -25,8 +25,8 @@ data class CreateClientRequest(
     @field:Schema(description = "Notas internas sobre el cliente (opcional)", example = "Cliente habitual, pago a 60 días")
     val notes: String? = null
 ) {
-    fun toEntity(tenantId: UUID) = Client(
-        tenantId = tenantId,
+    fun toEntity(organizationId: UUID) = Client(
+        organizationId = organizationId,
         name = name,
         email = email,
         phone = phone,

@@ -15,7 +15,7 @@ enum class QuoteStatus {
 @Table(
     name = "quotes",
     indexes = [
-        Index(name = "idx_quote_tenant", columnList = "tenant_id"),
+        Index(name = "idx_quote_tenant", columnList = "organization_id"),
         Index(name = "idx_quote_status", columnList = "status")
     ]
 )
@@ -24,7 +24,7 @@ data class Quote(
     val id: UUID = UUID.randomUUID(),
 
     @Column(nullable = false)
-    val tenantId: UUID,
+    val organizationId: UUID,
 
     @Column(nullable = false, unique = true)
     val quoteNumber: String,

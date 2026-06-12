@@ -16,13 +16,13 @@ class ErrorCodeTest {
     }
 
     @Test
-    fun `MISSING_TENANT has 400 BAD_REQUEST`() {
-        assert(ErrorCode.MISSING_TENANT.httpStatus == HttpStatus.BAD_REQUEST)
+    fun `MISSING_ORGANIZATION has 400 BAD_REQUEST`() {
+        assert(ErrorCode.MISSING_ORGANIZATION.httpStatus == HttpStatus.BAD_REQUEST)
     }
 
     @Test
-    fun `INVALID_TENANT has 400 BAD_REQUEST`() {
-        assert(ErrorCode.INVALID_TENANT.httpStatus == HttpStatus.BAD_REQUEST)
+    fun `INVALID_ORGANIZATION has 400 BAD_REQUEST`() {
+        assert(ErrorCode.INVALID_ORGANIZATION.httpStatus == HttpStatus.BAD_REQUEST)
     }
 
     @Test

@@ -42,7 +42,7 @@ class SupabaseAuthIntegrationTest {
 
     @BeforeAll
     fun checkEnv() {
-        assumeTrue(props.url.isNotBlank()) { "SUPABASE_URL not set — skipping real auth integration tests" }
+        assumeTrue(props.url.isNotBlank()) { "SUPABASE_URL not set â€” skipping real auth integration tests" }
     }
 
     @AfterAll

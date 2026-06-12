@@ -23,8 +23,8 @@ data class UpdateItemRequest(
     @field:Schema(description = "Notas internas (opcional)", example = "Actualización de precio por nuevo lote")
     val notes: String? = null
 ) {
-    fun toEntity(tenantId: UUID) = InventoryItem(
-        tenantId = tenantId,
+    fun toEntity(organizationId: UUID) = InventoryItem(
+        organizationId = organizationId,
         quantity = quantity,
         location = location,
         costPriceEur = costPriceEur,

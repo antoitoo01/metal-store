@@ -12,13 +12,3 @@ class UserAlreadyExistsException(
     message: String = "User already exists",
     override val errorCode: ErrorCode = ErrorCode.RESOURCE_CONFLICT
 ) : ApiException(errorCode, message)
-
-class MissingTenantIdException(
-    message: String = "X-Tenant-Id header is required and must be a valid UUID",
-    override val errorCode: ErrorCode = ErrorCode.MISSING_TENANT
-) : ApiException(errorCode, message)
-
-class InvalidTenantIdException(
-    message: String = "X-Tenant-Id header must be a valid UUID",
-    override val errorCode: ErrorCode = ErrorCode.INVALID_TENANT
-) : ApiException(errorCode, message)

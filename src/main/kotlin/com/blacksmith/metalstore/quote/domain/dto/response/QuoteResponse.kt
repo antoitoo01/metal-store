@@ -11,8 +11,8 @@ data class QuoteResponse(
     @field:Schema(description = "Identificador único del presupuesto", example = "550e8400-e29b-41d4-a716-446655440000")
     val id: UUID,
 
-    @field:Schema(description = "Identificador del inquilino", example = "550e8400-e29b-41d4-a716-446655440000")
-    val tenantId: UUID,
+    @field:Schema(description = "Identificador del organizaci�n", example = "550e8400-e29b-41d4-a716-446655440000")
+    val organizationId: UUID,
 
     @field:Schema(description = "Número de presupuesto", example = "PRE-2026-00042")
     val quoteNumber: String,
@@ -52,7 +52,7 @@ data class QuoteResponse(
 ) {
     companion object {
         fun from(e: Quote) = QuoteResponse(
-            id = e.id, tenantId = e.tenantId, quoteNumber = e.quoteNumber,
+            id = e.id, organizationId = e.organizationId, quoteNumber = e.quoteNumber,
             clientId = e.clientId, customerName = e.customerName,
             customerVat = e.customerVat, customerAddress = e.customerAddress,
             issueDate = e.issueDate, validUntil = e.validUntil,

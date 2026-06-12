@@ -11,7 +11,7 @@ Content-Type: application/json
     client.global.set("jwt", response.body.accessToken);
 %}
 
-### Listar presupuestos (paginado, scope tenant)
+### Listar presupuestos (paginado, scope organization)
 GET {{baseUrl}}/api/quotes
 Authorization: Bearer {{jwt}}
 

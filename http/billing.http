@@ -11,7 +11,7 @@ Content-Type: application/json
     client.global.set("jwt", response.body.accessToken);
 %}
 
-### Listar precios (scope tenant)
+### Listar precios (scope organization)
 GET {{baseUrl}}/api/billing/prices
 Authorization: Bearer {{jwt}}
 

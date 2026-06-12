@@ -2,11 +2,11 @@ package com.blacksmith.metalstore.auth
 
 import com.blacksmith.metalstore.auth.client.SupabaseAuthClient
 import com.blacksmith.metalstore.auth.domain.entity.Role
-import com.blacksmith.metalstore.auth.domain.entity.Tenant
 import com.blacksmith.metalstore.auth.domain.entity.User
 import com.blacksmith.metalstore.auth.domain.entity.UserState
-import com.blacksmith.metalstore.auth.repository.TenantRepository
 import com.blacksmith.metalstore.auth.repository.UserRepository
+import com.blacksmith.metalstore.organization.domain.entity.Organization
+import com.blacksmith.metalstore.organization.domain.repository.OrganizationRepository
 import org.hamcrest.Matchers.containsString
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -34,22 +34,21 @@ class AuthHttpIntegrationTest {
     private lateinit var userRepository: UserRepository
 
     @Autowired
-    private lateinit var tenantRepository: TenantRepository
+    private lateinit var organizationRepository: OrganizationRepository
 
     @MockitoBean
     private lateinit var supabaseAuthClient: SupabaseAuthClient
 
-    private val tenantId = UUID.randomUUID()
+    private val organizationId = UUID.randomUUID()
     private val userId = UUID.randomUUID()
     private val email = "http-test@example.com"
 
     @BeforeEach
     fun setUp() {
         userRepository.deleteAll()
-        tenantRepository.deleteAll()
+        organizationRepository.deleteAll()
 
-        val tenant = Tenant(id = tenantId, name = "Test HTTP", slug = "test-http")
-        tenantRepository.save(tenant)
+        organizationRepository.save(Organization(id = organizationId, name = "Test HTTP", slug = "test-http"))
     }
 
     @Test
@@ -82,7 +81,7 @@ class AuthHttpIntegrationTest {
     fun `me returns user details when JWT is valid`() {
         val user = User(
             id = userId,
-            tenantId = tenantId,
+            organizationId = organizationId,
             username = "httptest",
             email = email,
             role = Role.USER,
@@ -96,8 +95,8 @@ class AuthHttpIntegrationTest {
             .andExpect(jsonPath("$.id").value(userId.toString()))
             .andExpect(jsonPath("$.email").value(email))
             .andExpect(jsonPath("$.username").value("httptest"))
-            .andExpect(jsonPath("$.tenantId").value(tenantId.toString()))
-            .andExpect(jsonPath("$.tenantName").value("Test HTTP"))
+            .andExpect(jsonPath("$.organizationId").value(organizationId.toString()))
+            .andExpect(jsonPath("$.organizationName").value("Test HTTP"))
     }
 
     @Test

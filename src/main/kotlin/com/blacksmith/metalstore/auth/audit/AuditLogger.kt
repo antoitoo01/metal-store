@@ -17,7 +17,7 @@ class AuditLogger {
         val action: String,
         val entityType: String,
         val entityId: String? = null,
-        val tenantId: String? = null,
+        val organizationId: String? = null,
         val userId: String? = null,
         val details: Map<String, Any?>? = null
     )
@@ -25,18 +25,18 @@ class AuditLogger {
     fun log(event: AuditEvent) {
         log.info(
             AUDIT_MARKER,
-            "action={} entity={} id={} tenant={} user={} details={}",
+            "action={} entity={} id={} organization={} user={} details={}",
             event.action, event.entityType, event.entityId,
-            event.tenantId, event.userId, event.details
+            event.organizationId, event.userId, event.details
         )
     }
 
     fun warn(event: AuditEvent) {
         log.warn(
             AUDIT_MARKER,
-            "action={} entity={} id={} tenant={} user={} details={}",
+            "action={} entity={} id={} organization={} user={} details={}",
             event.action, event.entityType, event.entityId,
-            event.tenantId, event.userId, event.details
+            event.organizationId, event.userId, event.details
         )
     }
 }

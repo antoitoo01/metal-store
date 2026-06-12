@@ -9,6 +9,6 @@ import java.util.UUID
 
 @Repository
 interface CatalogItemTypeRepository : JpaRepository<CatalogItemType, UUID> {
-    fun findByTenantId(tenantId: UUID, pageable: Pageable): Page<CatalogItemType>
-    fun findByTenantIdAndNameContainingIgnoreCase(tenantId: UUID, name: String, pageable: Pageable): Page<CatalogItemType>
+    fun findByOrganizationId(organizationId: UUID, pageable: Pageable): Page<CatalogItemType>
+    fun findByOrganizationIdAndNameContainingIgnoreCase(organizationId: UUID, name: String, pageable: Pageable): Page<CatalogItemType>
 }

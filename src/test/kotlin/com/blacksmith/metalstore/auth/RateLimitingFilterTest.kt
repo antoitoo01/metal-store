@@ -31,7 +31,7 @@ class RateLimitingFilterTest {
     @Autowired
     private lateinit var rateLimitingFilter: RateLimitingFilter
 
-    private val tenantId = UUID.randomUUID()
+    private val organizationId = UUID.randomUUID()
 
     @BeforeEach
     fun setUp() {
@@ -41,7 +41,7 @@ class RateLimitingFilterTest {
     @Test
     fun `first request succeeds`() {
         mockMvc.perform(get("/api/inventory")
-            .header("X-Tenant-Id", tenantId.toString())
+            .header("X-Organization-Id", organizationId.toString())
             .header("X-Forwarded-For", "192.168.1.1"))
             .andExpect(status().isOk)
     }
@@ -52,13 +52,13 @@ class RateLimitingFilterTest {
 
         repeat(5) {
             mockMvc.perform(get("/api/inventory")
-                .header("X-Tenant-Id", tenantId.toString())
+                .header("X-Organization-Id", organizationId.toString())
                 .header("X-Forwarded-For", ip))
                 .andExpect(status().isOk)
         }
 
         mockMvc.perform(get("/api/inventory")
-            .header("X-Tenant-Id", tenantId.toString())
+            .header("X-Organization-Id", organizationId.toString())
             .header("X-Forwarded-For", ip))
             .andExpect(status().`is`(429))
             .andExpect(jsonPath("$.title").value("Too Many Requests"))
@@ -69,18 +69,18 @@ class RateLimitingFilterTest {
     fun `different IPs have independent rate limits`() {
         repeat(5) {
             mockMvc.perform(get("/api/inventory")
-                .header("X-Tenant-Id", tenantId.toString())
+                .header("X-Organization-Id", organizationId.toString())
                 .header("X-Forwarded-For", "192.168.1.10"))
                 .andExpect(status().isOk)
         }
 
         mockMvc.perform(get("/api/inventory")
-            .header("X-Tenant-Id", tenantId.toString())
+            .header("X-Organization-Id", organizationId.toString())
             .header("X-Forwarded-For", "192.168.1.10"))
             .andExpect(status().`is`(429))
 
         mockMvc.perform(get("/api/inventory")
-            .header("X-Tenant-Id", tenantId.toString())
+            .header("X-Organization-Id", organizationId.toString())
             .header("X-Forwarded-For", "10.0.0.99"))
             .andExpect(status().isOk)
     }
@@ -91,20 +91,20 @@ class RateLimitingFilterTest {
 
         repeat(5) {
             mockMvc.perform(get("/api/inventory")
-                .header("X-Tenant-Id", tenantId.toString())
+                .header("X-Organization-Id", organizationId.toString())
                 .header("X-Forwarded-For", ip))
                 .andExpect(status().isOk)
         }
 
         mockMvc.perform(get("/api/inventory")
-            .header("X-Tenant-Id", tenantId.toString())
+            .header("X-Organization-Id", organizationId.toString())
             .header("X-Forwarded-For", ip))
             .andExpect(status().`is`(429))
 
         rateLimitingFilter.clearBuckets()
 
         mockMvc.perform(get("/api/inventory")
-            .header("X-Tenant-Id", tenantId.toString())
+            .header("X-Organization-Id", organizationId.toString())
             .header("X-Forwarded-For", ip))
             .andExpect(status().isOk)
     }
@@ -115,12 +115,12 @@ class RateLimitingFilterTest {
 
         repeat(5) {
             mockMvc.perform(get("/api/inventory")
-                .header("X-Tenant-Id", tenantId.toString())
+                .header("X-Organization-Id", organizationId.toString())
                 .header("X-Forwarded-For", ip))
         }
 
         mockMvc.perform(get("/api/inventory")
-            .header("X-Tenant-Id", tenantId.toString())
+            .header("X-Organization-Id", organizationId.toString())
             .header("X-Forwarded-For", ip))
             .andExpect(status().`is`(429))
             .andExpect(MockMvcResultMatchers.header().exists("Retry-After"))

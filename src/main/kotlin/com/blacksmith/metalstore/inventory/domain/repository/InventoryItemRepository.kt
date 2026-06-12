@@ -9,8 +9,8 @@ import java.util.UUID
 
 @Repository
 interface InventoryItemRepository : JpaRepository<InventoryItem, UUID> {
-    fun findByTenantId(tenantId: UUID, pageable: Pageable): Page<InventoryItem>
-    fun findByTenantIdAndProfileId(tenantId: UUID, profileId: UUID): List<InventoryItem>
-    fun findByTenantIdAndItemId(tenantId: UUID, itemId: UUID): List<InventoryItem>
-    fun findByTenantIdAndLocationContainingIgnoreCase(tenantId: UUID, location: String): List<InventoryItem>
+    fun findByOrganizationId(organizationId: UUID, pageable: Pageable): Page<InventoryItem>
+    fun findByOrganizationIdAndProfileId(organizationId: UUID, profileId: UUID): List<InventoryItem>
+    fun findByOrganizationIdAndItemId(organizationId: UUID, itemId: UUID): List<InventoryItem>
+    fun findByOrganizationIdAndLocationContainingIgnoreCase(organizationId: UUID, location: String): List<InventoryItem>
 }

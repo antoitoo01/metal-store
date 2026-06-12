@@ -1,6 +1,6 @@
 package com.blacksmith.metalstore.inventory.controller
 
-import com.blacksmith.metalstore.auth.config.CurrentTenantId
+import com.blacksmith.metalstore.organization.config.CurrentOrganizationId
 import com.blacksmith.metalstore.inventory.application.InventoryService
 import com.blacksmith.metalstore.inventory.domain.dto.request.CreateItemRequest
 import com.blacksmith.metalstore.inventory.domain.dto.request.UpdateItemRequest
@@ -27,8 +27,8 @@ class InventoryController(
     @GetMapping
     @Operation(summary = "Listar inventario", description = "Retorna una lista paginada de ítems de inventario.")
     @ApiResponse(responseCode = "200", description = "Operación exitosa")
-    fun list(@CurrentTenantId tenantId: UUID, @PageableDefault(size = 20) pageable: Pageable): Page<ItemResponse> =
-        service.findAll(tenantId, pageable).map { ItemResponse.from(it) }
+    fun list(@CurrentOrganizationId organizationId: UUID, @PageableDefault(size = 20) pageable: Pageable): Page<ItemResponse> =
+        service.findAll(organizationId, pageable).map { ItemResponse.from(it) }
 
     @GetMapping("/{id}")
     @Operation(summary = "Obtener ítem por ID", description = "Retorna los datos de un ítem de inventario por su UUID.")
@@ -36,8 +36,8 @@ class InventoryController(
         ApiResponse(responseCode = "200", description = "Operación exitosa"),
         ApiResponse(responseCode = "404", description = "Recurso no encontrado")
     ])
-    fun get(@CurrentTenantId tenantId: UUID, @PathVariable id: UUID): ResponseEntity<ItemResponse> {
-        val item = service.findById(tenantId, id) ?: return ResponseEntity.notFound().build()
+    fun get(@CurrentOrganizationId organizationId: UUID, @PathVariable id: UUID): ResponseEntity<ItemResponse> {
+        val item = service.findById(organizationId, id) ?: return ResponseEntity.notFound().build()
         return ResponseEntity.ok(ItemResponse.from(item))
     }
 
@@ -48,8 +48,8 @@ class InventoryController(
         ApiResponse(responseCode = "201", description = "Recurso creado"),
         ApiResponse(responseCode = "400", description = "Solicitud inválida")
     ])
-    fun create(@CurrentTenantId tenantId: UUID, @Valid @RequestBody request: CreateItemRequest): ItemResponse {
-        val saved = service.create(request.toEntity(tenantId))
+    fun create(@CurrentOrganizationId organizationId: UUID, @Valid @RequestBody request: CreateItemRequest): ItemResponse {
+        val saved = service.create(request.toEntity(organizationId))
         return ItemResponse.from(saved)
     }
 
@@ -61,11 +61,11 @@ class InventoryController(
         ApiResponse(responseCode = "404", description = "Recurso no encontrado")
     ])
     fun update(
-        @CurrentTenantId tenantId: UUID,
+        @CurrentOrganizationId organizationId: UUID,
         @PathVariable id: UUID,
         @Valid @RequestBody request: UpdateItemRequest
     ): ResponseEntity<ItemResponse> {
-        val updated = service.update(tenantId, id, request.toEntity(tenantId))
+        val updated = service.update(organizationId, id, request.toEntity(organizationId))
             ?: return ResponseEntity.notFound().build()
         return ResponseEntity.ok(ItemResponse.from(updated))
     }
@@ -76,8 +76,8 @@ class InventoryController(
         ApiResponse(responseCode = "204", description = "Sin contenido"),
         ApiResponse(responseCode = "404", description = "Recurso no encontrado")
     ])
-    fun delete(@CurrentTenantId tenantId: UUID, @PathVariable id: UUID): ResponseEntity<Unit> {
-        val deleted = service.delete(tenantId, id)
+    fun delete(@CurrentOrganizationId organizationId: UUID, @PathVariable id: UUID): ResponseEntity<Unit> {
+        val deleted = service.delete(organizationId, id)
         return if (deleted) ResponseEntity.noContent().build()
         else ResponseEntity.notFound().build()
     }

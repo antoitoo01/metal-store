@@ -26,8 +26,8 @@ data class UpdateClientRequest(
     @field:Schema(description = "Estado del cliente (opcional)", example = "ACTIVE")
     val status: String? = null
 ) {
-    fun toEntity(tenantId: UUID) = Client(
-        tenantId = tenantId,
+    fun toEntity(organizationId: UUID) = Client(
+        organizationId = organizationId,
         name = name ?: "",
         email = email,
         phone = phone,

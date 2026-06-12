@@ -1,6 +1,6 @@
 package com.blacksmith.metalstore.quote.controller
 
-import com.blacksmith.metalstore.auth.config.CurrentTenantId
+import com.blacksmith.metalstore.organization.config.CurrentOrganizationId
 import com.blacksmith.metalstore.quote.application.QuoteService
 import com.blacksmith.metalstore.quote.domain.dto.request.CreateQuoteLineRequest
 import com.blacksmith.metalstore.quote.domain.dto.request.CreateQuoteRequest
@@ -29,9 +29,9 @@ class QuoteController(
     @GetMapping
     @Operation(summary = "Listar cotizaciones", description = "Retorna una lista paginada de cotizaciones.")
     @ApiResponse(responseCode = "200", description = "Operación exitosa")
-    fun list(@CurrentTenantId tenantId: UUID, @PageableDefault(size = 20) pageable: Pageable, @RequestParam(name = "clientId", required = false) clientId: UUID?): Page<QuoteResponse> {
-        val quotes = if (clientId != null) service.listQuotesByClient(tenantId, clientId, pageable)
-            else service.listQuotes(tenantId, pageable)
+    fun list(@CurrentOrganizationId organizationId: UUID, @PageableDefault(size = 20) pageable: Pageable, @RequestParam(name = "clientId", required = false) clientId: UUID?): Page<QuoteResponse> {
+        val quotes = if (clientId != null) service.listQuotesByClient(organizationId, clientId, pageable)
+            else service.listQuotes(organizationId, pageable)
         return quotes.map { QuoteResponse.from(it) }
     }
 
@@ -41,8 +41,8 @@ class QuoteController(
         ApiResponse(responseCode = "200", description = "Operación exitosa"),
         ApiResponse(responseCode = "404", description = "Recurso no encontrado")
     ])
-    fun get(@CurrentTenantId tenantId: UUID, @PathVariable id: UUID): ResponseEntity<QuoteResponse> {
-        val quote = service.findQuote(tenantId, id) ?: return ResponseEntity.notFound().build()
+    fun get(@CurrentOrganizationId organizationId: UUID, @PathVariable id: UUID): ResponseEntity<QuoteResponse> {
+        val quote = service.findQuote(organizationId, id) ?: return ResponseEntity.notFound().build()
         return ResponseEntity.ok(QuoteResponse.from(quote))
     }
 
@@ -54,10 +54,10 @@ class QuoteController(
         ApiResponse(responseCode = "400", description = "Solicitud inválida")
     ])
     fun createDraft(
-        @CurrentTenantId tenantId: UUID,
+        @CurrentOrganizationId organizationId: UUID,
         @Valid @RequestBody request: CreateQuoteRequest
     ): QuoteResponse {
-        val quote = service.createDraft(tenantId, request.toEntity(tenantId, ""))
+        val quote = service.createDraft(organizationId, request.toEntity(organizationId, ""))
         return QuoteResponse.from(quote)
     }
 
@@ -69,11 +69,11 @@ class QuoteController(
         ApiResponse(responseCode = "404", description = "Recurso no encontrado")
     ])
     fun update(
-        @CurrentTenantId tenantId: UUID,
+        @CurrentOrganizationId organizationId: UUID,
         @PathVariable id: UUID,
         @Valid @RequestBody request: UpdateQuoteRequest
     ): ResponseEntity<QuoteResponse> {
-        val updated = service.update(tenantId, id, request.customerName, request.customerVat, request.customerAddress, request.validUntil, request.notes)
+        val updated = service.update(organizationId, id, request.customerName, request.customerVat, request.customerAddress, request.validUntil, request.notes)
             ?: return ResponseEntity.badRequest().build()
         return ResponseEntity.ok(QuoteResponse.from(updated))
     }
@@ -94,11 +94,11 @@ class QuoteController(
         ApiResponse(responseCode = "400", description = "Solicitud inválida")
     ])
     fun addLine(
-        @CurrentTenantId tenantId: UUID,
+        @CurrentOrganizationId organizationId: UUID,
         @PathVariable id: UUID,
         @Valid @RequestBody request: CreateQuoteLineRequest
     ): ResponseEntity<QuoteLineResponse> {
-        val saved = service.addLine(tenantId, id, request.toEntity(id))
+        val saved = service.addLine(organizationId, id, request.toEntity(id))
             ?: return ResponseEntity.badRequest().build()
         return ResponseEntity.ok(QuoteLineResponse.from(saved))
     }
@@ -110,8 +110,8 @@ class QuoteController(
         ApiResponse(responseCode = "204", description = "Sin contenido"),
         ApiResponse(responseCode = "404", description = "Recurso no encontrado")
     ])
-    fun removeLine(@CurrentTenantId tenantId: UUID, @PathVariable quoteId: UUID, @PathVariable lineId: UUID) {
-        service.removeLine(tenantId, quoteId, lineId)
+    fun removeLine(@CurrentOrganizationId organizationId: UUID, @PathVariable quoteId: UUID, @PathVariable lineId: UUID) {
+        service.removeLine(organizationId, quoteId, lineId)
     }
 
     @PostMapping("/{id}/issue")
@@ -120,8 +120,8 @@ class QuoteController(
         ApiResponse(responseCode = "200", description = "Operación exitosa"),
         ApiResponse(responseCode = "400", description = "Solicitud inválida")
     ])
-    fun issue(@CurrentTenantId tenantId: UUID, @PathVariable id: UUID): ResponseEntity<QuoteResponse> {
-        val quote = service.issue(tenantId, id) ?: return ResponseEntity.badRequest().build()
+    fun issue(@CurrentOrganizationId organizationId: UUID, @PathVariable id: UUID): ResponseEntity<QuoteResponse> {
+        val quote = service.issue(organizationId, id) ?: return ResponseEntity.badRequest().build()
         return ResponseEntity.ok(QuoteResponse.from(quote))
     }
 
@@ -131,8 +131,8 @@ class QuoteController(
         ApiResponse(responseCode = "200", description = "Operación exitosa"),
         ApiResponse(responseCode = "400", description = "Solicitud inválida")
     ])
-    fun accept(@CurrentTenantId tenantId: UUID, @PathVariable id: UUID): ResponseEntity<QuoteResponse> {
-        val quote = service.accept(tenantId, id) ?: return ResponseEntity.badRequest().build()
+    fun accept(@CurrentOrganizationId organizationId: UUID, @PathVariable id: UUID): ResponseEntity<QuoteResponse> {
+        val quote = service.accept(organizationId, id) ?: return ResponseEntity.badRequest().build()
         return ResponseEntity.ok(QuoteResponse.from(quote))
     }
 
@@ -142,8 +142,8 @@ class QuoteController(
         ApiResponse(responseCode = "200", description = "Operación exitosa"),
         ApiResponse(responseCode = "400", description = "Solicitud inválida")
     ])
-    fun reject(@CurrentTenantId tenantId: UUID, @PathVariable id: UUID): ResponseEntity<QuoteResponse> {
-        val quote = service.reject(tenantId, id) ?: return ResponseEntity.badRequest().build()
+    fun reject(@CurrentOrganizationId organizationId: UUID, @PathVariable id: UUID): ResponseEntity<QuoteResponse> {
+        val quote = service.reject(organizationId, id) ?: return ResponseEntity.badRequest().build()
         return ResponseEntity.ok(QuoteResponse.from(quote))
     }
 
@@ -153,8 +153,8 @@ class QuoteController(
         ApiResponse(responseCode = "200", description = "Operación exitosa"),
         ApiResponse(responseCode = "400", description = "Solicitud inválida")
     ])
-    fun cancel(@CurrentTenantId tenantId: UUID, @PathVariable id: UUID): ResponseEntity<QuoteResponse> {
-        val quote = service.cancel(tenantId, id) ?: return ResponseEntity.badRequest().build()
+    fun cancel(@CurrentOrganizationId organizationId: UUID, @PathVariable id: UUID): ResponseEntity<QuoteResponse> {
+        val quote = service.cancel(organizationId, id) ?: return ResponseEntity.badRequest().build()
         return ResponseEntity.ok(QuoteResponse.from(quote))
     }
 }

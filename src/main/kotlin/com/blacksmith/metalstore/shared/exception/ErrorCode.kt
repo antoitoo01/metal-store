@@ -5,8 +5,8 @@ import org.springframework.http.HttpStatus
 enum class ErrorCode(val httpStatus: HttpStatus) {
     VALIDATION_ERROR(HttpStatus.BAD_REQUEST),
     MALFORMED_REQUEST(HttpStatus.BAD_REQUEST),
-    MISSING_TENANT(HttpStatus.BAD_REQUEST),
-    INVALID_TENANT(HttpStatus.BAD_REQUEST),
+    MISSING_ORGANIZATION(HttpStatus.BAD_REQUEST),
+    INVALID_ORGANIZATION(HttpStatus.BAD_REQUEST),
     INVALID_CREDENTIALS(HttpStatus.UNAUTHORIZED),
     TOKEN_EXPIRED(HttpStatus.UNAUTHORIZED),
     INVALID_TOKEN(HttpStatus.UNAUTHORIZED),

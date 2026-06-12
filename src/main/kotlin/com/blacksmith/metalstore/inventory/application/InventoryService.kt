@@ -17,12 +17,12 @@ class InventoryService(
     private val audit: AuditLogger
 ) {
     @Transactional(readOnly = true)
-    fun findAll(tenantId: UUID, pageable: Pageable): Page<InventoryItem> =
-        repo.findByTenantId(tenantId, pageable)
+    fun findAll(organizationId: UUID, pageable: Pageable): Page<InventoryItem> =
+        repo.findByOrganizationId(organizationId, pageable)
 
     @Transactional(readOnly = true)
-    fun findById(tenantId: UUID, id: UUID): InventoryItem? =
-        repo.findById(id).filter { it.tenantId == tenantId }.orElse(null)
+    fun findById(organizationId: UUID, id: UUID): InventoryItem? =
+        repo.findById(id).filter { it.organizationId == organizationId }.orElse(null)
 
     fun create(item: InventoryItem): InventoryItem {
         require(item.assertValidSource()) { "InventoryItem must reference either a profile or an item (exclusive)" }
@@ -31,14 +31,14 @@ class InventoryService(
             action = "INVENTORY_CREATED",
             entityType = "InventoryItem",
             entityId = saved.id.toString(),
-            tenantId = saved.tenantId.toString(),
+            organizationId = saved.organizationId.toString(),
             details = mapOf("profileId" to saved.profileId?.toString(), "quantity" to saved.quantity.toString())
         ))
         return saved
     }
 
-    fun update(tenantId: UUID, id: UUID, updated: InventoryItem): InventoryItem? {
-        val existing = repo.findById(id).filter { it.tenantId == tenantId }.orElse(null) ?: return null
+    fun update(organizationId: UUID, id: UUID, updated: InventoryItem): InventoryItem? {
+        val existing = repo.findById(id).filter { it.organizationId == organizationId }.orElse(null) ?: return null
         val merged = existing.copy(
             quantity = updated.quantity,
             location = updated.location ?: existing.location,
@@ -51,20 +51,20 @@ class InventoryService(
             action = "INVENTORY_UPDATED",
             entityType = "InventoryItem",
             entityId = saved.id.toString(),
-            tenantId = tenantId.toString(),
+            organizationId = organizationId.toString(),
             details = mapOf("quantity" to saved.quantity.toString())
         ))
         return saved
     }
 
-    fun delete(tenantId: UUID, id: UUID): Boolean {
-        val item = repo.findById(id).filter { it.tenantId == tenantId }.orElse(null) ?: return false
+    fun delete(organizationId: UUID, id: UUID): Boolean {
+        val item = repo.findById(id).filter { it.organizationId == organizationId }.orElse(null) ?: return false
         repo.delete(item)
         audit.log(AuditLogger.AuditEvent(
             action = "INVENTORY_DELETED",
             entityType = "InventoryItem",
             entityId = id.toString(),
-            tenantId = tenantId.toString()
+            organizationId = organizationId.toString()
         ))
         return true
     }

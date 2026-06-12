@@ -1,7 +1,7 @@
 ### Health check
 GET {{baseUrl}}/api/health
 
-### Registrar nuevo usuario (crea tenant automáticamente)
+### Registrar nuevo usuario (crea organization automáticamente)
 POST {{baseUrl}}/api/auth/register
 Content-Type: application/json
 

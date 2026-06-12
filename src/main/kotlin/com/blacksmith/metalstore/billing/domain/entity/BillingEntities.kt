@@ -11,7 +11,7 @@ import java.util.UUID
 @Table(
     name = "price_list",
     indexes = [
-        Index(name = "idx_price_tenant", columnList = "tenant_id"),
+        Index(name = "idx_price_tenant", columnList = "organization_id"),
         Index(name = "idx_price_profile", columnList = "profile_id"),
         Index(name = "idx_price_item", columnList = "item_id")
     ]
@@ -21,7 +21,7 @@ data class PriceListItem(
     val id: UUID = UUID.randomUUID(),
 
     @Column(nullable = false)
-    val tenantId: UUID,
+    val organizationId: UUID,
 
     val profileId: UUID? = null,
 
@@ -45,7 +45,7 @@ enum class InvoiceStatus {
 @Table(
     name = "invoices",
     indexes = [
-        Index(name = "idx_invoice_tenant", columnList = "tenant_id"),
+        Index(name = "idx_invoice_tenant", columnList = "organization_id"),
         Index(name = "idx_invoice_status", columnList = "status")
     ]
 )
@@ -54,7 +54,7 @@ data class Invoice(
     val id: UUID = UUID.randomUUID(),
 
     @Column(nullable = false)
-    val tenantId: UUID,
+    val organizationId: UUID,
 
     @Column(nullable = false, unique = true)
     val invoiceNumber: String,

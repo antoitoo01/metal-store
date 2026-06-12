@@ -24,8 +24,8 @@ data class CreateQuoteRequest(
     @field:Schema(description = "Notas internas del presupuesto (opcional)", example = "Presupuesto válido por 30 días")
     val notes: String? = null
 ) {
-    fun toEntity(tenantId: UUID, quoteNumber: String) = Quote(
-        tenantId = tenantId,
+    fun toEntity(organizationId: UUID, quoteNumber: String) = Quote(
+        organizationId = organizationId,
         quoteNumber = quoteNumber,
         clientId = clientId,
         customerName = customerName,

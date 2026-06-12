@@ -3,12 +3,12 @@ package com.blacksmith.metalstore.auth
 import com.blacksmith.metalstore.auth.client.SupabaseAuthClient
 import com.blacksmith.metalstore.auth.domain.dto.request.UpdateUserRequest
 import com.blacksmith.metalstore.auth.domain.entity.Role
-import com.blacksmith.metalstore.auth.domain.entity.Tenant
 import com.blacksmith.metalstore.auth.domain.entity.User
 import com.blacksmith.metalstore.auth.domain.entity.UserState
-import com.blacksmith.metalstore.auth.repository.TenantRepository
 import com.blacksmith.metalstore.auth.repository.UserRepository
 import com.blacksmith.metalstore.auth.service.UserService
+import com.blacksmith.metalstore.organization.domain.entity.Organization
+import com.blacksmith.metalstore.organization.domain.repository.OrganizationRepository
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
@@ -28,12 +28,12 @@ class UserServiceTest {
     private lateinit var userRepository: UserRepository
 
     @Autowired
-    private lateinit var tenantRepository: TenantRepository
+    private lateinit var organizationRepository: OrganizationRepository
 
     private lateinit var supabaseAuthClient: SupabaseAuthClient
     private lateinit var userService: UserService
 
-    private val tenantId = UUID.randomUUID()
+    private val organizationId = UUID.randomUUID()
     private val ownerId = UUID.randomUUID()
     private val otherId = UUID.randomUUID()
     private val adminId = UUID.randomUUID()
@@ -41,16 +41,15 @@ class UserServiceTest {
     @BeforeEach
     fun setUp() {
         userRepository.deleteAll()
-        tenantRepository.deleteAll()
+        organizationRepository.deleteAll()
         supabaseAuthClient = mock<SupabaseAuthClient>()
         userService = UserService(userRepository, supabaseAuthClient)
 
-        val tenant = Tenant(id = tenantId, name = "Test Taller", slug = "test-taller")
-        tenantRepository.save(tenant)
+        organizationRepository.save(Organization(id = organizationId, name = "Test Taller", slug = "test-taller"))
 
-        userRepository.save(User(id = ownerId, tenantId = tenantId, username = "owner", email = "owner@test.com", role = Role.USER))
-        userRepository.save(User(id = otherId, tenantId = tenantId, username = "other", email = "other@test.com", role = Role.USER))
-        userRepository.save(User(id = adminId, tenantId = tenantId, username = "admin", email = "admin@test.com", role = Role.ADMIN))
+        userRepository.save(User(id = ownerId, organizationId = organizationId, username = "owner", email = "owner@test.com", role = Role.USER))
+        userRepository.save(User(id = otherId, organizationId = organizationId, username = "other", email = "other@test.com", role = Role.USER))
+        userRepository.save(User(id = adminId, organizationId = organizationId, username = "admin", email = "admin@test.com", role = Role.ADMIN))
     }
 
     @Test

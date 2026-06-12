@@ -13,7 +13,7 @@ data class User(
     val id: UUID,
 
     @Column(nullable = false)
-    var tenantId: UUID,
+    var organizationId: UUID,
 
     @Column(nullable = true)
     var username: String?,
@@ -30,12 +30,12 @@ data class User(
     @Column(nullable = false)
     var status: UserState = UserState.INACTIVE
 ) : BaseEntity() {
-    fun toResponse(tenantName: String = "") = UserResponse(
+    fun toResponse(organizationName: String = "") = UserResponse(
         id = id,
         username = username ?: "",
         email = email,
         role = role,
-        tenantId = tenantId,
-        tenantName = tenantName
+        organizationId = organizationId,
+        organizationName = organizationName
     )
 }

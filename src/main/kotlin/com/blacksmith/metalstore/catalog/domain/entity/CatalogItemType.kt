@@ -7,14 +7,14 @@ import java.util.UUID
 @Entity
 @Table(
     name = "catalog_item_types",
-    indexes = [Index(name = "idx_itemtype_tenant", columnList = "tenant_id")]
+    indexes = [Index(name = "idx_itemtype_tenant", columnList = "organization_id")]
 )
 data class CatalogItemType(
     @Id
     val id: UUID = UUID.randomUUID(),
 
     @Column(nullable = false)
-    val tenantId: UUID,
+    val organizationId: UUID,
 
     @Column(nullable = false)
     val name: String,

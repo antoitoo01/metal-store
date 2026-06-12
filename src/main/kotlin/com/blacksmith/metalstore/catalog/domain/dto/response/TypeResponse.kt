@@ -9,8 +9,8 @@ data class TypeResponse(
     @field:Schema(description = "Identificador único del tipo de artículo", example = "550e8400-e29b-41d4-a716-446655440000")
     val id: UUID,
 
-    @field:Schema(description = "Identificador del inquilino", example = "550e8400-e29b-41d4-a716-446655440000")
-    val tenantId: UUID,
+    @field:Schema(description = "Identificador del organizaci�n", example = "550e8400-e29b-41d4-a716-446655440000")
+    val organizationId: UUID,
 
     @field:Schema(description = "Nombre del tipo de artículo", example = "Plancha de acero")
     val name: String,
@@ -26,7 +26,7 @@ data class TypeResponse(
 ) {
     companion object {
         fun from(e: CatalogItemType) = TypeResponse(
-            id = e.id, tenantId = e.tenantId, name = e.name,
+            id = e.id, organizationId = e.organizationId, name = e.name,
             description = e.description, schemaDefinition = e.schemaDefinition,
             createdAt = e.createdAt
         )

@@ -22,7 +22,7 @@ class ClientServiceTest {
     private lateinit var repo: ClientRepository
 
     private lateinit var service: ClientService
-    private val tenantId = UUID.randomUUID()
+    private val organizationId = UUID.randomUUID()
 
     @BeforeEach
     fun setUp() {
@@ -32,58 +32,58 @@ class ClientServiceTest {
 
     @Test
     fun `create and find client`() {
-        val saved = service.create(Client(tenantId = tenantId, name = "Taller López"))
+        val saved = service.create(Client(organizationId = organizationId, name = "Taller LÃ³pez"))
         assert(saved.id != null)
-        assert(saved.name == "Taller López")
+        assert(saved.name == "Taller LÃ³pez")
 
-        val found = service.findById(tenantId, saved.id)
+        val found = service.findById(organizationId, saved.id)
         assert(found != null)
-        assert(found!!.name == "Taller López")
+        assert(found!!.name == "Taller LÃ³pez")
     }
 
     @Test
-    fun `findAll returns only clients for the given tenant`() {
+    fun `findAll returns only clients for the given organization`() {
         val otherTenant = UUID.randomUUID()
-        repo.save(Client(tenantId = tenantId, name = "Cliente A"))
-        repo.save(Client(tenantId = otherTenant, name = "Cliente B"))
+        repo.save(Client(organizationId = organizationId, name = "Cliente A"))
+        repo.save(Client(organizationId = otherTenant, name = "Cliente B"))
 
-        val clients = service.findAll(tenantId, PageRequest.of(0, 100))
+        val clients = service.findAll(organizationId, PageRequest.of(0, 100))
         assert(clients.totalElements == 1L)
     }
 
     @Test
     fun `findAll filters by name`() {
-        repo.save(Client(tenantId = tenantId, name = "Taller Pérez"))
-        repo.save(Client(tenantId = tenantId, name = "Herrería García"))
-        repo.save(Client(tenantId = tenantId, name = "Taller López"))
+        repo.save(Client(organizationId = organizationId, name = "Taller PÃ©rez"))
+        repo.save(Client(organizationId = organizationId, name = "HerrerÃ­a GarcÃ­a"))
+        repo.save(Client(organizationId = organizationId, name = "Taller LÃ³pez"))
 
-        val result = service.findAll(tenantId, PageRequest.of(0, 100), "Taller")
+        val result = service.findAll(organizationId, PageRequest.of(0, 100), "Taller")
         assert(result.totalElements == 2L)
     }
 
     @Test
-    fun `delete removes client for the correct tenant`() {
-        val client = service.create(Client(tenantId = tenantId, name = "Test"))
-        val deleted = service.delete(tenantId, client.id)
+    fun `delete removes client for the correct organization`() {
+        val client = service.create(Client(organizationId = organizationId, name = "Test"))
+        val deleted = service.delete(organizationId, client.id)
         assert(deleted)
         assert(repo.findById(client.id).isEmpty)
     }
 
     @Test
-    fun `delete returns false for wrong tenant`() {
+    fun `delete returns false for wrong organization`() {
         val otherTenant = UUID.randomUUID()
-        val client = service.create(Client(tenantId = tenantId, name = "Test"))
+        val client = service.create(Client(organizationId = organizationId, name = "Test"))
         val deleted = service.delete(otherTenant, client.id)
         assert(!deleted)
     }
 
     @Test
     fun `activate and deactivate client`() {
-        val client = service.create(Client(tenantId = tenantId, name = "Test"))
-        val deactivated = service.deactivate(tenantId, client.id)
+        val client = service.create(Client(organizationId = organizationId, name = "Test"))
+        val deactivated = service.deactivate(organizationId, client.id)
         assert(deactivated!!.status == ClientStatus.INACTIVE)
 
-        val activated = service.activate(tenantId, client.id)
+        val activated = service.activate(organizationId, client.id)
         assert(activated!!.status == ClientStatus.ACTIVE)
     }
 }

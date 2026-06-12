@@ -11,8 +11,8 @@ data class InvoiceResponse(
     @field:Schema(description = "Identificador único de la factura", example = "550e8400-e29b-41d4-a716-446655440000")
     val id: UUID,
 
-    @field:Schema(description = "Identificador del inquilino", example = "550e8400-e29b-41d4-a716-446655440000")
-    val tenantId: UUID,
+    @field:Schema(description = "Identificador del organizaci�n", example = "550e8400-e29b-41d4-a716-446655440000")
+    val organizationId: UUID,
 
     @field:Schema(description = "Número de factura", example = "FAC-2026-00123")
     val invoiceNumber: String,
@@ -49,7 +49,7 @@ data class InvoiceResponse(
 ) {
     companion object {
         fun from(e: Invoice) = InvoiceResponse(
-            id = e.id, tenantId = e.tenantId, invoiceNumber = e.invoiceNumber,
+            id = e.id, organizationId = e.organizationId, invoiceNumber = e.invoiceNumber,
             customerName = e.customerName, customerVat = e.customerVat,
             customerAddress = e.customerAddress, issueDate = e.issueDate,
             dueDate = e.dueDate, status = e.status, subtotal = e.subtotal,

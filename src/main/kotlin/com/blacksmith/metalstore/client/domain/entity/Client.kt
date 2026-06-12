@@ -10,8 +10,8 @@ enum class ClientStatus { ACTIVE, INACTIVE }
 @Table(
     name = "clients",
     indexes = [
-        Index(name = "idx_client_tenant", columnList = "tenant_id"),
-        Index(name = "idx_client_name", columnList = "tenant_id, name")
+        Index(name = "idx_client_tenant", columnList = "organization_id"),
+        Index(name = "idx_client_name", columnList = "organization_id, name")
     ]
 )
 data class Client(
@@ -19,7 +19,7 @@ data class Client(
     val id: UUID = UUID.randomUUID(),
 
     @Column(nullable = false)
-    val tenantId: UUID,
+    val organizationId: UUID,
 
     @Column(nullable = false)
     val name: String,

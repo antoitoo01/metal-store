@@ -17,13 +17,13 @@ class ClientService(
     private val audit: AuditLogger
 ) {
     @Transactional(readOnly = true)
-    fun findAll(tenantId: UUID, pageable: Pageable, nameFilter: String? = null): Page<Client> =
-        if (nameFilter.isNullOrBlank()) repo.findByTenantId(tenantId, pageable)
-        else repo.findByTenantIdAndNameContainingIgnoreCase(tenantId, nameFilter, pageable)
+    fun findAll(organizationId: UUID, pageable: Pageable, nameFilter: String? = null): Page<Client> =
+        if (nameFilter.isNullOrBlank()) repo.findByOrganizationId(organizationId, pageable)
+        else repo.findByOrganizationIdAndNameContainingIgnoreCase(organizationId, nameFilter, pageable)
 
     @Transactional(readOnly = true)
-    fun findById(tenantId: UUID, id: UUID): Client? =
-        repo.findById(id).filter { it.tenantId == tenantId }.orElse(null)
+    fun findById(organizationId: UUID, id: UUID): Client? =
+        repo.findById(id).filter { it.organizationId == organizationId }.orElse(null)
 
     fun create(client: Client): Client {
         val saved = repo.save(client)
@@ -31,14 +31,14 @@ class ClientService(
             action = "CLIENT_CREATED",
             entityType = "Client",
             entityId = saved.id.toString(),
-            tenantId = saved.tenantId.toString(),
+            organizationId = saved.organizationId.toString(),
             details = mapOf("name" to saved.name, "vatNumber" to saved.vatNumber)
         ))
         return saved
     }
 
-    fun update(tenantId: UUID, id: UUID, updated: Client): Client? {
-        val existing = repo.findById(id).filter { it.tenantId == tenantId }.orElse(null) ?: return null
+    fun update(organizationId: UUID, id: UUID, updated: Client): Client? {
+        val existing = repo.findById(id).filter { it.organizationId == organizationId }.orElse(null) ?: return null
         val merged = existing.copy(
             name = updated.name.ifBlank { existing.name },
             email = updated.email ?: existing.email,
@@ -53,35 +53,35 @@ class ClientService(
             action = "CLIENT_UPDATED",
             entityType = "Client",
             entityId = saved.id.toString(),
-            tenantId = tenantId.toString(),
+            organizationId = organizationId.toString(),
             details = mapOf("name" to saved.name)
         ))
         return saved
     }
 
-    fun delete(tenantId: UUID, id: UUID): Boolean {
-        val client = repo.findById(id).filter { it.tenantId == tenantId }.orElse(null) ?: return false
+    fun delete(organizationId: UUID, id: UUID): Boolean {
+        val client = repo.findById(id).filter { it.organizationId == organizationId }.orElse(null) ?: return false
         repo.delete(client)
         audit.log(AuditLogger.AuditEvent(
             action = "CLIENT_DELETED",
             entityType = "Client",
             entityId = id.toString(),
-            tenantId = tenantId.toString()
+            organizationId = organizationId.toString()
         ))
         return true
     }
 
-    fun activate(tenantId: UUID, id: UUID): Client? {
-        val client = repo.findById(id).filter { it.tenantId == tenantId }.orElse(null) ?: return null
+    fun activate(organizationId: UUID, id: UUID): Client? {
+        val client = repo.findById(id).filter { it.organizationId == organizationId }.orElse(null) ?: return null
         val saved = repo.save(client.copy(status = ClientStatus.ACTIVE))
-        audit.log(AuditLogger.AuditEvent(action = "CLIENT_ACTIVATED", entityType = "Client", entityId = id.toString(), tenantId = tenantId.toString()))
+        audit.log(AuditLogger.AuditEvent(action = "CLIENT_ACTIVATED", entityType = "Client", entityId = id.toString(), organizationId = organizationId.toString()))
         return saved
     }
 
-    fun deactivate(tenantId: UUID, id: UUID): Client? {
-        val client = repo.findById(id).filter { it.tenantId == tenantId }.orElse(null) ?: return null
+    fun deactivate(organizationId: UUID, id: UUID): Client? {
+        val client = repo.findById(id).filter { it.organizationId == organizationId }.orElse(null) ?: return null
         val saved = repo.save(client.copy(status = ClientStatus.INACTIVE))
-        audit.log(AuditLogger.AuditEvent(action = "CLIENT_DEACTIVATED", entityType = "Client", entityId = id.toString(), tenantId = tenantId.toString()))
+        audit.log(AuditLogger.AuditEvent(action = "CLIENT_DEACTIVATED", entityType = "Client", entityId = id.toString(), organizationId = organizationId.toString()))
         return saved
     }
 }

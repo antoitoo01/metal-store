@@ -10,8 +10,8 @@ data class ClientResponse(
     @field:Schema(description = "Identificador Ãºnico del cliente", example = "550e8400-e29b-41d4-a716-446655440000")
     val id: UUID,
 
-    @field:Schema(description = "Identificador del inquilino", example = "550e8400-e29b-41d4-a716-446655440000")
-    val tenantId: UUID,
+    @field:Schema(description = "Identificador del organización", example = "550e8400-e29b-41d4-a716-446655440000")
+    val organizationId: UUID,
 
     @field:Schema(description = "Nombre del cliente", example = "Aceros del Norte S.A.")
     val name: String,
@@ -42,7 +42,7 @@ data class ClientResponse(
 ) {
     companion object {
         fun from(e: Client) = ClientResponse(
-            id = e.id, tenantId = e.tenantId, name = e.name, email = e.email,
+            id = e.id, organizationId = e.organizationId, name = e.name, email = e.email,
             phone = e.phone, address = e.address, vatNumber = e.vatNumber,
             notes = e.notes, status = e.status, createdAt = e.createdAt,
             updatedAt = e.updatedAt

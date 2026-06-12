@@ -10,8 +10,8 @@ data class ItemResponse(
     @field:Schema(description = "Identificador único del ítem de inventario", example = "550e8400-e29b-41d4-a716-446655440000")
     val id: UUID,
 
-    @field:Schema(description = "Identificador del inquilino", example = "550e8400-e29b-41d4-a716-446655440000")
-    val tenantId: UUID,
+    @field:Schema(description = "Identificador del organizaci�n", example = "550e8400-e29b-41d4-a716-446655440000")
+    val organizationId: UUID,
 
     @field:Schema(description = "Identificador del perfil de artículo (opcional)", example = "550e8400-e29b-41d4-a716-446655440001")
     val profileId: UUID?,
@@ -39,7 +39,7 @@ data class ItemResponse(
 ) {
     companion object {
         fun from(e: InventoryItem) = ItemResponse(
-            id = e.id, tenantId = e.tenantId, profileId = e.profileId, itemId = e.itemId,
+            id = e.id, organizationId = e.organizationId, profileId = e.profileId, itemId = e.itemId,
             quantity = e.quantity, location = e.location, costPriceEur = e.costPriceEur,
             supplier = e.supplier, receivedAt = e.receivedAt, notes = e.notes
         )

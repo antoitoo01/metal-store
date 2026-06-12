@@ -6,6 +6,10 @@ import com.blacksmith.metalstore.auth.domain.entity.UserState
 import com.blacksmith.metalstore.auth.repository.UserRepository
 import com.blacksmith.metalstore.catalog.domain.entity.CatalogItemType
 import com.blacksmith.metalstore.catalog.domain.repository.CatalogItemTypeRepository
+import com.blacksmith.metalstore.organization.domain.entity.Membership
+import com.blacksmith.metalstore.organization.domain.entity.OrganizationRole
+import com.blacksmith.metalstore.organization.domain.entity.MembershipStatus
+import com.blacksmith.metalstore.organization.domain.repository.MembershipRepository
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
@@ -33,68 +37,72 @@ class CatalogItemTypeControllerHttpTest {
     @Autowired
     private lateinit var userRepo: UserRepository
 
-    private val tenantId = UUID.randomUUID()
-    private val otherTenantId = UUID.randomUUID()
+    @Autowired
+    private lateinit var membershipRepo: MembershipRepository
+
+    private val organizationId = UUID.randomUUID()
+    private val otherOrganizationId = UUID.randomUUID()
     private val userId = UUID.randomUUID()
-    private val header = "X-Tenant-Id"
+    private val header = "X-Organization-Id"
 
     @BeforeEach
     fun setUp() {
         repo.deleteAll()
+        membershipRepo.deleteAll()
         userRepo.deleteAll()
     }
 
     @Test
     fun `create item type`() {
-        val body = """{"tenantId":"$tenantId","name":"Custom Bracket","description":"Soportes personalizados","schemaDefinition":"{\"fields\":[{\"name\":\"width\",\"type\":\"decimal\"}]}"}"""
+        val body = """{"organizationId":"$organizationId","name":"Custom Bracket","description":"Soportes personalizados","schemaDefinition":"{\"fields\":[{\"name\":\"width\",\"type\":\"decimal\"}]}"}"""
 
         mockMvc.perform(post("/api/catalog/item-types")
-            .header(header, tenantId.toString())
+            .header(header, organizationId.toString())
             .contentType(MediaType.APPLICATION_JSON)
             .content(body))
             .andExpect(status().isCreated)
             .andExpect(jsonPath("$.name").value("Custom Bracket"))
-            .andExpect(jsonPath("$.tenantId").value(tenantId.toString()))
+            .andExpect(jsonPath("$.organizationId").value(organizationId.toString()))
     }
 
     @Test
-    fun `list returns paginated types for tenant`() {
-        repo.save(CatalogItemType(tenantId = tenantId, name = "Bracket"))
-        repo.save(CatalogItemType(tenantId = tenantId, name = "Panel"))
-        repo.save(CatalogItemType(tenantId = otherTenantId, name = "Other"))
+    fun `list returns paginated types for organization`() {
+        repo.save(CatalogItemType(organizationId = organizationId, name = "Bracket"))
+        repo.save(CatalogItemType(organizationId = organizationId, name = "Panel"))
+        repo.save(CatalogItemType(organizationId = otherOrganizationId, name = "Other"))
 
         mockMvc.perform(get("/api/catalog/item-types")
-            .header(header, tenantId.toString()))
+            .header(header, organizationId.toString()))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.page.totalElements").value(2))
     }
 
     @Test
     fun `get by id returns type`() {
-        val t = repo.save(CatalogItemType(tenantId = tenantId, name = "Glass Panel"))
+        val t = repo.save(CatalogItemType(organizationId = organizationId, name = "Glass Panel"))
 
         mockMvc.perform(get("/api/catalog/item-types/{id}", t.id)
-            .header(header, tenantId.toString()))
+            .header(header, organizationId.toString()))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.name").value("Glass Panel"))
     }
 
     @Test
     fun `get by id returns 404 for cross-tenant`() {
-        val t = repo.save(CatalogItemType(tenantId = otherTenantId, name = "Hidden"))
+        val t = repo.save(CatalogItemType(organizationId = otherOrganizationId, name = "Hidden"))
 
         mockMvc.perform(get("/api/catalog/item-types/{id}", t.id)
-            .header(header, tenantId.toString()))
+            .header(header, organizationId.toString()))
             .andExpect(status().isNotFound)
     }
 
     @Test
     fun `update item type`() {
-        val t = repo.save(CatalogItemType(tenantId = tenantId, name = "Old Name"))
-        val body = """{"tenantId":"$tenantId","name":"New Name"}"""
+        val t = repo.save(CatalogItemType(organizationId = organizationId, name = "Old Name"))
+        val body = """{"organizationId":"$organizationId","name":"New Name"}"""
 
         mockMvc.perform(put("/api/catalog/item-types/{id}", t.id)
-            .header(header, tenantId.toString())
+            .header(header, organizationId.toString())
             .contentType(MediaType.APPLICATION_JSON)
             .content(body))
             .andExpect(status().isOk)
@@ -103,31 +111,35 @@ class CatalogItemTypeControllerHttpTest {
 
     @Test
     fun `delete removes type`() {
-        val t = repo.save(CatalogItemType(tenantId = tenantId, name = "Temporal"))
+        val t = repo.save(CatalogItemType(organizationId = organizationId, name = "Temporal"))
 
         mockMvc.perform(delete("/api/catalog/item-types/{id}", t.id)
-            .header(header, tenantId.toString()))
+            .header(header, organizationId.toString()))
             .andExpect(status().isNoContent)
 
         assert(repo.findById(t.id).isEmpty)
     }
 
     @Test
-    fun `delete returns 404 for wrong tenant`() {
-        val t = repo.save(CatalogItemType(tenantId = otherTenantId, name = "Not Mine"))
+    fun `delete returns 404 for wrong organization`() {
+        val t = repo.save(CatalogItemType(organizationId = otherOrganizationId, name = "Not Mine"))
 
         mockMvc.perform(delete("/api/catalog/item-types/{id}", t.id)
-            .header(header, tenantId.toString()))
+            .header(header, organizationId.toString()))
             .andExpect(status().isNotFound)
     }
 
     @Test
-    fun `tenant resolved from JWT when auth present`() {
+    fun `organization resolved from JWT when auth present`() {
         userRepo.save(User(
-            id = userId, tenantId = tenantId, username = "jwtuser",
+            id = userId, organizationId = organizationId, username = "jwtuser",
             email = "jwt@test.com", role = Role.USER, status = UserState.ACTIVE
         ))
-        repo.save(CatalogItemType(tenantId = tenantId, name = "JWT Type"))
+        membershipRepo.save(Membership(
+            userId = userId, organizationId = organizationId,
+            role = OrganizationRole.WORKER, status = MembershipStatus.ACTIVE
+        ))
+        repo.save(CatalogItemType(organizationId = organizationId, name = "JWT Type"))
 
         mockMvc.perform(get("/api/catalog/item-types")
             .with(jwt().jwt { it.subject(userId.toString()) }))

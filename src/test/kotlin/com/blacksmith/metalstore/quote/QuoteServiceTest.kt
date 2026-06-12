@@ -29,7 +29,7 @@ class QuoteServiceTest {
     private lateinit var lineRepo: QuoteLineRepository
 
     private lateinit var service: QuoteService
-    private val tenantId = UUID.randomUUID()
+    private val organizationId = UUID.randomUUID()
 
     @BeforeEach
     fun setUp() {
@@ -40,50 +40,50 @@ class QuoteServiceTest {
 
     @Test
     fun `create and find quote`() {
-        val saved = service.createDraft(tenantId, Quote(tenantId = tenantId, quoteNumber = "", customerName = "Cliente Test"))
+        val saved = service.createDraft(organizationId, Quote(organizationId = organizationId, quoteNumber = "", customerName = "Cliente Test"))
         assert(saved.id != null)
         assert(saved.quoteNumber.startsWith("PRES-"))
         assert(saved.status == QuoteStatus.DRAFT)
 
-        val found = service.findQuote(tenantId, saved.id)
+        val found = service.findQuote(organizationId, saved.id)
         assert(found != null)
         assert(found!!.customerName == "Cliente Test")
     }
 
     @Test
-    fun `list returns only quotes for tenant`() {
+    fun `list returns only quotes for organization`() {
         val otherTenant = UUID.randomUUID()
-        service.createDraft(tenantId, Quote(tenantId = tenantId, quoteNumber = "", customerName = "A"))
-        service.createDraft(otherTenant, Quote(tenantId = otherTenant, quoteNumber = "", customerName = "B"))
+        service.createDraft(organizationId, Quote(organizationId = organizationId, quoteNumber = "", customerName = "A"))
+        service.createDraft(otherTenant, Quote(organizationId = otherTenant, quoteNumber = "", customerName = "B"))
 
-        val quotes = service.listQuotes(tenantId, PageRequest.of(0, 100))
+        val quotes = service.listQuotes(organizationId, PageRequest.of(0, 100))
         assert(quotes.totalElements == 1L)
     }
 
     @Test
     fun `add line to draft recalculates totals`() {
-        val quote = service.createDraft(tenantId, Quote(tenantId = tenantId, quoteNumber = "", customerName = "Test"))
+        val quote = service.createDraft(organizationId, Quote(organizationId = organizationId, quoteNumber = "", customerName = "Test"))
         val line = QuoteLine(quoteId = quote.id, lineNumber = 1, description = "Perfil IPN 200", quantity = BigDecimal("10"), unitPrice = BigDecimal("25.50"), totalPrice = BigDecimal.ZERO)
-        service.addLine(tenantId, quote.id, line)
+        service.addLine(organizationId, quote.id, line)
 
-    val updated = service.findQuote(tenantId, quote.id)
+    val updated = service.findQuote(organizationId, quote.id)
     assert(updated!!.subtotal.compareTo(BigDecimal("255.00")) == 0)
     }
 
     @Test
     fun `add line to issued quote returns null`() {
-        val quote = service.createDraft(tenantId, Quote(tenantId = tenantId, quoteNumber = "", customerName = "Test"))
-        service.issue(tenantId, quote.id)
+        val quote = service.createDraft(organizationId, Quote(organizationId = organizationId, quoteNumber = "", customerName = "Test"))
+        service.issue(organizationId, quote.id)
 
         val line = QuoteLine(quoteId = quote.id, lineNumber = 1, description = "Perfil IPN 200", quantity = BigDecimal.ONE, unitPrice = BigDecimal.TEN, totalPrice = BigDecimal.ZERO)
-        val result = service.addLine(tenantId, quote.id, line)
+        val result = service.addLine(organizationId, quote.id, line)
         assert(result == null)
     }
 
     @Test
     fun `issue transitions from draft`() {
-        val quote = service.createDraft(tenantId, Quote(tenantId = tenantId, quoteNumber = "", customerName = "Test"))
-        val issued = service.issue(tenantId, quote.id)
+        val quote = service.createDraft(organizationId, Quote(organizationId = organizationId, quoteNumber = "", customerName = "Test"))
+        val issued = service.issue(organizationId, quote.id)
 
         assert(issued != null)
         assert(issued!!.status == QuoteStatus.ISSUED)
@@ -91,18 +91,18 @@ class QuoteServiceTest {
 
     @Test
     fun `issue from issued returns null`() {
-        val quote = service.createDraft(tenantId, Quote(tenantId = tenantId, quoteNumber = "", customerName = "Test"))
-        service.issue(tenantId, quote.id)
+        val quote = service.createDraft(organizationId, Quote(organizationId = organizationId, quoteNumber = "", customerName = "Test"))
+        service.issue(organizationId, quote.id)
 
-        val result = service.issue(tenantId, quote.id)
+        val result = service.issue(organizationId, quote.id)
         assert(result == null)
     }
 
     @Test
     fun `accept transitions from issued`() {
-        val quote = service.createDraft(tenantId, Quote(tenantId = tenantId, quoteNumber = "", customerName = "Test"))
-        service.issue(tenantId, quote.id)
-        val accepted = service.accept(tenantId, quote.id)
+        val quote = service.createDraft(organizationId, Quote(organizationId = organizationId, quoteNumber = "", customerName = "Test"))
+        service.issue(organizationId, quote.id)
+        val accepted = service.accept(organizationId, quote.id)
 
         assert(accepted != null)
         assert(accepted!!.status == QuoteStatus.ACCEPTED)
@@ -110,16 +110,16 @@ class QuoteServiceTest {
 
     @Test
     fun `accept from draft returns null`() {
-        val quote = service.createDraft(tenantId, Quote(tenantId = tenantId, quoteNumber = "", customerName = "Test"))
-        val result = service.accept(tenantId, quote.id)
+        val quote = service.createDraft(organizationId, Quote(organizationId = organizationId, quoteNumber = "", customerName = "Test"))
+        val result = service.accept(organizationId, quote.id)
         assert(result == null)
     }
 
     @Test
     fun `reject transitions from issued`() {
-        val quote = service.createDraft(tenantId, Quote(tenantId = tenantId, quoteNumber = "", customerName = "Test"))
-        service.issue(tenantId, quote.id)
-        val rejected = service.reject(tenantId, quote.id)
+        val quote = service.createDraft(organizationId, Quote(organizationId = organizationId, quoteNumber = "", customerName = "Test"))
+        service.issue(organizationId, quote.id)
+        val rejected = service.reject(organizationId, quote.id)
 
         assert(rejected != null)
         assert(rejected!!.status == QuoteStatus.REJECTED)
@@ -127,18 +127,18 @@ class QuoteServiceTest {
 
     @Test
     fun `cancel works from draft or issued`() {
-        val q1 = service.createDraft(tenantId, Quote(tenantId = tenantId, quoteNumber = "", customerName = "Test"))
-        service.issue(tenantId, q1.id)
-        val cancelled = service.cancel(tenantId, q1.id)
+        val q1 = service.createDraft(organizationId, Quote(organizationId = organizationId, quoteNumber = "", customerName = "Test"))
+        service.issue(organizationId, q1.id)
+        val cancelled = service.cancel(organizationId, q1.id)
         assert(cancelled!!.status == QuoteStatus.CANCELLED)
     }
 
     @Test
     fun `cancel from accepted returns null`() {
-        val quote = service.createDraft(tenantId, Quote(tenantId = tenantId, quoteNumber = "", customerName = "Test"))
-        service.issue(tenantId, quote.id)
-        service.accept(tenantId, quote.id)
-        val result = service.cancel(tenantId, quote.id)
+        val quote = service.createDraft(organizationId, Quote(organizationId = organizationId, quoteNumber = "", customerName = "Test"))
+        service.issue(organizationId, quote.id)
+        service.accept(organizationId, quote.id)
+        val result = service.cancel(organizationId, quote.id)
         assert(result == null)
     }
 }

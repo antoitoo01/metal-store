@@ -29,8 +29,8 @@ data class CreateItemRequest(
     @field:Schema(description = "Notas internas (opcional)", example = "Lote recibido el 15/05/2026")
     val notes: String? = null
 ) {
-    fun toEntity(tenantId: UUID) = InventoryItem(
-        tenantId = tenantId,
+    fun toEntity(organizationId: UUID) = InventoryItem(
+        organizationId = organizationId,
         profileId = profileId,
         itemId = itemId,
         quantity = quantity,
