@@ -1,13 +1,62 @@
 -- ============================================================
--- Migration: tenant → organization (data only)
--- El schema lo crea Hibernate via ddl-auto: update.
--- Este script solo migra datos + renombra columnas + agrega FKs.
+-- Migration: tenant → organization
+-- Ejecutar UNA sola vez en Supabase SQL Editor.
+-- Crea tablas si no existen (Hibernate nunca las crea en prod
+-- porque usa ddl-auto: validate) + migra datos existentes.
 -- ============================================================
 
 BEGIN;
 
 -- ============================================================
--- 1. Migrar datos desde old tenants → organizations
+-- 1. Tablas nuevas (schema exacto que espera Hibernate)
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS organizations (
+    id UUID NOT NULL,
+    created_at TIMESTAMP(6) NOT NULL,
+    updated_at TIMESTAMP(6) NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    slug VARCHAR(255) NOT NULL,
+    settings TEXT,
+    PRIMARY KEY (id),
+    CONSTRAINT uq_organizations_slug UNIQUE (slug)
+);
+
+CREATE TABLE IF NOT EXISTS memberships (
+    id UUID NOT NULL,
+    created_at TIMESTAMP(6) NOT NULL,
+    updated_at TIMESTAMP(6) NOT NULL,
+    user_id UUID NOT NULL,
+    organization_id UUID NOT NULL,
+    role VARCHAR(255) NOT NULL,
+    status VARCHAR(255) NOT NULL DEFAULT 'ACTIVE',
+    invited_by UUID,
+    PRIMARY KEY (id),
+    CONSTRAINT uq_memberships_user_org UNIQUE (user_id, organization_id),
+    CONSTRAINT fk_memberships_organization FOREIGN KEY (organization_id) REFERENCES organizations(id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_membership_org ON memberships(organization_id);
+CREATE INDEX IF NOT EXISTS idx_membership_user ON memberships(user_id);
+
+CREATE TABLE IF NOT EXISTS invitations (
+    id UUID NOT NULL,
+    created_at TIMESTAMP(6) NOT NULL,
+    updated_at TIMESTAMP(6) NOT NULL,
+    token UUID NOT NULL,
+    organization_id UUID NOT NULL,
+    role VARCHAR(255) NOT NULL,
+    email VARCHAR(255) NOT NULL,
+    status VARCHAR(255) NOT NULL DEFAULT 'PENDING',
+    created_by UUID NOT NULL,
+    expires_at TIMESTAMP(6),
+    PRIMARY KEY (id),
+    CONSTRAINT uq_invitations_token UNIQUE (token),
+    CONSTRAINT fk_invitations_organization FOREIGN KEY (organization_id) REFERENCES organizations(id)
+);
+
+-- ============================================================
+-- 2. Migrar datos desde old tenants → organizations
 -- ============================================================
 
 DO $$
@@ -42,7 +91,6 @@ DO $$
 DECLARE
     org_col TEXT;
 BEGIN
-    -- Usamos la columna que exista (tenant_id antes del rename, organization_id después)
     SELECT column_name INTO org_col
     FROM information_schema.columns
     WHERE table_schema = 'public' AND table_name = 'users'
@@ -70,8 +118,6 @@ END $$;
 
 -- ============================================================
 -- 4. Renombrar tenant_id → organization_id
--- Hibernate pudo haber creado organization_id (vacía) sin dropear
--- la vieja tenant_id. Primero dropeamos la nueva si existe.
 -- ============================================================
 
 DO $$
@@ -82,14 +128,12 @@ DECLARE
 BEGIN
     FOREACH tbl IN ARRAY tables_to_fix
     LOOP
-        -- ¿Todavía tiene la columna tenant_id?
         EXECUTE format(
             'SELECT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = ''public'' AND table_name = %L AND column_name = ''tenant_id'')',
             tbl
         ) INTO has_old_col;
 
         IF has_old_col THEN
-            -- Hibernate pudo crear organization_id vacía — dropearla antes de renombrar
             EXECUTE format('ALTER TABLE %I DROP COLUMN IF EXISTS organization_id', tbl);
             EXECUTE format('ALTER TABLE %I RENAME COLUMN tenant_id TO organization_id', tbl);
             RAISE NOTICE 'Renamed tenant_id → organization_id in %', tbl;
@@ -129,7 +173,7 @@ BEGIN
 END $$;
 
 -- ============================================================
--- 6. Actualizar CHECK constraints (TENANT_OWNER → ORGANIZATION_OWNER)
+-- 6. Actualizar CHECK constraints + datos
 -- ============================================================
 
 ALTER TABLE IF EXISTS users DROP CONSTRAINT IF EXISTS users_role_check;
@@ -146,7 +190,7 @@ ALTER TABLE IF EXISTS users ADD CONSTRAINT users_role_check
 DROP TABLE IF EXISTS tenants CASCADE;
 
 -- ============================================================
--- 8. RLS policies (Solo Supabase)
+-- 8. RLS policies
 -- ============================================================
 
 ALTER TABLE organizations ENABLE ROW LEVEL SECURITY;
