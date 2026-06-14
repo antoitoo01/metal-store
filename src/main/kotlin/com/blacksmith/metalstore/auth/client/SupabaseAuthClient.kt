@@ -100,7 +100,7 @@ class SupabaseAuthClient(
         val body = mapOf("refresh_token" to refreshToken)
         return try {
             val response: ResponseEntity<Map<String, Any?>> = rest.exchange(
-                "${props.url}/auth/v1/token?grant_type=password",
+                "${props.url}/auth/v1/token?grant_type=refresh_token",
                 HttpMethod.POST,
                 HttpEntity(body, headers),
                 object : ParameterizedTypeReference<Map<String, Any?>>() {}
