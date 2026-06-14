@@ -6,12 +6,12 @@ import com.blacksmith.metalstore.auth.domain.dto.request.RegisterRequest
 import com.blacksmith.metalstore.auth.domain.dto.response.LoginResponse
 import com.blacksmith.metalstore.auth.domain.dto.response.UserResponse
 import com.blacksmith.metalstore.auth.service.AuthService
-import jakarta.servlet.http.Cookie
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import jakarta.validation.Valid
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
+import org.springframework.http.ResponseCookie
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.security.oauth2.jwt.Jwt
@@ -104,22 +104,24 @@ class AuthController(
     }
 
     private fun setAuthCookie(response: HttpServletResponse, token: String, maxAge: Int, secure: Boolean) {
-        val cookie = Cookie("access_token", token).apply {
-            isHttpOnly = true
-            this@apply.secure = secure
-            path = "/"
-            this.maxAge = maxAge
-        }
-        response.addCookie(cookie)
+        val cookie = ResponseCookie.from("access_token", token)
+            .httpOnly(true)
+            .secure(secure)
+            .path("/")
+            .maxAge(maxAge.toLong())
+            .sameSite(if (secure) "Strict" else "Lax")
+            .build()
+        response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString())
     }
 
     private fun clearAuthCookie(response: HttpServletResponse, secure: Boolean) {
-        val cookie = Cookie("access_token", null).apply {
-            isHttpOnly = true
-            this@apply.secure = secure
-            path = "/"
-            maxAge = 0
-        }
-        response.addCookie(cookie)
+        val cookie = ResponseCookie.from("access_token", "")
+            .httpOnly(true)
+            .secure(secure)
+            .path("/")
+            .maxAge(0)
+            .sameSite(if (secure) "Strict" else "Lax")
+            .build()
+        response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString())
     }
 }

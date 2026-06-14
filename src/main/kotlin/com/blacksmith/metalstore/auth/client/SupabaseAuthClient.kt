@@ -18,8 +18,17 @@ import org.springframework.web.client.RestTemplate
 @Service
 class SupabaseAuthClient(
     private val props: SupabaseProperties,
-    private val rest: RestTemplate = RestTemplate()
+    private val rest: RestTemplate = createRestTemplate()
 ) {
+    companion object {
+        private fun createRestTemplate(): RestTemplate {
+            val factory = org.springframework.http.client.SimpleClientHttpRequestFactory()
+            factory.setConnectTimeout(10000)
+            factory.setReadTimeout(30000)
+            return RestTemplate(factory)
+        }
+    }
+
 
     fun signUp(email: String, password: String, username: String?): Map<String, Any?> {
         val headers = HttpHeaders().apply {
