@@ -32,6 +32,8 @@ logging:
     org.springframework.security: WARN
 
 app:
+  invitation:
+    base-url: ${INVITATION_BASE_URL:https://metalstore.duckdns.org}
   seed:
     catalog:
       enabled: false

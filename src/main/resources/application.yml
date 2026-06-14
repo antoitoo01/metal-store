@@ -24,6 +24,8 @@ rate-limiting:
   excluded-paths: /api/health
 
 app:
+  invitation:
+    base-url: http://localhost:4200
   storage:
     bucket-name: catalog-images
     upload-dir: uploads

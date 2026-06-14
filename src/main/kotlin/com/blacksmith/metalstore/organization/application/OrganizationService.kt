@@ -2,11 +2,9 @@ package com.blacksmith.metalstore.organization.application
 
 import com.blacksmith.metalstore.organization.domain.dto.request.CreateOrganizationRequest
 import com.blacksmith.metalstore.organization.domain.dto.request.UpdateOrganizationRequest
-import com.blacksmith.metalstore.organization.domain.dto.response.InvitationResponse
 import com.blacksmith.metalstore.organization.domain.dto.response.MembershipResponse
 import com.blacksmith.metalstore.organization.domain.dto.response.OrganizationResponse
 import com.blacksmith.metalstore.organization.domain.entity.*
-import com.blacksmith.metalstore.organization.domain.repository.InvitationRepository
 import com.blacksmith.metalstore.organization.domain.repository.MembershipRepository
 import com.blacksmith.metalstore.organization.domain.repository.OrganizationRepository
 import com.blacksmith.metalstore.organization.exception.*
@@ -18,7 +16,6 @@ import java.util.UUID
 class OrganizationService(
     private val orgRepository: OrganizationRepository,
     private val membershipRepository: MembershipRepository,
-    private val invitationRepository: InvitationRepository,
 ) {
     fun findOrganizationsByUserId(userId: UUID): List<OrganizationResponse> {
         val memberships = membershipRepository.findByUserId(userId)
@@ -88,48 +85,6 @@ class OrganizationService(
             if (owners.size <= 1) throw CannotRemoveLastOwnerException()
         }
         membershipRepository.delete(membership)
-    }
-
-    @Transactional
-    fun createInvitation(orgId: UUID, email: String, role: OrganizationRole, currentUserId: UUID): InvitationResponse {
-        requireAdminOrOwner(orgId, currentUserId)
-        if (invitationRepository.existsByEmailAndOrganizationIdAndStatus(email, orgId, InvitationStatus.PENDING)) {
-            throw DuplicateInvitationException()
-        }
-        val token = UUID.randomUUID()
-        val invitation = invitationRepository.save(Invitation(
-            token = token,
-            organizationId = orgId,
-            role = role,
-            email = email,
-            createdBy = currentUserId,
-        ))
-        return InvitationResponse.from(invitation, includeToken = true)
-    }
-
-    fun getInvitations(orgId: UUID, currentUserId: UUID): List<InvitationResponse> {
-        requireAdminOrOwner(orgId, currentUserId)
-        return invitationRepository.findByOrganizationIdAndStatus(orgId, InvitationStatus.PENDING)
-            .map { InvitationResponse.from(it) }
-    }
-
-    @Transactional
-    fun acceptInvitation(token: UUID, userId: UUID): MembershipResponse {
-        val invitation = invitationRepository.findByToken(token)
-            ?: throw InvitationNotFoundException()
-        if (invitation.status != InvitationStatus.PENDING) {
-            throw InvitationAlreadyAcceptedException()
-        }
-        invitation.status = InvitationStatus.ACCEPTED
-        invitationRepository.save(invitation)
-        val membership = membershipRepository.save(Membership(
-            userId = userId,
-            organizationId = invitation.organizationId,
-            role = invitation.role,
-            status = MembershipStatus.ACTIVE,
-            invitedBy = invitation.createdBy,
-        ))
-        return MembershipResponse.from(membership)
     }
 
     private fun requireAdminOrOwner(orgId: UUID, userId: UUID) {
