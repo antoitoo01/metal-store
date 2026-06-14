@@ -32,6 +32,9 @@ logging:
     org.springframework.security: WARN
 
 app:
+  seed:
+    catalog:
+      enabled: false
   storage:
     bucket-name: catalog-images
 

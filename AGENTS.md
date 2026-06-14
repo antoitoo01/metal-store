@@ -36,9 +36,10 @@
 | `/api/auth/me` | GET | JWT | Returns current authenticated user |
 | `/api/auth/refresh` | POST | None | Refresh access token using refresh token |
 | `/api/auth/logout` | POST | JWT | Revoke session |
-| `/api/users/{id}` | GET | Future | Find user by ID |
-| `/api/users` | PUT | Future | Update user |
-| `/api/users/{id}` | DELETE | Future | Delete user |
+| `/api/users` | GET | JWT | List paginated users in organization |
+| `/api/users/{id}` | GET | JWT | Find user by ID |
+| `/api/users` | PUT | JWT | Update current user |
+| `/api/users/{id}` | DELETE | ADMIN | Delete user |
 
 ## Conventions
 
