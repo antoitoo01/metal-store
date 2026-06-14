@@ -11,6 +11,7 @@ import org.springframework.http.ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.security.oauth2.jwt.Jwt
 import org.springframework.web.bind.annotation.*
+import jakarta.validation.Valid
 import java.util.UUID
 
 @RestController
@@ -23,7 +24,7 @@ class InvitationController(
     @Operation(summary = "Crear invitación")
     fun create(
         @PathVariable orgId: UUID,
-        @RequestBody request: CreateInvitationRequest,
+        @Valid @RequestBody request: CreateInvitationRequest,
         @AuthenticationPrincipal jwt: Jwt?,
     ): ResponseEntity<InvitationResponse> {
         val userId = jwt?.subject?.let { UUID.fromString(it) }

@@ -68,7 +68,7 @@ class BillingController(
     fun updatePrice(
         @CurrentOrganizationId organizationId: UUID,
         @PathVariable id: UUID,
-        @RequestBody request: PriceUpdateRequest
+        @Valid @RequestBody request: PriceUpdateRequest
     ): ResponseEntity<PriceResponse> {
         val updated = service.updatePrice(organizationId, id, request.unitPrice, request.validFrom, request.validTo, request.notes)
             ?: return ResponseEntity.notFound().build()

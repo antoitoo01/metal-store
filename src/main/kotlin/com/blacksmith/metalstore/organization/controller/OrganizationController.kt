@@ -12,6 +12,7 @@ import org.springframework.http.ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.security.oauth2.jwt.Jwt
 import org.springframework.web.bind.annotation.*
+import jakarta.validation.Valid
 import java.util.UUID
 
 @RestController
@@ -31,7 +32,7 @@ class OrganizationController(
     @Operation(summary = "Crear organización")
     fun create(
         @AuthenticationPrincipal jwt: Jwt?,
-        @RequestBody request: CreateOrganizationRequest,
+        @Valid @RequestBody request: CreateOrganizationRequest,
     ): ResponseEntity<OrganizationResponse> {
         val userId = jwt?.subject?.let { UUID.fromString(it) }
             ?: return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
@@ -48,7 +49,7 @@ class OrganizationController(
     @Operation(summary = "Actualizar organización")
     fun update(
         @PathVariable id: UUID,
-        @RequestBody request: UpdateOrganizationRequest,
+        @Valid @RequestBody request: UpdateOrganizationRequest,
         @AuthenticationPrincipal jwt: Jwt?,
     ): ResponseEntity<OrganizationResponse> {
         val userId = jwt?.subject?.let { UUID.fromString(it) }

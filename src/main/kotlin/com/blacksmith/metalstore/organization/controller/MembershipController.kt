@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.security.oauth2.jwt.Jwt
 import org.springframework.web.bind.annotation.*
+import jakarta.validation.Valid
 import java.util.UUID
 
 @RestController
@@ -38,7 +39,7 @@ class MembershipController(
     fun updateRole(
         @PathVariable orgId: UUID,
         @PathVariable userId: UUID,
-        @RequestBody request: UpdateRoleRequest,
+        @Valid @RequestBody request: UpdateRoleRequest,
         @AuthenticationPrincipal jwt: Jwt?,
     ): ResponseEntity<Unit> {
         val currentUserId = jwt?.subject?.let { UUID.fromString(it) }
