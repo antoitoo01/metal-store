@@ -1,6 +1,6 @@
 package com.blacksmith.metalstore.catalog.controller
 
-import com.blacksmith.metalstore.catalog.domain.entity.CatalogProfile
+import com.blacksmith.metalstore.catalog.domain.dto.response.CatalogProfileResponse
 import com.blacksmith.metalstore.catalog.domain.repository.CatalogProfileRepository
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
@@ -28,11 +28,13 @@ class CatalogProfileController(
         @RequestParam shapeType: String? = null,
         @RequestParam familyCode: String? = null,
         @PageableDefault(size = 20) pageable: Pageable
-    ): Page<CatalogProfile> {
-        if (q != null || standard != null || shapeType != null || familyCode != null) {
-            return repo.searchProfiles(q, standard, shapeType, familyCode, pageable)
+    ): Page<CatalogProfileResponse> {
+        val page = if (q != null || standard != null || shapeType != null || familyCode != null) {
+            repo.searchProfiles(q, standard, shapeType, familyCode, pageable)
+        } else {
+            repo.findAll(pageable)
         }
-        return repo.findAll(pageable)
+        return page.map { CatalogProfileResponse.from(it) }
     }
 
     @GetMapping("/{id}")
@@ -41,8 +43,8 @@ class CatalogProfileController(
         ApiResponse(responseCode = "200", description = "Operación exitosa"),
         ApiResponse(responseCode = "404", description = "Recurso no encontrado")
     ])
-    fun getById(@PathVariable id: UUID): ResponseEntity<CatalogProfile> {
+    fun getById(@PathVariable id: UUID): ResponseEntity<CatalogProfileResponse> {
         val profile = repo.findById(id).orElse(null) ?: return ResponseEntity.notFound().build()
-        return ResponseEntity.ok(profile)
+        return ResponseEntity.ok(CatalogProfileResponse.from(profile))
     }
 }

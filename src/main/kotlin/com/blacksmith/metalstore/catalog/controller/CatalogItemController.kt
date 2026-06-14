@@ -1,6 +1,6 @@
 package com.blacksmith.metalstore.catalog.controller
 
-import com.blacksmith.metalstore.catalog.domain.entity.CatalogItem
+import com.blacksmith.metalstore.catalog.domain.dto.response.CatalogItemResponse
 import com.blacksmith.metalstore.catalog.domain.repository.CatalogItemRepository
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
@@ -26,11 +26,10 @@ class CatalogItemController(
         @RequestParam q: String? = null,
         @RequestParam itemType: String? = null,
         @PageableDefault(size = 20) pageable: Pageable
-    ): Page<CatalogItem> {
-        if (q != null || itemType != null) {
-            return repo.searchItems(q, itemType, pageable)
-        }
-        return repo.findAll(pageable)
+    ): Page<CatalogItemResponse> {
+        val page = if (q != null || itemType != null) repo.searchItems(q, itemType, pageable)
+        else repo.findAll(pageable)
+        return page.map { CatalogItemResponse.from(it) }
     }
 
     @GetMapping("/{id}")
@@ -39,8 +38,8 @@ class CatalogItemController(
         ApiResponse(responseCode = "200", description = "Operación exitosa"),
         ApiResponse(responseCode = "404", description = "Recurso no encontrado")
     ])
-    fun getById(@PathVariable id: UUID): ResponseEntity<CatalogItem> {
+    fun getById(@PathVariable id: UUID): ResponseEntity<CatalogItemResponse> {
         val item = repo.findById(id).orElse(null) ?: return ResponseEntity.notFound().build()
-        return ResponseEntity.ok(item)
+        return ResponseEntity.ok(CatalogItemResponse.from(item))
     }
 }
