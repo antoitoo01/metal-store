@@ -1,5 +1,5 @@
 package com.blacksmith.metalstore.organization.domain.dto.request
 
-data class CreateInvitationRequest(
-    val emails: List<String>,
+data class AcceptRequest(
+    val token: String,
 )

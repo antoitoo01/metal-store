@@ -27,6 +27,12 @@ class InvitationNotFoundException :
 class InvitationAlreadyAcceptedException :
     ApiException(ErrorCode.RESOURCE_CONFLICT, "La invitación ya fue aceptada")
 
+class InvitationExpiredException :
+    ApiException(ErrorCode.RESOURCE_CONFLICT, "La invitación ha expirado")
+
+class InvitationEmailMismatchException :
+    ApiException(ErrorCode.FORBIDDEN, "El email del usuario no coincide con el email de la invitación")
+
 class DuplicateInvitationException :
     ApiException(ErrorCode.RESOURCE_CONFLICT, "Ya existe una invitación pendiente para este email")
 
