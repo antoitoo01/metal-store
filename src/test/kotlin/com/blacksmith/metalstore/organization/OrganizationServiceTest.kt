@@ -2,11 +2,9 @@ package com.blacksmith.metalstore.organization
 
 import com.blacksmith.metalstore.organization.application.OrganizationService
 import com.blacksmith.metalstore.organization.domain.dto.request.CreateOrganizationRequest
-import com.blacksmith.metalstore.organization.domain.dto.request.CreateInvitationRequest
 import com.blacksmith.metalstore.organization.domain.dto.request.UpdateOrganizationRequest
 import com.blacksmith.metalstore.organization.domain.dto.request.UpdateRoleRequest
 import com.blacksmith.metalstore.organization.domain.entity.*
-import com.blacksmith.metalstore.organization.domain.repository.InvitationRepository
 import com.blacksmith.metalstore.organization.domain.repository.MembershipRepository
 import com.blacksmith.metalstore.organization.domain.repository.OrganizationRepository
 import com.blacksmith.metalstore.organization.exception.*
@@ -27,9 +25,6 @@ class OrganizationServiceTest {
     @Autowired
     private lateinit var membershipRepository: MembershipRepository
 
-    @Autowired
-    private lateinit var invitationRepository: InvitationRepository
-
     private lateinit var service: OrganizationService
     private val ownerId = UUID.randomUUID()
     private val adminId = UUID.randomUUID()
@@ -37,10 +32,9 @@ class OrganizationServiceTest {
 
     @BeforeEach
     fun setUp() {
-        invitationRepository.deleteAll()
         membershipRepository.deleteAll()
         orgRepository.deleteAll()
-        service = OrganizationService(orgRepository, membershipRepository, invitationRepository)
+        service = OrganizationService(orgRepository, membershipRepository)
     }
 
     @Test
@@ -199,80 +193,6 @@ class OrganizationServiceTest {
             service.removeMember(org.id, ownerId, ownerId)
             assert(false) { "Expected CannotRemoveLastOwnerException" }
         } catch (e: CannotRemoveLastOwnerException) {
-            // expected
-        }
-    }
-
-    @Test
-    fun `createInvitation creates pending invitation`() {
-        val org = service.createOrganization(ownerId, CreateOrganizationRequest("Test"))
-
-        val invitation = service.createInvitation(org.id, "nuevo@test.com", OrganizationRole.WORKER, ownerId)
-
-        assert(invitation.email == "nuevo@test.com")
-        assert(invitation.role == OrganizationRole.WORKER)
-        assert(invitation.token != null)
-    }
-
-    @Test
-    fun `createInvitation throws duplicate`() {
-        val org = service.createOrganization(ownerId, CreateOrganizationRequest("Test"))
-        service.createInvitation(org.id, "dup@test.com", OrganizationRole.WORKER, ownerId)
-
-        try {
-            service.createInvitation(org.id, "dup@test.com", OrganizationRole.WORKER, ownerId)
-            assert(false) { "Expected DuplicateInvitationException" }
-        } catch (e: DuplicateInvitationException) {
-            // expected
-        }
-    }
-
-    @Test
-    fun `getInvitations returns pending invitations`() {
-        val org = service.createOrganization(ownerId, CreateOrganizationRequest("Test"))
-        service.createInvitation(org.id, "a@test.com", OrganizationRole.WORKER, ownerId)
-        service.createInvitation(org.id, "b@test.com", OrganizationRole.ADMIN, ownerId)
-
-        val invitations = service.getInvitations(org.id, ownerId)
-
-        assert(invitations.size == 2)
-    }
-
-    @Test
-    fun `acceptInvitation creates membership and marks accepted`() {
-        val org = service.createOrganization(ownerId, CreateOrganizationRequest("Test"))
-        val invitation = service.createInvitation(org.id, "nuevo@test.com", OrganizationRole.WORKER, ownerId)
-        val token = invitation.token!!
-
-        val membership = service.acceptInvitation(token, workerId)
-
-        assert(membership.userId == workerId)
-        assert(membership.role == OrganizationRole.WORKER)
-
-        val updatedInv = invitationRepository.findByToken(token)
-        assert(updatedInv!!.status == InvitationStatus.ACCEPTED)
-    }
-
-    @Test
-    fun `acceptInvitation throws when token not found`() {
-        try {
-            service.acceptInvitation(UUID.randomUUID(), workerId)
-            assert(false) { "Expected InvitationNotFoundException" }
-        } catch (e: InvitationNotFoundException) {
-            // expected
-        }
-    }
-
-    @Test
-    fun `acceptInvitation throws when already accepted`() {
-        val org = service.createOrganization(ownerId, CreateOrganizationRequest("Test"))
-        val invitation = service.createInvitation(org.id, "nuevo@test.com", OrganizationRole.WORKER, ownerId)
-        service.acceptInvitation(invitation.token!!, workerId)
-
-        try {
-            service.acceptInvitation(invitation.token!!, UUID.randomUUID())
-            assert(false) { "Expected InvitationAlreadyAcceptedException" }
-        } catch (e: InvitationAlreadyAcceptedException) {
             // expected
         }
     }

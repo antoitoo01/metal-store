@@ -3,7 +3,6 @@ package com.blacksmith.metalstore.organization
 import com.blacksmith.metalstore.organization.domain.entity.MembershipStatus
 import com.blacksmith.metalstore.organization.domain.entity.OrganizationRole
 import com.blacksmith.metalstore.organization.domain.entity.Membership
-import com.blacksmith.metalstore.organization.domain.repository.InvitationRepository
 import com.blacksmith.metalstore.organization.domain.repository.MembershipRepository
 import com.blacksmith.metalstore.organization.domain.repository.OrganizationRepository
 import org.junit.jupiter.api.BeforeEach
@@ -33,14 +32,10 @@ class OrganizationControllerHttpTest {
     @Autowired
     private lateinit var membershipRepository: MembershipRepository
 
-    @Autowired
-    private lateinit var invitationRepository: InvitationRepository
-
     private val ownerId = UUID.randomUUID()
 
     @BeforeEach
     fun setUp() {
-        invitationRepository.deleteAll()
         membershipRepository.deleteAll()
         orgRepository.deleteAll()
     }

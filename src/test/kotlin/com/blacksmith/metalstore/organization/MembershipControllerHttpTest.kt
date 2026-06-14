@@ -1,7 +1,6 @@
 package com.blacksmith.metalstore.organization
 
 import com.blacksmith.metalstore.organization.domain.entity.*
-import com.blacksmith.metalstore.organization.domain.repository.InvitationRepository
 import com.blacksmith.metalstore.organization.domain.repository.MembershipRepository
 import com.blacksmith.metalstore.organization.domain.repository.OrganizationRepository
 import org.junit.jupiter.api.BeforeEach
@@ -31,16 +30,12 @@ class MembershipControllerHttpTest {
     @Autowired
     private lateinit var membershipRepository: MembershipRepository
 
-    @Autowired
-    private lateinit var invitationRepository: InvitationRepository
-
     private val ownerId = UUID.randomUUID()
     private val memberId = UUID.randomUUID()
     private var orgId: UUID = UUID.randomUUID()
 
     @BeforeEach
     fun setUp() {
-        invitationRepository.deleteAll()
         membershipRepository.deleteAll()
         orgRepository.deleteAll()
         val org = orgRepository.save(Organization(name = "Test", slug = "test"))

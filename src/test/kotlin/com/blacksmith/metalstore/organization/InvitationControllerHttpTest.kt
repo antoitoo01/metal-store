@@ -7,8 +7,8 @@ import com.blacksmith.metalstore.organization.domain.repository.OrganizationRepo
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc
+import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.http.MediaType
 import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt
 import org.springframework.test.context.ActiveProfiles
@@ -37,48 +37,101 @@ class InvitationControllerHttpTest {
     private val ownerId = UUID.randomUUID()
     private val newUserId = UUID.randomUUID()
     private var orgId: UUID = UUID.randomUUID()
+    private var orgName: String = "Test"
 
     @BeforeEach
     fun setUp() {
         invitationRepository.deleteAll()
         membershipRepository.deleteAll()
         orgRepository.deleteAll()
-        val org = orgRepository.save(Organization(name = "Test", slug = "test"))
+        val org = orgRepository.save(Organization(name = orgName, slug = "test"))
         orgId = org.id
         membershipRepository.save(Membership(userId = ownerId, organizationId = orgId, role = OrganizationRole.OWNER))
     }
 
     @Test
-    fun `create invitation returns pending invitation`() {
+    fun `create invitations batch returns created invitations`() {
         mockMvc.perform(post("/api/organizations/{orgId}/invitations", orgId)
             .with(jwt().jwt { it.subject(ownerId.toString()) })
             .contentType(MediaType.APPLICATION_JSON)
-            .content("""{"email":"invitado@test.com","role":"WORKER"}"""))
+            .content("""{"emails":["a@test.com","b@test.com"]}"""))
             .andExpect(status().isCreated)
-            .andExpect(jsonPath("$.email").value("invitado@test.com"))
-            .andExpect(jsonPath("$.status").value("PENDING"))
+            .andExpect(jsonPath("$.length()").value(2))
+            .andExpect(jsonPath("$[0].email").value("a@test.com"))
+            .andExpect(jsonPath("$[0].status").value("PENDING"))
+            .andExpect(jsonPath("$[0].organizationName").value(orgName))
+            .andExpect(jsonPath("$[0].token").isString)
+            .andExpect(jsonPath("$[0].link").isString)
+            .andExpect(jsonPath("$[0].expiresAt").isString)
     }
 
     @Test
-    fun `list invitations returns pending`() {
-        invitationRepository.save(Invitation(token = UUID.randomUUID(), organizationId = orgId, role = OrganizationRole.WORKER, email = "a@test.com", createdBy = ownerId))
-        invitationRepository.save(Invitation(token = UUID.randomUUID(), organizationId = orgId, role = OrganizationRole.ADMIN, email = "b@test.com", createdBy = ownerId))
+    fun `create invitations returns conflict on duplicate email`() {
+        invitationRepository.save(Invitation(organizationId = orgId, email = "dup@test.com", createdBy = ownerId))
+
+        mockMvc.perform(post("/api/organizations/{orgId}/invitations", orgId)
+            .with(jwt().jwt { it.subject(ownerId.toString()) })
+            .contentType(MediaType.APPLICATION_JSON)
+            .content("""{"emails":["dup@test.com"]}"""))
+            .andExpect(status().isConflict)
+    }
+
+    @Test
+    fun `list invitations returns paginated`() {
+        invitationRepository.save(Invitation(organizationId = orgId, email = "a@test.com", createdBy = ownerId))
+        invitationRepository.save(Invitation(organizationId = orgId, email = "b@test.com", createdBy = ownerId))
 
         mockMvc.perform(get("/api/organizations/{orgId}/invitations", orgId)
-            .with(jwt().jwt { it.subject(ownerId.toString()) }))
+            .with(jwt().jwt { it.subject(ownerId.toString()) })
+            .param("page", "0")
+            .param("size", "10"))
             .andExpect(status().isOk)
-            .andExpect(jsonPath("$.length()").value(2))
+            .andExpect(jsonPath("$.page.totalElements").value(2))
+            .andExpect(jsonPath("$.content[0].id").exists())
+    }
+
+    @Test
+    fun `cancel invitation marks as cancelled`() {
+        val inv = invitationRepository.save(Invitation(organizationId = orgId, email = "c@test.com", createdBy = ownerId))
+
+        mockMvc.perform(delete("/api/organizations/{orgId}/invitations/{id}", orgId, inv.id)
+            .with(jwt().jwt { it.subject(ownerId.toString()) }))
+            .andExpect(status().isNoContent)
+
+        val updated = invitationRepository.findById(inv.id).get()
+        assert(updated.status == InvitationStatus.CANCELLED)
     }
 
     @Test
     fun `accept invitation creates membership`() {
-        val token = UUID.randomUUID()
-        invitationRepository.save(Invitation(token = token, organizationId = orgId, role = OrganizationRole.WORKER, email = "nuevo@test.com", createdBy = ownerId))
+        val token = UUID.randomUUID().toString()
+        val email = "nuevo@test.com"
+        invitationRepository.save(Invitation(token = token, organizationId = orgId, email = email, createdBy = ownerId))
 
-        mockMvc.perform(post("/api/invitations/{token}/accept", token)
-            .with(jwt().jwt { it.subject(newUserId.toString()) }))
-            .andExpect(status().isCreated)
+        mockMvc.perform(post("/api/invitations/accept")
+            .with(jwt().jwt {
+                it.subject(newUserId.toString())
+                it.claim("email", email)
+            })
+            .contentType(MediaType.APPLICATION_JSON)
+            .content("""{"token":"$token"}"""))
+            .andExpect(status().isOk)
             .andExpect(jsonPath("$.userId").value(newUserId.toString()))
             .andExpect(jsonPath("$.role").value("WORKER"))
+    }
+
+    @Test
+    fun `decline invitation marks as declined`() {
+        val token = UUID.randomUUID().toString()
+        invitationRepository.save(Invitation(token = token, organizationId = orgId, email = "d@test.com", createdBy = ownerId))
+
+        mockMvc.perform(post("/api/invitations/decline")
+            .with(jwt().jwt { it.subject(newUserId.toString()) })
+            .contentType(MediaType.APPLICATION_JSON)
+            .content("""{"token":"$token"}"""))
+            .andExpect(status().isOk)
+
+        val updated = invitationRepository.findByToken(token)!!
+        assert(updated.status == InvitationStatus.DECLINED)
     }
 }
