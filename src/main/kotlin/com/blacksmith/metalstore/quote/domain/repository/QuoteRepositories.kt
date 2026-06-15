@@ -6,14 +6,31 @@ import com.blacksmith.metalstore.quote.domain.entity.QuoteStatus
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.data.jpa.repository.Query
+import org.springframework.data.repository.query.Param
 import org.springframework.stereotype.Repository
 import java.util.UUID
 
 @Repository
 interface QuoteRepository : JpaRepository<Quote, UUID> {
-    fun findByOrganizationIdOrderByIssueDateDesc(organizationId: UUID, pageable: Pageable): Page<Quote>
+    @Query("""
+        SELECT q FROM Quote q
+        WHERE q.organizationId = :orgId
+        AND (:q IS NULL OR LOWER(q.quoteNumber) LIKE LOWER(CONCAT('%', :q, '%'))
+          OR LOWER(q.customerName) LIKE LOWER(CONCAT('%', :q, '%')))
+        AND (:status IS NULL OR q.status = :status)
+        AND (:clientId IS NULL OR q.clientId = :clientId)
+        ORDER BY q.issueDate DESC
+    """)
+    fun findAllFiltered(
+        @Param("orgId") orgId: UUID,
+        @Param("q") q: String?,
+        @Param("status") status: QuoteStatus?,
+        @Param("clientId") clientId: UUID?,
+        pageable: Pageable
+    ): Page<Quote>
+
     fun findByOrganizationIdAndStatus(organizationId: UUID, status: QuoteStatus): List<Quote>
-    fun findByOrganizationIdAndClientIdOrderByIssueDateDesc(organizationId: UUID, clientId: UUID, pageable: Pageable): Page<Quote>
     fun countByOrganizationId(organizationId: UUID): Long
 }
 

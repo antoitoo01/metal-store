@@ -6,6 +6,7 @@ import com.blacksmith.metalstore.billing.domain.entity.*
 import com.blacksmith.metalstore.billing.domain.repository.InvoiceLineRepository
 import com.blacksmith.metalstore.billing.domain.repository.InvoiceRepository
 import com.blacksmith.metalstore.billing.domain.repository.PriceListRepository
+import com.blacksmith.metalstore.shared.NumberSequenceRepository
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.mock
@@ -13,11 +14,13 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.data.domain.PageRequest
 import org.springframework.test.context.ActiveProfiles
+import org.springframework.transaction.annotation.Transactional
 import java.math.BigDecimal
 import java.util.UUID
 
 @SpringBootTest
 @ActiveProfiles("test")
+@Transactional
 class BillingServiceTest {
 
     @Autowired
@@ -26,6 +29,8 @@ class BillingServiceTest {
     private lateinit var invoiceRepo: InvoiceRepository
     @Autowired
     private lateinit var invoiceLineRepo: InvoiceLineRepository
+    @Autowired
+    private lateinit var numberSequenceRepo: NumberSequenceRepository
 
     private lateinit var service: BillingService
     private val organizationId = UUID.randomUUID()
@@ -36,7 +41,7 @@ class BillingServiceTest {
         priceListRepo.deleteAll()
         invoiceRepo.deleteAll()
         invoiceLineRepo.deleteAll()
-        service = BillingService(priceListRepo, invoiceRepo, invoiceLineRepo, mock(AuditLogger::class.java))
+        service = BillingService(priceListRepo, invoiceRepo, invoiceLineRepo, numberSequenceRepo, mock(AuditLogger::class.java))
     }
 
     @Test

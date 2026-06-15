@@ -7,6 +7,7 @@ import com.blacksmith.metalstore.quote.domain.entity.QuoteLine
 import com.blacksmith.metalstore.quote.domain.entity.QuoteStatus
 import com.blacksmith.metalstore.quote.domain.repository.QuoteLineRepository
 import com.blacksmith.metalstore.quote.domain.repository.QuoteRepository
+import com.blacksmith.metalstore.shared.NumberSequenceRepository
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.mock
@@ -14,12 +15,14 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.data.domain.PageRequest
 import org.springframework.test.context.ActiveProfiles
+import org.springframework.transaction.annotation.Transactional
 import java.math.BigDecimal
 import java.time.LocalDate
 import java.util.UUID
 
 @SpringBootTest
 @ActiveProfiles("test")
+@Transactional
 class QuoteServiceTest {
 
     @Autowired
@@ -27,6 +30,8 @@ class QuoteServiceTest {
 
     @Autowired
     private lateinit var lineRepo: QuoteLineRepository
+    @Autowired
+    private lateinit var numberSequenceRepo: NumberSequenceRepository
 
     private lateinit var service: QuoteService
     private val organizationId = UUID.randomUUID()
@@ -35,7 +40,7 @@ class QuoteServiceTest {
     fun setUp() {
         quoteRepo.deleteAll()
         lineRepo.deleteAll()
-        service = QuoteService(quoteRepo, lineRepo, mock(AuditLogger::class.java))
+        service = QuoteService(quoteRepo, lineRepo, numberSequenceRepo, mock(AuditLogger::class.java))
     }
 
     @Test

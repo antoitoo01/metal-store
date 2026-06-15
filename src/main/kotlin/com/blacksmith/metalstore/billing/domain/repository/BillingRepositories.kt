@@ -21,18 +21,23 @@ interface PriceListRepository : JpaRepository<PriceListItem, UUID> {
 
 @Repository
 interface InvoiceRepository : JpaRepository<Invoice, UUID> {
-    fun findByOrganizationIdOrderByIssueDateDesc(organizationId: UUID, pageable: Pageable): Page<Invoice>
     fun findByOrganizationIdAndStatus(organizationId: UUID, status: InvoiceStatus): List<Invoice>
     fun countByOrganizationId(organizationId: UUID): Long
 
     @Query("""
         SELECT i FROM Invoice i
-        WHERE i.organizationId = :organizationId
-        AND (LOWER(i.customerName) LIKE LOWER(CONCAT('%', :q, '%'))
+        WHERE i.organizationId = :orgId
+        AND (:q IS NULL OR LOWER(i.customerName) LIKE LOWER(CONCAT('%', :q, '%'))
           OR LOWER(i.invoiceNumber) LIKE LOWER(CONCAT('%', :q, '%')))
+        AND (:status IS NULL OR i.status = :status)
         ORDER BY i.issueDate DESC
     """)
-    fun searchByOrganizationId(@Param("organizationId") organizationId: UUID, @Param("q") q: String, pageable: Pageable): Page<Invoice>
+    fun findAllFiltered(
+        @Param("orgId") orgId: UUID,
+        @Param("q") q: String?,
+        @Param("status") status: InvoiceStatus?,
+        pageable: Pageable
+    ): Page<Invoice>
 }
 
 @Repository

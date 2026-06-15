@@ -6,6 +6,9 @@ import com.blacksmith.metalstore.quote.domain.entity.QuoteLine
 import com.blacksmith.metalstore.quote.domain.entity.QuoteStatus
 import com.blacksmith.metalstore.quote.domain.repository.QuoteLineRepository
 import com.blacksmith.metalstore.quote.domain.repository.QuoteRepository
+import com.blacksmith.metalstore.shared.NumberSequence
+import com.blacksmith.metalstore.shared.NumberSequenceId
+import com.blacksmith.metalstore.shared.NumberSequenceRepository
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Service
@@ -19,15 +22,12 @@ import java.util.UUID
 class QuoteService(
     private val quoteRepo: QuoteRepository,
     private val lineRepo: QuoteLineRepository,
+    private val numberSequenceRepo: NumberSequenceRepository,
     private val audit: AuditLogger
 ) {
     @Transactional(readOnly = true)
-    fun listQuotes(organizationId: UUID, pageable: Pageable): Page<Quote> =
-        quoteRepo.findByOrganizationIdOrderByIssueDateDesc(organizationId, pageable)
-
-    @Transactional(readOnly = true)
-    fun listQuotesByClient(organizationId: UUID, clientId: UUID, pageable: Pageable): Page<Quote> =
-        quoteRepo.findByOrganizationIdAndClientIdOrderByIssueDateDesc(organizationId, clientId, pageable)
+    fun listQuotes(organizationId: UUID, pageable: Pageable, q: String? = null, status: QuoteStatus? = null, clientId: UUID? = null): Page<Quote> =
+        quoteRepo.findAllFiltered(organizationId, q, status, clientId, pageable)
 
     @Transactional(readOnly = true)
     fun findQuote(organizationId: UUID, quoteId: UUID): Quote? =
@@ -176,7 +176,10 @@ class QuoteService(
 
     private fun nextQuoteNumber(organizationId: UUID): String {
         val year = LocalDate.now().year
-        val count = quoteRepo.countByOrganizationId(organizationId) + 1
-        return "PRES-$year-${organizationId.toString().take(8).uppercase()}-$count"
+        val seq = numberSequenceRepo.findWithLock(organizationId, "PRES", year)
+            .orElse(NumberSequence(NumberSequenceId(organizationId, "PRES", year), 0))
+        seq.counter += 1
+        numberSequenceRepo.save(seq)
+        return "PRES-$year-${organizationId.toString().take(8).uppercase()}-${seq.counter}"
     }
 }

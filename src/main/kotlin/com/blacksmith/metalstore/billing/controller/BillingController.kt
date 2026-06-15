@@ -9,6 +9,7 @@ import com.blacksmith.metalstore.billing.domain.dto.request.UpsertPriceRequest
 import com.blacksmith.metalstore.billing.domain.dto.response.InvoiceResponse
 import com.blacksmith.metalstore.billing.domain.dto.response.LineResponse
 import com.blacksmith.metalstore.billing.domain.dto.response.PriceResponse
+import com.blacksmith.metalstore.billing.domain.entity.InvoiceStatus
 import jakarta.validation.Valid
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
@@ -79,8 +80,13 @@ class BillingController(
     @GetMapping("/invoices")
     @Operation(summary = "Listar facturas", description = "Retorna una lista paginada de facturas.")
     @ApiResponse(responseCode = "200", description = "Operación exitosa")
-    fun listInvoices(@CurrentOrganizationId organizationId: UUID, @PageableDefault(size = 20) pageable: Pageable, @RequestParam(name = "q", required = false) q: String?): Page<InvoiceResponse> =
-        service.listInvoices(organizationId, pageable, q).map { InvoiceResponse.from(it) }
+    fun listInvoices(
+        @CurrentOrganizationId organizationId: UUID,
+        @PageableDefault(size = 20) pageable: Pageable,
+        @RequestParam(name = "q", required = false) q: String?,
+        @RequestParam(name = "status", required = false) status: InvoiceStatus?
+    ): Page<InvoiceResponse> =
+        service.listInvoices(organizationId, pageable, q, status).map { InvoiceResponse.from(it) }
 
     @GetMapping("/invoices/{id}")
     @Operation(summary = "Obtener factura por ID", description = "Retorna los datos de una factura por su UUID.")

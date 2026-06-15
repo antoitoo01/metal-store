@@ -8,6 +8,9 @@ import com.blacksmith.metalstore.billing.domain.entity.PriceListItem
 import com.blacksmith.metalstore.billing.domain.repository.InvoiceLineRepository
 import com.blacksmith.metalstore.billing.domain.repository.InvoiceRepository
 import com.blacksmith.metalstore.billing.domain.repository.PriceListRepository
+import com.blacksmith.metalstore.shared.NumberSequence
+import com.blacksmith.metalstore.shared.NumberSequenceId
+import com.blacksmith.metalstore.shared.NumberSequenceRepository
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Service
@@ -22,6 +25,7 @@ class BillingService(
     private val priceListRepo: PriceListRepository,
     private val invoiceRepo: InvoiceRepository,
     private val invoiceLineRepo: InvoiceLineRepository,
+    private val numberSequenceRepo: NumberSequenceRepository,
     private val audit: AuditLogger
 ) {
     // ── Price List ──────────────────────────────────────────────
@@ -74,9 +78,8 @@ class BillingService(
 
     // ── Invoices ────────────────────────────────────────────────
     @Transactional(readOnly = true)
-    fun listInvoices(organizationId: UUID, pageable: Pageable, q: String? = null): Page<Invoice> =
-        if (q.isNullOrBlank()) invoiceRepo.findByOrganizationIdOrderByIssueDateDesc(organizationId, pageable)
-        else invoiceRepo.searchByOrganizationId(organizationId, q, pageable)
+    fun listInvoices(organizationId: UUID, pageable: Pageable, q: String? = null, status: InvoiceStatus? = null): Page<Invoice> =
+        invoiceRepo.findAllFiltered(organizationId, q, status, pageable)
 
     @Transactional(readOnly = true)
     fun findInvoice(organizationId: UUID, invoiceId: UUID): Invoice? =
@@ -217,7 +220,10 @@ class BillingService(
 
     private fun nextInvoiceNumber(organizationId: UUID): String {
         val year = LocalDate.now().year
-        val count = invoiceRepo.countByOrganizationId(organizationId) + 1
-        return "FAC-$year-${organizationId.toString().take(8).uppercase()}-$count"
+        val seq = numberSequenceRepo.findWithLock(organizationId, "FAC", year)
+            .orElse(NumberSequence(NumberSequenceId(organizationId, "FAC", year), 0))
+        seq.counter += 1
+        numberSequenceRepo.save(seq)
+        return "FAC-$year-${organizationId.toString().take(8).uppercase()}-${seq.counter}"
     }
 }

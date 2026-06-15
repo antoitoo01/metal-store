@@ -7,6 +7,7 @@ import com.blacksmith.metalstore.quote.domain.dto.request.CreateQuoteRequest
 import com.blacksmith.metalstore.quote.domain.dto.request.UpdateQuoteRequest
 import com.blacksmith.metalstore.quote.domain.dto.response.QuoteLineResponse
 import com.blacksmith.metalstore.quote.domain.dto.response.QuoteResponse
+import com.blacksmith.metalstore.quote.domain.entity.QuoteStatus
 import jakarta.validation.Valid
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
@@ -29,11 +30,14 @@ class QuoteController(
     @GetMapping
     @Operation(summary = "Listar cotizaciones", description = "Retorna una lista paginada de cotizaciones.")
     @ApiResponse(responseCode = "200", description = "Operación exitosa")
-    fun list(@CurrentOrganizationId organizationId: UUID, @PageableDefault(size = 20) pageable: Pageable, @RequestParam(name = "clientId", required = false) clientId: UUID?): Page<QuoteResponse> {
-        val quotes = if (clientId != null) service.listQuotesByClient(organizationId, clientId, pageable)
-            else service.listQuotes(organizationId, pageable)
-        return quotes.map { QuoteResponse.from(it) }
-    }
+    fun list(
+        @CurrentOrganizationId organizationId: UUID,
+        @PageableDefault(size = 20) pageable: Pageable,
+        @RequestParam(name = "q", required = false) q: String?,
+        @RequestParam(name = "status", required = false) status: QuoteStatus?,
+        @RequestParam(name = "clientId", required = false) clientId: UUID?
+    ): Page<QuoteResponse> =
+        service.listQuotes(organizationId, pageable, q, status, clientId).map { QuoteResponse.from(it) }
 
     @GetMapping("/{id}")
     @Operation(summary = "Obtener cotización por ID", description = "Retorna los datos de una cotización por su UUID.")
