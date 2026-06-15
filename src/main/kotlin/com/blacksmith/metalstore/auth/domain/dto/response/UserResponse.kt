@@ -1,12 +1,16 @@
 package com.blacksmith.metalstore.auth.domain.dto.response
 
 import com.blacksmith.metalstore.auth.domain.entity.Role
+import com.blacksmith.metalstore.organization.domain.entity.OrganizationRole
 import io.swagger.v3.oas.annotations.media.Schema
 import java.util.UUID
 
 data class UserResponse(
     @field:Schema(description = "Identificador 煤nico del usuario", example = "550e8400-e29b-41d4-a716-446655440000")
     val id: UUID,
+
+    @field:Schema(description = "Identificador del tenant/espacio personal", example = "550e8400-e29b-41d4-a716-446655440000")
+    val tenantId: UUID,
 
     @field:Schema(description = "Nombre de usuario", example = "jperez")
     val username: String,
@@ -17,9 +21,23 @@ data class UserResponse(
     @field:Schema(description = "Rol del usuario", example = "ADMIN")
     val role: Role,
 
-    @field:Schema(description = "Identificador del organizaci髇", example = "550e8400-e29b-41d4-a716-446655440000")
+    @field:Schema(description = "Identificador de la organizaci贸n activa", example = "550e8400-e29b-41d4-a716-446655440000")
     val organizationId: UUID,
 
-    @field:Schema(description = "Nombre del organizaci髇/empresa", example = "Aceros del Norte S.A.")
-    val organizationName: String
+    @field:Schema(description = "Nombre de la organizaci贸n activa", example = "Aceros del Norte S.A.")
+    val organizationName: String,
+
+    @field:Schema(description = "Organizaciones a las que pertenece el usuario")
+    val organizations: List<UserOrganization>,
+)
+
+data class UserOrganization(
+    @field:Schema(description = "Identificador de la organizaci贸n", example = "550e8400-e29b-41d4-a716-446655440000")
+    val organizationId: UUID,
+
+    @field:Schema(description = "Nombre de la organizaci贸n", example = "Aceros del Norte S.A.")
+    val organizationName: String,
+
+    @field:Schema(description = "Rol del usuario en la organizaci贸n", example = "OWNER")
+    val role: OrganizationRole,
 )

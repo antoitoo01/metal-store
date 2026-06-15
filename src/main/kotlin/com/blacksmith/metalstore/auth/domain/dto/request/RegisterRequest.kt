@@ -9,8 +9,8 @@ data class RegisterRequest(
     @field:Schema(description = "Nombre de usuario (opcional)", example = "jperez")
     val username: String?,
 
-    @field:Schema(description = "Nombre del organización/empresa (opcional)", example = "Aceros del Norte S.A.")
-    val organizationName: String?,
+    @field:Schema(description = "Nombre del tenant/espacio personal (opcional)", example = "Aceros del Norte S.A.")
+    val tenantName: String?,
 
     @field:Schema(description = "Correo electrÃ³nico del usuario", example = "jperez@acerosdelnorte.com")
     @field:NotBlank

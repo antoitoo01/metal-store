@@ -1,5 +1,6 @@
 package com.blacksmith.metalstore.auth.domain.entity
 
+import com.blacksmith.metalstore.auth.domain.dto.response.UserOrganization
 import com.blacksmith.metalstore.auth.domain.dto.response.UserResponse
 import com.blacksmith.metalstore.shared.BaseEntity
 import jakarta.persistence.*
@@ -12,8 +13,8 @@ data class User(
     @Id
     val id: UUID,
 
-    @Column(nullable = false)
-    var organizationId: UUID,
+    @Column(name = "tenant_id", nullable = false)
+    var tenantId: UUID,
 
     @Column(nullable = true)
     var username: String?,
@@ -30,12 +31,18 @@ data class User(
     @Column(nullable = false)
     var status: UserState = UserState.INACTIVE
 ) : BaseEntity() {
-    fun toResponse(organizationName: String = "") = UserResponse(
+    fun toResponse(
+        organizationName: String = "",
+        activeOrgId: UUID = tenantId,
+        organizations: List<UserOrganization> = emptyList()
+    ) = UserResponse(
         id = id,
+        tenantId = tenantId,
         username = username ?: "",
         email = email,
         role = role,
-        organizationId = organizationId,
-        organizationName = organizationName
+        organizationId = activeOrgId,
+        organizationName = organizationName,
+        organizations = organizations,
     )
 }

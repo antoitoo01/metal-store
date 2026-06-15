@@ -20,9 +20,9 @@ class UserService(
     private val supabase: SupabaseAuthClient
 ) {
     @Transactional(readOnly = true)
-    fun findAll(organizationId: UUID, pageable: Pageable, q: String? = null): Page<User> =
-        if (q.isNullOrBlank()) userRepository.findByOrganizationId(organizationId, pageable)
-        else userRepository.findByOrganizationIdAndUsernameContainingIgnoreCaseOrEmailContainingIgnoreCase(organizationId, q, q, pageable)
+    fun findAll(tenantId: UUID, pageable: Pageable, q: String? = null): Page<User> =
+        if (q.isNullOrBlank()) userRepository.findByTenantId(tenantId, pageable)
+        else userRepository.findByTenantIdAndUsernameContainingIgnoreCaseOrEmailContainingIgnoreCase(tenantId, q, q, pageable)
 
     @Transactional(readOnly = true)
     fun findById(id: UUID): User {
@@ -48,8 +48,7 @@ class UserService(
 
     @Transactional
     fun update(request: UpdateUserRequest, authenticatedId: UUID): User {
-        verifyOwnerOrAdmin(request.id, authenticatedId)
-        val user = findById(request.id)
+        val user = findById(authenticatedId)
 
         request.username?.takeIf { it.isNotBlank() }?.let { username ->
             if (username != user.username && userRepository.existsByUsername(username)) {
@@ -58,13 +57,12 @@ class UserService(
             user.username = username
         }
 
-        request.email.takeIf { it.isNotBlank() }?.let { email ->
+        request.email?.takeIf { it.isNotBlank() }?.let { email ->
             if (email != user.email) {
                 if (userRepository.existsByEmail(email)) {
                     throw UserAlreadyExistsException("El email $email ya está en uso")
                 }
-                // Sync with Supabase Auth first
-                supabase.updateUserEmail(request.id, email)
+                supabase.updateUserEmail(authenticatedId, email)
                 user.email = email
             }
         }
@@ -75,7 +73,6 @@ class UserService(
     @Transactional
     fun deleteById(id: UUID, authenticatedId: UUID) {
         verifyOwnerOrAdmin(id, authenticatedId)
-        // Sync delete with Supabase Auth first
         supabase.deleteUser(id)
         userRepository.deleteById(id)
     }

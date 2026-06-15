@@ -20,12 +20,18 @@ data class LoginResponse(
     @field:Schema(description = "Correo electr√≥nico del usuario autenticado", example = "admin@metalstore.com")
     val email: String,
 
+    @field:Schema(description = "Nombre de usuario (opcional)", example = "jperez")
+    val username: String? = null,
+
     @field:Schema(description = "Rol del usuario", example = "ADMIN")
     val role: Role,
 
-    @field:Schema(description = "Identificador del organizaciÛn", example = "550e8400-e29b-41d4-a716-446655440000")
+    @field:Schema(description = "Identificador del tenant/espacio personal", example = "550e8400-e29b-41d4-a716-446655440000")
+    val tenantId: UUID,
+
+    @field:Schema(description = "Identificador de la organizaci√≥n activa", example = "550e8400-e29b-41d4-a716-446655440000")
     val organizationId: UUID,
 
-    @field:Schema(description = "Nombre del organizaciÛn/empresa", example = "MetalStore S.A.")
+    @field:Schema(description = "Nombre de la organizaci√≥n activa", example = "MetalStore S.A.")
     val organizationName: String
 )

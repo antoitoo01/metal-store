@@ -65,7 +65,7 @@ class CurrentOrganizationIdArgumentResolver(
             }
             if (userId != null) {
                 val user = userRepository.findById(userId).orElse(null)
-                if (user != null) return user.organizationId
+                if (user != null) return user.tenantId
             }
         }
         val request = webRequest.getNativeRequest(HttpServletRequest::class.java)

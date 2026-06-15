@@ -4,6 +4,7 @@ import com.blacksmith.metalstore.auth.audit.AuditLogger
 import com.blacksmith.metalstore.auth.client.SupabaseAuthClient
 import com.blacksmith.metalstore.auth.domain.dto.request.RegisterRequest
 import com.blacksmith.metalstore.auth.domain.dto.response.LoginResponse
+import com.blacksmith.metalstore.auth.domain.dto.response.UserOrganization
 import com.blacksmith.metalstore.auth.domain.dto.response.UserResponse
 import com.blacksmith.metalstore.auth.domain.entity.Role
 import com.blacksmith.metalstore.auth.domain.entity.User
@@ -12,6 +13,7 @@ import com.blacksmith.metalstore.auth.exception.UserNotFoundException
 import com.blacksmith.metalstore.auth.repository.UserRepository
 import com.blacksmith.metalstore.organization.application.OrganizationService
 import com.blacksmith.metalstore.organization.domain.dto.request.CreateOrganizationRequest
+import com.blacksmith.metalstore.organization.domain.repository.MembershipRepository
 import com.blacksmith.metalstore.organization.domain.repository.OrganizationRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -22,6 +24,7 @@ class AuthService(
     private val supabase: SupabaseAuthClient,
     private val userRepository: UserRepository,
     private val organizationRepository: OrganizationRepository,
+    private val membershipRepository: MembershipRepository,
     private val organizationService: OrganizationService,
     private val audit: AuditLogger
 ) {
@@ -31,13 +34,13 @@ class AuthService(
         val supabaseId = UUID.fromString(supabaseUser.getValue("id") as String)
         val email = supabaseUser.getValue("email") as String
 
-        val orgName = request.organizationName
+        val tenantName = request.tenantName
             ?: request.username
             ?: request.email.substringBefore("@")
-        val orgResponse = organizationService.createOrganization(supabaseId, CreateOrganizationRequest(orgName))
+        val orgResponse = organizationService.createOrganization(supabaseId, CreateOrganizationRequest(tenantName))
         val user = User(
             id = supabaseId,
-            organizationId = orgResponse.id,
+            tenantId = orgResponse.id,
             username = request.username,
             email = email,
             role = Role.ORGANIZATION_OWNER,
@@ -67,14 +70,14 @@ class AuthService(
         val user = userRepository.findById(supabaseId).orElse(null)
 
         if (user != null) {
-            val org = organizationRepository.findById(user.organizationId)
+            val org = organizationRepository.findById(user.tenantId)
                 .orElseThrow { UserNotFoundException("Organization not found") }
 
             audit.log(AuditLogger.AuditEvent(
                 action = "LOGIN_SUCCESS",
                 entityType = "User",
                 entityId = user.id.toString(),
-                organizationId = user.organizationId.toString(),
+                organizationId = user.tenantId.toString(),
                 details = mapOf("email" to email)
             ))
 
@@ -90,12 +93,12 @@ class AuthService(
         val supabaseEmail = supabaseUser.getValue("email") as String
         val supabaseUsername = (supabaseUser["user_metadata"] as? Map<String, Any?>)?.get("username") as? String
 
-        val orgName = supabaseUsername ?: supabaseEmail.substringBefore("@")
-        val orgResponse = organizationService.createOrganization(supabaseId, CreateOrganizationRequest(orgName))
+        val tenantName = supabaseUsername ?: supabaseEmail.substringBefore("@")
+        val orgResponse = organizationService.createOrganization(supabaseId, CreateOrganizationRequest(tenantName))
 
         val newUser = User(
             id = supabaseId,
-            organizationId = orgResponse.id,
+            tenantId = orgResponse.id,
             username = supabaseUsername,
             email = supabaseEmail,
             role = Role.ORGANIZATION_OWNER,
@@ -115,7 +118,7 @@ class AuthService(
         val user = userRepository.findById(userId).orElse(null)
 
         if (user != null) {
-            val org = organizationRepository.findById(user.organizationId)
+            val org = organizationRepository.findById(user.tenantId)
                 .orElseThrow { UserNotFoundException("Organization not found") }
             return buildLoginResponse(response, user, org.name)
         }
@@ -123,12 +126,12 @@ class AuthService(
         val supabaseEmail = supabaseUser.getValue("email") as String
         val supabaseUsername = (supabaseUser["user_metadata"] as? Map<String, Any?>)?.get("username") as? String
 
-        val orgName = supabaseUsername ?: supabaseEmail.substringBefore("@")
-        val orgResponse = organizationService.createOrganization(userId, CreateOrganizationRequest(orgName))
+        val tenantName = supabaseUsername ?: supabaseEmail.substringBefore("@")
+        val orgResponse = organizationService.createOrganization(userId, CreateOrganizationRequest(tenantName))
 
         val newUser = User(
             id = userId,
-            organizationId = orgResponse.id,
+            tenantId = orgResponse.id,
             username = supabaseUsername,
             email = supabaseEmail,
             role = Role.ORGANIZATION_OWNER,
@@ -143,9 +146,15 @@ class AuthService(
     fun me(userId: UUID): UserResponse {
         val user = userRepository.findById(userId)
             .orElseThrow { UserNotFoundException("User not found") }
-        val org = organizationRepository.findById(user.organizationId)
+        val org = organizationRepository.findById(user.tenantId)
             .orElseThrow { UserNotFoundException("Organization not found") }
-        return user.toResponse(org.name)
+        val memberships = membershipRepository.findByUserId(userId)
+        val organizations = memberships.map { m ->
+            val memberOrg = organizationRepository.findById(m.organizationId)
+                .orElseThrow { UserNotFoundException("Organization not found") }
+            UserOrganization(organizationId = memberOrg.id, organizationName = memberOrg.name, role = m.role)
+        }
+        return user.toResponse(org.name, organizations = organizations)
     }
 
     fun logout(accessToken: String) {
@@ -158,8 +167,10 @@ class AuthService(
             refreshToken = supabaseResponse["refresh_token"] as? String,
             expiresIn = (supabaseResponse["expires_in"] as? Int) ?: 3600,
             email = user.email,
+            username = user.username,
             role = user.role,
-            organizationId = user.organizationId,
+            tenantId = user.tenantId,
+            organizationId = user.tenantId,
             organizationName = organizationName
         )
     }

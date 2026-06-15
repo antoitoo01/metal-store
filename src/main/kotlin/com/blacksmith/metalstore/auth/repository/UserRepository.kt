@@ -16,8 +16,8 @@ interface UserRepository : JpaRepository<User, UUID> {
     fun existsByUsername(username: String): Boolean
     fun existsByEmail(email: String): Boolean
 
-    fun findByOrganizationId(organizationId: UUID, pageable: Pageable): Page<User>
-    fun findByOrganizationIdAndUsernameContainingIgnoreCaseOrEmailContainingIgnoreCase(
-        organizationId: UUID, username: String, email: String, pageable: Pageable
+    fun findByTenantId(tenantId: UUID, pageable: Pageable): Page<User>
+    fun findByTenantIdAndUsernameContainingIgnoreCaseOrEmailContainingIgnoreCase(
+        tenantId: UUID, username: String, email: String, pageable: Pageable
     ): Page<User>
 }
