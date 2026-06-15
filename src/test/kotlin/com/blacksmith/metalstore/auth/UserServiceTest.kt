@@ -47,14 +47,14 @@ class UserServiceTest {
 
         organizationRepository.save(Organization(id = organizationId, name = "Test Taller", slug = "test-taller"))
 
-        userRepository.save(User(id = ownerId, organizationId = organizationId, username = "owner", email = "owner@test.com", role = Role.USER))
-        userRepository.save(User(id = otherId, organizationId = organizationId, username = "other", email = "other@test.com", role = Role.USER))
-        userRepository.save(User(id = adminId, organizationId = organizationId, username = "admin", email = "admin@test.com", role = Role.ADMIN))
+        userRepository.save(User(id = ownerId, tenantId = organizationId, username = "owner", email = "owner@test.com", role = Role.USER))
+        userRepository.save(User(id = otherId, tenantId = organizationId, username = "other", email = "other@test.com", role = Role.USER))
+        userRepository.save(User(id = adminId, tenantId = organizationId, username = "admin", email = "admin@test.com", role = Role.ADMIN))
     }
 
     @Test
     fun `update own profile works`() {
-        val request = UpdateUserRequest(id = ownerId, username = "owner-updated", email = "owner@test.com")
+        val request = UpdateUserRequest(username = "owner-updated", email = "owner@test.com")
 
         val result = userService.update(request, ownerId)
 
@@ -63,7 +63,7 @@ class UserServiceTest {
 
     @Test
     fun `update email triggers supabase sync`() {
-        val request = UpdateUserRequest(id = ownerId, username = "owner", email = "newemail@test.com")
+        val request = UpdateUserRequest(username = "owner", email = "newemail@test.com")
 
         userService.update(request, ownerId)
 
@@ -71,21 +71,22 @@ class UserServiceTest {
     }
 
     @Test
-    fun `non-admin cannot update another user`() {
-        val request = UpdateUserRequest(id = otherId, username = "hacked", email = "other@test.com")
+    fun `update with nonexistent user throws exception`() {
+        val request = UpdateUserRequest(username = "ghost", email = "ghost@test.com")
+        val fakeId = UUID.randomUUID()
 
-        assertThrows<AccessDeniedException> {
-            userService.update(request, ownerId)
+        assertThrows<com.blacksmith.metalstore.auth.exception.UserNotFoundException> {
+            userService.update(request, fakeId)
         }
     }
 
     @Test
-    fun `admin can update another user`() {
-        val request = UpdateUserRequest(id = otherId, username = "admin-updated", email = "other@test.com")
+    fun `update enforces username uniqueness`() {
+        val request = UpdateUserRequest(username = "other", email = "owner@test.com")
 
-        val result = userService.update(request, adminId)
-
-        assert(result.username == "admin-updated")
+        assertThrows<com.blacksmith.metalstore.auth.exception.UserAlreadyExistsException> {
+            userService.update(request, ownerId)
+        }
     }
 
     @Test

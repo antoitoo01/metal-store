@@ -81,7 +81,7 @@ class AuthHttpIntegrationTest {
     fun `me returns user details when JWT is valid`() {
         val user = User(
             id = userId,
-            organizationId = organizationId,
+            tenantId = organizationId,
             username = "httptest",
             email = email,
             role = Role.USER,

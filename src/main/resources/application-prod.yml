@@ -9,7 +9,7 @@ spring:
     driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
-      ddl-auto: validate
+      ddl-auto: update # Cambiar "update" a "validate" en producción para evitar cambios automáticos en el esquema de la base de datos con la versión 0.1.0
     show-sql: false
     open-in-view: false
     properties:

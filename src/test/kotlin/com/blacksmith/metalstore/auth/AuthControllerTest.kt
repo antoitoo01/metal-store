@@ -10,7 +10,9 @@ import com.blacksmith.metalstore.auth.service.AuthService
 import com.blacksmith.metalstore.organization.application.OrganizationService
 import com.blacksmith.metalstore.organization.domain.dto.request.CreateOrganizationRequest
 import com.blacksmith.metalstore.organization.domain.dto.response.OrganizationResponse
+import com.blacksmith.metalstore.organization.domain.entity.Membership
 import com.blacksmith.metalstore.organization.domain.entity.Organization
+import com.blacksmith.metalstore.organization.domain.repository.MembershipRepository
 import com.blacksmith.metalstore.organization.domain.repository.OrganizationRepository
 import com.blacksmith.metalstore.shared.exception.ApiException
 import com.blacksmith.metalstore.shared.exception.ErrorCode
@@ -35,6 +37,9 @@ class AuthControllerTest {
     @Autowired
     private lateinit var organizationRepository: OrganizationRepository
 
+    @Autowired
+    private lateinit var membershipRepository: MembershipRepository
+
     private lateinit var supabaseAuthClient: SupabaseAuthClient
     private lateinit var organizationService: OrganizationService
     private lateinit var authService: AuthService
@@ -51,12 +56,13 @@ class AuthControllerTest {
     fun setUp() {
         userRepository.deleteAll()
         organizationRepository.deleteAll()
+        membershipRepository.deleteAll()
         organizationRepository.save(Organization(id = userUuid, name = organizationName, slug = organizationName.lowercase().replace(" ", "-")))
         supabaseAuthClient = mock(SupabaseAuthClient::class.java)
         organizationService = mock(OrganizationService::class.java)
         `when`(organizationService.createOrganization(any(), any()))
             .thenReturn(OrganizationResponse(id = userUuid, name = organizationName, slug = organizationName.lowercase().replace(" ", "-")))
-        authService = AuthService(supabaseAuthClient, userRepository, organizationRepository, organizationService, mock(AuditLogger::class.java))
+        authService = AuthService(supabaseAuthClient, userRepository, organizationRepository, membershipRepository, organizationService, mock(AuditLogger::class.java))
     }
 
     @Test
@@ -74,7 +80,7 @@ class AuthControllerTest {
         )
 
         val response = authService.register(
-            RegisterRequest(username = "testuser", organizationName = organizationName, email = email, password = password)
+            RegisterRequest(username = "testuser", tenantName = organizationName, email = email, password = password)
         )
 
         assert(response.accessToken == accessToken)
@@ -87,7 +93,7 @@ class AuthControllerTest {
         assert(savedUser.isPresent)
         assert(savedUser.get().email == email)
         assert(savedUser.get().role == Role.ORGANIZATION_OWNER)
-        assert(savedUser.get().organizationId == response.organizationId)
+        assert(savedUser.get().tenantId == response.organizationId)
     }
 
     @Test
@@ -105,7 +111,7 @@ class AuthControllerTest {
         )
 
         authService.register(
-            RegisterRequest(username = "testuser", organizationName = organizationName, email = email, password = password)
+            RegisterRequest(username = "testuser", tenantName = organizationName, email = email, password = password)
         )
 
         val response = authService.login(email, password)
@@ -129,7 +135,7 @@ class AuthControllerTest {
         )
 
         authService.register(
-            RegisterRequest(username = "testuser", organizationName = organizationName, email = email, password = password)
+            RegisterRequest(username = "testuser", tenantName = organizationName, email = email, password = password)
         )
 
         val response = authService.me(userUuid)
