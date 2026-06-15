@@ -15,7 +15,6 @@ repositories {
 }
 
 dependencies {
-	implementation("org.springframework.boot:spring-boot-h2console")
 	implementation("org.springframework.boot:spring-boot-autoconfigure")
 	implementation("org.springframework.boot:spring-boot-starter-data-jpa")
 	implementation("org.springframework.boot:spring-boot-starter-security")
@@ -36,6 +35,7 @@ dependencies {
 	testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
 	testImplementation("org.mockito:mockito-core")
 	testImplementation("org.mockito.kotlin:mockito-kotlin:6.0.0")
+	testRuntimeOnly("com.h2database:h2")
 	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
