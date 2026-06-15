@@ -1,5 +1,8 @@
 package com.blacksmith.metalstore.organization.controller
 
+import com.blacksmith.metalstore.auth.config.CurrentUser
+import com.blacksmith.metalstore.auth.config.CurrentUserInfo
+import com.blacksmith.metalstore.auth.config.CurrentUserId
 import com.blacksmith.metalstore.organization.application.InvitationService
 import com.blacksmith.metalstore.organization.domain.dto.request.AcceptRequest
 import com.blacksmith.metalstore.organization.domain.dto.request.CreateInvitationRequest
@@ -13,8 +16,6 @@ import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
-import org.springframework.security.core.annotation.AuthenticationPrincipal
-import org.springframework.security.oauth2.jwt.Jwt
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
@@ -35,11 +36,10 @@ class InvitationController(
     fun create(
         @PathVariable orgId: UUID,
         @Valid @RequestBody request: CreateInvitationRequest,
-        @AuthenticationPrincipal jwt: Jwt?,
+        @CurrentUserId userId: UUID?,
     ): ResponseEntity<List<InvitationResponse>> {
-        val userId = jwt?.subject?.let { UUID.fromString(it) }
-            ?: return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
-        val invitations = service.createInvitations(orgId, request.emails, userId)
+        val uid = userId ?: return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
+        val invitations = service.createInvitations(orgId, request.emails, uid)
         return ResponseEntity.status(HttpStatus.CREATED).body(invitations)
     }
 
@@ -48,11 +48,10 @@ class InvitationController(
     fun list(
         @PathVariable orgId: UUID,
         pageable: Pageable,
-        @AuthenticationPrincipal jwt: Jwt?,
+        @CurrentUserId userId: UUID?,
     ): ResponseEntity<Page<InvitationResponse>> {
-        val userId = jwt?.subject?.let { UUID.fromString(it) }
-            ?: return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
-        return ResponseEntity.ok(service.listInvitations(orgId, pageable, userId))
+        val uid = userId ?: return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
+        return ResponseEntity.ok(service.listInvitations(orgId, pageable, uid))
     }
 
     @DeleteMapping("/api/organizations/{orgId}/invitations/{id}")
@@ -60,11 +59,10 @@ class InvitationController(
     fun cancel(
         @PathVariable orgId: UUID,
         @PathVariable id: UUID,
-        @AuthenticationPrincipal jwt: Jwt?,
+        @CurrentUserId userId: UUID?,
     ): ResponseEntity<Unit> {
-        val userId = jwt?.subject?.let { UUID.fromString(it) }
-            ?: return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
-        service.cancelInvitation(orgId, id, userId)
+        val uid = userId ?: return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
+        service.cancelInvitation(orgId, id, uid)
         return ResponseEntity.noContent().build()
     }
 
@@ -72,13 +70,10 @@ class InvitationController(
     @Operation(summary = "Aceptar invitación")
     fun accept(
         @Valid @RequestBody request: AcceptRequest,
-        @AuthenticationPrincipal jwt: Jwt?,
+        @CurrentUser user: CurrentUserInfo?,
     ): ResponseEntity<MembershipResponse> {
-        val userId = jwt?.subject?.let { UUID.fromString(it) }
-            ?: return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
-        val email = jwt?.getClaimAsString("email")
-            ?: return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
-        val membership = service.acceptInvitation(request.token, userId, email)
+        val u = user ?: return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
+        val membership = service.acceptInvitation(request.token, u.id, u.email)
         return ResponseEntity.ok(membership)
     }
 
@@ -86,11 +81,10 @@ class InvitationController(
     @Operation(summary = "Rechazar invitación")
     fun decline(
         @Valid @RequestBody request: DeclineRequest,
-        @AuthenticationPrincipal jwt: Jwt?,
+        @CurrentUserId userId: UUID?,
     ): ResponseEntity<Unit> {
-        val userId = jwt?.subject?.let { UUID.fromString(it) }
-            ?: return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
-        service.declineInvitation(request.token, userId)
+        val uid = userId ?: return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
+        service.declineInvitation(request.token, uid)
         return ResponseEntity.ok().build()
     }
 }
