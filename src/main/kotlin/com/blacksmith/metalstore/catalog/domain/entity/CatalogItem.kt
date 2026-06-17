@@ -2,8 +2,6 @@ package com.blacksmith.metalstore.catalog.domain.entity
 
 import com.blacksmith.metalstore.shared.BaseEntity
 import jakarta.persistence.*
-import org.hibernate.annotations.JdbcTypeCode
-import org.hibernate.type.SqlTypes
 import java.math.BigDecimal
 import java.util.UUID
 
@@ -18,10 +16,9 @@ data class CatalogItem(
     @Column(nullable = false, length = 30)
     val itemType: String,
 
-    @JdbcTypeCode(SqlTypes.VARCHAR)
+    @Column(length = 100)
     val sku: String? = null,
 
-    @JdbcTypeCode(SqlTypes.VARCHAR)
     @Column(nullable = false, length = 65535)
     val designation: String,
 
@@ -31,7 +28,7 @@ data class CatalogItem(
     @Column(precision = 10, scale = 4)
     val weightKgM: BigDecimal? = null,
 
-    @JdbcTypeCode(SqlTypes.VARCHAR)
+    @Column(length = 255)
     val material: String? = null,
 
     @Column(precision = 10, scale = 4)
@@ -40,6 +37,6 @@ data class CatalogItem(
     @Column(columnDefinition = "TEXT")
     val metadata: String? = null,
 
-    @JdbcTypeCode(SqlTypes.VARCHAR)
+    @Column(length = 500)
     var imagePath: String? = null
 ) : BaseEntity()

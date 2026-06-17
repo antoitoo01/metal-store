@@ -2,8 +2,6 @@ package com.blacksmith.metalstore.client.domain.entity
 
 import com.blacksmith.metalstore.shared.BaseEntity
 import jakarta.persistence.*
-import org.hibernate.annotations.JdbcTypeCode
-import org.hibernate.type.SqlTypes
 import java.util.UUID
 
 enum class ClientStatus { ACTIVE, INACTIVE }
@@ -26,16 +24,16 @@ data class Client(
     @Column(nullable = false)
     val name: String,
 
-    @JdbcTypeCode(SqlTypes.VARCHAR)
+    @Column(length = 255)
     val email: String? = null,
 
-    @JdbcTypeCode(SqlTypes.VARCHAR)
+    @Column(length = 50)
     val phone: String? = null,
 
     @Column(length = 500)
     val address: String? = null,
 
-    @JdbcTypeCode(SqlTypes.VARCHAR)
+    @Column(length = 20)
     val vatNumber: String? = null,
 
     @Column(length = 2000)
