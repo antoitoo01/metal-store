@@ -4,6 +4,8 @@ import com.blacksmith.metalstore.shared.BaseEntity
 import jakarta.persistence.*
 import jakarta.validation.constraints.Positive
 import jakarta.validation.constraints.PositiveOrZero
+import org.hibernate.annotations.JdbcTypeCode
+import org.hibernate.type.SqlTypes
 import java.math.BigDecimal
 import java.time.LocalDateTime
 import java.util.UUID
@@ -32,12 +34,14 @@ data class InventoryItem(
     @Column(nullable = false, precision = 12, scale = 4)
     val quantity: BigDecimal,
 
+    @JdbcTypeCode(SqlTypes.VARCHAR)
     val location: String? = null,
 
     @field:PositiveOrZero
     @Column(precision = 12, scale = 4)
     val costPriceEur: BigDecimal? = null,
 
+    @JdbcTypeCode(SqlTypes.VARCHAR)
     val supplier: String? = null,
 
     @Column(nullable = false, updatable = false)

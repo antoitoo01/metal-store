@@ -3,6 +3,8 @@ package com.blacksmith.metalstore.quote.domain.entity
 import com.blacksmith.metalstore.shared.BaseEntity
 import jakarta.persistence.*
 import jakarta.validation.constraints.Positive
+import org.hibernate.annotations.JdbcTypeCode
+import org.hibernate.type.SqlTypes
 import java.math.BigDecimal
 import java.time.LocalDate
 import java.util.UUID
@@ -31,8 +33,11 @@ data class Quote(
 
     val clientId: UUID? = null,
 
+    @JdbcTypeCode(SqlTypes.VARCHAR)
     val customerName: String? = null,
+    @JdbcTypeCode(SqlTypes.VARCHAR)
     val customerVat: String? = null,
+    @Column(columnDefinition = "TEXT")
     val customerAddress: String? = null,
 
     @Column(nullable = false)
@@ -53,6 +58,7 @@ data class Quote(
     @Column(precision = 14, scale = 4)
     val total: BigDecimal = BigDecimal.ZERO,
 
+    @Column(columnDefinition = "TEXT")
     val notes: String? = null
 ) : BaseEntity()
 

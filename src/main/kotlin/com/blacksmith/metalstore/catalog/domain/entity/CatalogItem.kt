@@ -18,6 +18,7 @@ data class CatalogItem(
     @Column(nullable = false, length = 30)
     val itemType: String,
 
+    @JdbcTypeCode(SqlTypes.VARCHAR)
     val sku: String? = null,
 
     @JdbcTypeCode(SqlTypes.VARCHAR)
@@ -30,6 +31,7 @@ data class CatalogItem(
     @Column(precision = 10, scale = 4)
     val weightKgM: BigDecimal? = null,
 
+    @JdbcTypeCode(SqlTypes.VARCHAR)
     val material: String? = null,
 
     @Column(precision = 10, scale = 4)
@@ -38,5 +40,6 @@ data class CatalogItem(
     @Column(columnDefinition = "TEXT")
     val metadata: String? = null,
 
+    @JdbcTypeCode(SqlTypes.VARCHAR)
     var imagePath: String? = null
 ) : BaseEntity()
