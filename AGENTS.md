@@ -4,7 +4,7 @@
 
 - `gradlew build` — full build + tests (only command used)
 - Tests: `@ActiveProfiles("test")`, H2 in-memory (test profile)
-- Dev: profile `dev` (default), H2 in-memory
+- Dev: profile `dev` (default), PostgreSQL via Docker (`localhost:5433/testdb`)
 
 ## Stack
 
@@ -24,7 +24,7 @@
 - **Auth**: Supabase Auth API via `SupabaseAuthClient` (REST, not SDK). Backend proxies signup/signin.
 - **JWKs**: Spring Security OAuth2 resource server validates Supabase JWT via `jwk-set-uri`.
 - **DB**: `auth/` entity maps to local `users` table. No FK to `auth.users` — `User.id` = Supabase `auth.users.id` UUID.
-- **Profile separation**: `dev` = permit-all security + H2; non-dev = OAuth2 + JWT validation.
+- **Profile separation**: `dev` = permit-all security + PostgreSQL; non-dev = OAuth2 + JWT validation.
 - **Env vars** (loaded via `DotenvLoader` in `main()` from `.env`): `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SECRET_KEY`, `SUPABASE_DB_URL`, `SUPABASE_DB_USER`, `SUPABASE_DB_PASSWORD`.
 
 ## Auth Flow
@@ -43,7 +43,7 @@
 
 ## Conventions
 
-- Default profile is `dev` (H2 + permit-all security)
+- Default profile is `dev` (PostgreSQL + permit-all security)
 - Password removed from `User` entity — Supabase handles auth
 - `LoginResponse` includes `accessToken`, `refreshToken`, `expiresIn`, `email`, `role`
 - `CreateUserRequest` no longer has `password` (use `RegisterRequest` for registration)
