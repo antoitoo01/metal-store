@@ -20,9 +20,9 @@ class UserService(
     private val supabase: SupabaseAuthClient
 ) {
     @Transactional(readOnly = true)
-    fun findAll(tenantId: UUID, pageable: Pageable, q: String? = null): Page<User> =
-        if (q.isNullOrBlank()) userRepository.findByTenantId(tenantId, pageable)
-        else userRepository.findByTenantIdAndUsernameContainingIgnoreCaseOrEmailContainingIgnoreCase(tenantId, q, q, pageable)
+    fun findAll(organizationId: UUID, pageable: Pageable, q: String? = null): Page<User> =
+        if (q.isNullOrBlank()) userRepository.findByOrganizationId(organizationId, pageable)
+        else userRepository.findByOrganizationIdAndUsernameContainingIgnoreCaseOrEmailContainingIgnoreCase(organizationId, q, q, pageable)
 
     @Transactional(readOnly = true)
     fun findById(id: UUID): User {
@@ -41,7 +41,7 @@ class UserService(
         if (targetId == authenticatedId) return
         val currentUser = userRepository.findById(authenticatedId)
             .orElseThrow { UserNotFoundException("Usuario autenticado no encontrado") }
-        if (currentUser.role != Role.ADMIN && currentUser.role != Role.ORGANIZATION_OWNER) {
+        if (currentUser.role != Role.COMPANY) {
             throw AccessDeniedException("No tienes permisos para realizar esta operación")
         }
     }

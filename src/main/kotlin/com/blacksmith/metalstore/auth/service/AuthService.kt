@@ -40,10 +40,10 @@ class AuthService(
         val orgResponse = organizationService.createOrganization(supabaseId, CreateOrganizationRequest(tenantName))
         val user = User(
             id = supabaseId,
-            tenantId = orgResponse.id,
+            organizationId = orgResponse.id,
             username = request.username,
             email = email,
-            role = Role.ORGANIZATION_OWNER,
+            role = Role.COMPANY,
             status = UserState.ACTIVE
         )
         userRepository.save(user)
@@ -70,14 +70,14 @@ class AuthService(
         val user = userRepository.findById(supabaseId).orElse(null)
 
         if (user != null) {
-            val org = organizationRepository.findById(user.tenantId)
+            val org = organizationRepository.findById(user.organizationId)
                 .orElseThrow { UserNotFoundException("Organization not found") }
 
             audit.log(AuditLogger.AuditEvent(
                 action = "LOGIN_SUCCESS",
                 entityType = "User",
                 entityId = user.id.toString(),
-                organizationId = user.tenantId.toString(),
+                organizationId = user.organizationId.toString(),
                 details = mapOf("email" to email)
             ))
 
@@ -98,10 +98,10 @@ class AuthService(
 
         val newUser = User(
             id = supabaseId,
-            tenantId = orgResponse.id,
+            organizationId = orgResponse.id,
             username = supabaseUsername,
             email = supabaseEmail,
-            role = Role.ORGANIZATION_OWNER,
+            role = Role.COMPANY,
             status = UserState.ACTIVE
         )
         userRepository.save(newUser)
@@ -118,7 +118,7 @@ class AuthService(
         val user = userRepository.findById(userId).orElse(null)
 
         if (user != null) {
-            val org = organizationRepository.findById(user.tenantId)
+            val org = organizationRepository.findById(user.organizationId)
                 .orElseThrow { UserNotFoundException("Organization not found") }
             return buildLoginResponse(response, user, org.name)
         }
@@ -131,10 +131,10 @@ class AuthService(
 
         val newUser = User(
             id = userId,
-            tenantId = orgResponse.id,
+            organizationId = orgResponse.id,
             username = supabaseUsername,
             email = supabaseEmail,
-            role = Role.ORGANIZATION_OWNER,
+            role = Role.COMPANY,
             status = UserState.ACTIVE
         )
         userRepository.save(newUser)
@@ -146,7 +146,7 @@ class AuthService(
     fun me(userId: UUID): UserResponse {
         val user = userRepository.findById(userId)
             .orElseThrow { UserNotFoundException("User not found") }
-        val org = organizationRepository.findById(user.tenantId)
+        val org = organizationRepository.findById(user.organizationId)
             .orElseThrow { UserNotFoundException("Organization not found") }
         val memberships = membershipRepository.findByUserId(userId)
         val organizations = memberships.map { m ->
@@ -154,7 +154,7 @@ class AuthService(
                 .orElseThrow { UserNotFoundException("Organization not found") }
             UserOrganization(organizationId = memberOrg.id, organizationName = memberOrg.name, role = m.role)
         }
-        return user.toResponse(org.name, organizations = organizations)
+        return UserResponse.from(user, org.name, organizations = organizations)
     }
 
     fun logout(accessToken: String) {
@@ -169,8 +169,7 @@ class AuthService(
             email = user.email,
             username = user.username,
             role = user.role,
-            tenantId = user.tenantId,
-            organizationId = user.tenantId,
+            organizationId = user.organizationId,
             organizationName = organizationName
         )
     }

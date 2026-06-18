@@ -122,13 +122,13 @@ class OrganizationServiceTest {
     @Test
     fun `getMembers returns all members`() {
         val org = service.createOrganization(ownerId, CreateOrganizationRequest("Test"))
-        membershipRepository.save(Membership(userId = adminId, organizationId = org.id, role = OrganizationRole.ADMIN))
+        membershipRepository.save(Membership(userId = adminId, organizationId = org.id, role = OrganizationRole.EDITOR))
 
         val members = service.getMembers(org.id)
 
         assert(members.size == 2)
         assert(members.any { it.userId == ownerId && it.role == OrganizationRole.OWNER })
-        assert(members.any { it.userId == adminId && it.role == OrganizationRole.ADMIN })
+        assert(members.any { it.userId == adminId && it.role == OrganizationRole.EDITOR })
     }
 
     @Test
@@ -154,21 +154,21 @@ class OrganizationServiceTest {
     @Test
     fun `updateMemberRole changes role`() {
         val org = service.createOrganization(ownerId, CreateOrganizationRequest("Test"))
-        membershipRepository.save(Membership(userId = adminId, organizationId = org.id, role = OrganizationRole.ADMIN))
+        membershipRepository.save(Membership(userId = adminId, organizationId = org.id, role = OrganizationRole.EDITOR))
 
-        service.updateMemberRole(org.id, adminId, OrganizationRole.WORKER, ownerId)
+        service.updateMemberRole(org.id, adminId, OrganizationRole.VIEWER, ownerId)
 
         val updated = membershipRepository.findByUserIdAndOrganizationIdAndStatus(adminId, org.id, MembershipStatus.ACTIVE)
-        assert(updated!!.role == OrganizationRole.WORKER)
+        assert(updated!!.role == OrganizationRole.VIEWER)
     }
 
     @Test
     fun `updateMemberRole throws when not admin or owner`() {
         val org = service.createOrganization(ownerId, CreateOrganizationRequest("Test"))
-        membershipRepository.save(Membership(userId = workerId, organizationId = org.id, role = OrganizationRole.WORKER))
+        membershipRepository.save(Membership(userId = workerId, organizationId = org.id, role = OrganizationRole.VIEWER))
 
         try {
-            service.updateMemberRole(org.id, adminId, OrganizationRole.WORKER, workerId)
+            service.updateMemberRole(org.id, adminId, OrganizationRole.VIEWER, workerId)
             assert(false) { "Expected RoleRequiredException" }
         } catch (e: RoleRequiredException) {
             // expected
@@ -178,7 +178,7 @@ class OrganizationServiceTest {
     @Test
     fun `removeMember removes membership`() {
         val org = service.createOrganization(ownerId, CreateOrganizationRequest("Test"))
-        membershipRepository.save(Membership(userId = adminId, organizationId = org.id, role = OrganizationRole.ADMIN))
+        membershipRepository.save(Membership(userId = adminId, organizationId = org.id, role = OrganizationRole.EDITOR))
 
         service.removeMember(org.id, adminId, ownerId)
 

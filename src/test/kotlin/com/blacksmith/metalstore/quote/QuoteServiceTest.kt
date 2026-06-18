@@ -2,6 +2,7 @@ package com.blacksmith.metalstore.quote
 
 import com.blacksmith.metalstore.auth.audit.AuditLogger
 import com.blacksmith.metalstore.quote.application.QuoteService
+import com.blacksmith.metalstore.shared.exception.ApiException
 import com.blacksmith.metalstore.quote.domain.entity.Quote
 import com.blacksmith.metalstore.quote.domain.entity.QuoteLine
 import com.blacksmith.metalstore.quote.domain.entity.QuoteStatus
@@ -76,13 +77,17 @@ class QuoteServiceTest {
     }
 
     @Test
-    fun `add line to issued quote returns null`() {
+    fun `add line to issued quote throws`() {
         val quote = service.createDraft(organizationId, Quote(organizationId = organizationId, quoteNumber = "", customerName = "Test"))
         service.issue(organizationId, quote.id)
 
         val line = QuoteLine(quoteId = quote.id, lineNumber = 1, description = "Perfil IPN 200", quantity = BigDecimal.ONE, unitPrice = BigDecimal.TEN, totalPrice = BigDecimal.ZERO)
-        val result = service.addLine(organizationId, quote.id, line)
-        assert(result == null)
+        try {
+            service.addLine(organizationId, quote.id, line)
+            assert(false) { "Expected ApiException" }
+        } catch (e: IllegalArgumentException) {
+            // expected
+        }
     }
 
     @Test
@@ -95,12 +100,16 @@ class QuoteServiceTest {
     }
 
     @Test
-    fun `issue from issued returns null`() {
+    fun `issue from issued throws`() {
         val quote = service.createDraft(organizationId, Quote(organizationId = organizationId, quoteNumber = "", customerName = "Test"))
         service.issue(organizationId, quote.id)
 
-        val result = service.issue(organizationId, quote.id)
-        assert(result == null)
+        try {
+            service.issue(organizationId, quote.id)
+            assert(false) { "Expected IllegalArgumentException" }
+        } catch (e: IllegalArgumentException) {
+            // expected
+        }
     }
 
     @Test
@@ -114,10 +123,14 @@ class QuoteServiceTest {
     }
 
     @Test
-    fun `accept from draft returns null`() {
+    fun `accept from draft throws`() {
         val quote = service.createDraft(organizationId, Quote(organizationId = organizationId, quoteNumber = "", customerName = "Test"))
-        val result = service.accept(organizationId, quote.id)
-        assert(result == null)
+        try {
+            service.accept(organizationId, quote.id)
+            assert(false) { "Expected IllegalArgumentException" }
+        } catch (e: IllegalArgumentException) {
+            // expected
+        }
     }
 
     @Test
@@ -139,11 +152,15 @@ class QuoteServiceTest {
     }
 
     @Test
-    fun `cancel from accepted returns null`() {
+    fun `cancel from accepted throws`() {
         val quote = service.createDraft(organizationId, Quote(organizationId = organizationId, quoteNumber = "", customerName = "Test"))
         service.issue(organizationId, quote.id)
         service.accept(organizationId, quote.id)
-        val result = service.cancel(organizationId, quote.id)
-        assert(result == null)
+        try {
+            service.cancel(organizationId, quote.id)
+            assert(false) { "Expected IllegalArgumentException" }
+        } catch (e: IllegalArgumentException) {
+            // expected
+        }
     }
 }

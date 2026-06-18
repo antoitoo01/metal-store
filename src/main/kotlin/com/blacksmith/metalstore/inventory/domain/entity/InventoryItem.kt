@@ -6,6 +6,7 @@ import jakarta.validation.constraints.Positive
 import jakarta.validation.constraints.PositiveOrZero
 import java.math.BigDecimal
 import java.time.LocalDateTime
+import java.util.Objects
 import java.util.UUID
 
 @Entity
@@ -17,7 +18,7 @@ import java.util.UUID
         Index(name = "idx_inventory_item", columnList = "item_id")
     ]
 )
-data class InventoryItem(
+class InventoryItem(
     @Id
     val id: UUID = UUID.randomUUID(),
 
@@ -47,7 +48,16 @@ data class InventoryItem(
 
     @Column(columnDefinition = "TEXT")
     val notes: String? = null
-) : BaseEntity()
+) : BaseEntity() {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other == null || javaClass != other.javaClass) return false
+        val that = other as InventoryItem
+        return id == that.id
+    }
+
+    override fun hashCode(): Int = Objects.hash(id)
+}
 
 fun InventoryItem.assertValidSource(): Boolean =
     (profileId != null) xor (itemId != null)

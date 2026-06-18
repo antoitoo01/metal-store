@@ -2,6 +2,7 @@ package com.blacksmith.metalstore.client.domain.entity
 
 import com.blacksmith.metalstore.shared.BaseEntity
 import jakarta.persistence.*
+import java.util.Objects
 import java.util.UUID
 
 enum class ClientStatus { ACTIVE, INACTIVE }
@@ -14,7 +15,7 @@ enum class ClientStatus { ACTIVE, INACTIVE }
         Index(name = "idx_client_name", columnList = "organization_id, name")
     ]
 )
-data class Client(
+class Client(
     @Id
     val id: UUID = UUID.randomUUID(),
 
@@ -42,4 +43,13 @@ data class Client(
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
     val status: ClientStatus = ClientStatus.ACTIVE
-) : BaseEntity()
+) : BaseEntity() {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other == null || javaClass != other.javaClass) return false
+        val that = other as Client
+        return id == that.id
+    }
+
+    override fun hashCode(): Int = Objects.hash(id)
+}

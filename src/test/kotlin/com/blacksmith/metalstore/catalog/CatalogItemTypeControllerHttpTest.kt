@@ -132,12 +132,12 @@ class CatalogItemTypeControllerHttpTest {
     @Test
     fun `organization resolved from JWT when auth present`() {
         userRepo.save(User(
-            id = userId, tenantId = organizationId, username = "jwtuser",
-            email = "jwt@test.com", role = Role.USER, status = UserState.ACTIVE
+            id = userId, organizationId = organizationId, username = "jwtuser",
+            email = "jwt@test.com", role = Role.COMPANY, status = UserState.ACTIVE
         ))
         membershipRepo.save(Membership(
             userId = userId, organizationId = organizationId,
-            role = OrganizationRole.WORKER, status = MembershipStatus.ACTIVE
+            role = OrganizationRole.VIEWER, status = MembershipStatus.ACTIVE
         ))
         repo.save(CatalogItemType(organizationId = organizationId, name = "JWT Type"))
 

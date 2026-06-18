@@ -1,6 +1,8 @@
 package com.blacksmith.metalstore.inventory.controller
 
 import com.blacksmith.metalstore.organization.config.CurrentOrganizationId
+import com.blacksmith.metalstore.organization.config.RequiresRole
+import com.blacksmith.metalstore.organization.domain.entity.OrganizationRole
 import com.blacksmith.metalstore.inventory.application.InventoryService
 import com.blacksmith.metalstore.inventory.domain.dto.request.CreateItemRequest
 import com.blacksmith.metalstore.inventory.domain.dto.request.UpdateItemRequest
@@ -36,13 +38,12 @@ class InventoryController(
         ApiResponse(responseCode = "200", description = "Operación exitosa"),
         ApiResponse(responseCode = "404", description = "Recurso no encontrado")
     ])
-    fun get(@CurrentOrganizationId organizationId: UUID, @PathVariable id: UUID): ResponseEntity<ItemResponse> {
-        val item = service.findById(organizationId, id) ?: return ResponseEntity.notFound().build()
-        return ResponseEntity.ok(ItemResponse.from(item))
-    }
+    fun get(@CurrentOrganizationId organizationId: UUID, @PathVariable id: UUID): ItemResponse =
+        ItemResponse.from(service.findById(organizationId, id))
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
+    @RequiresRole(OrganizationRole.EDITOR)
     @Operation(summary = "Crear ítem", description = "Crea un nuevo ítem de inventario.")
     @ApiResponses(value = [
         ApiResponse(responseCode = "201", description = "Recurso creado"),
@@ -54,6 +55,7 @@ class InventoryController(
     }
 
     @PutMapping("/{id}")
+    @RequiresRole(OrganizationRole.EDITOR)
     @Operation(summary = "Actualizar ítem", description = "Actualiza los datos de un ítem de inventario existente.")
     @ApiResponses(value = [
         ApiResponse(responseCode = "200", description = "Operación exitosa"),
@@ -64,21 +66,18 @@ class InventoryController(
         @CurrentOrganizationId organizationId: UUID,
         @PathVariable id: UUID,
         @Valid @RequestBody request: UpdateItemRequest
-    ): ResponseEntity<ItemResponse> {
-        val updated = service.update(organizationId, id, request.toEntity(organizationId))
-            ?: return ResponseEntity.notFound().build()
-        return ResponseEntity.ok(ItemResponse.from(updated))
-    }
+    ): ItemResponse =
+        ItemResponse.from(service.update(organizationId, id, request.toEntity(organizationId)))
 
     @DeleteMapping("/{id}")
+    @RequiresRole(OrganizationRole.ADMIN)
     @Operation(summary = "Eliminar ítem", description = "Elimina un ítem de inventario por su UUID.")
     @ApiResponses(value = [
         ApiResponse(responseCode = "204", description = "Sin contenido"),
         ApiResponse(responseCode = "404", description = "Recurso no encontrado")
     ])
     fun delete(@CurrentOrganizationId organizationId: UUID, @PathVariable id: UUID): ResponseEntity<Unit> {
-        val deleted = service.delete(organizationId, id)
-        return if (deleted) ResponseEntity.noContent().build()
-        else ResponseEntity.notFound().build()
+        service.delete(organizationId, id)
+        return ResponseEntity.noContent().build()
     }
 }

@@ -2,6 +2,7 @@ package com.blacksmith.metalstore.billing
 
 import com.blacksmith.metalstore.auth.audit.AuditLogger
 import com.blacksmith.metalstore.billing.application.BillingService
+import com.blacksmith.metalstore.shared.exception.ApiException
 import com.blacksmith.metalstore.billing.domain.entity.*
 import com.blacksmith.metalstore.billing.domain.repository.InvoiceLineRepository
 import com.blacksmith.metalstore.billing.domain.repository.InvoiceRepository
@@ -94,8 +95,12 @@ class BillingServiceTest {
             invoiceId = inv.id, lineNumber = 1, description = "Test",
             quantity = BigDecimal.ONE, unitPrice = BigDecimal.TEN, totalPrice = BigDecimal.TEN
         )
-        val result = service.addLine(organizationId, inv.id, line)
-        assert(result == null)
+        try {
+            service.addLine(organizationId, inv.id, line)
+            assert(false) { "Expected IllegalArgumentException" }
+        } catch (e: IllegalArgumentException) {
+            // expected
+        }
     }
 
     @Test

@@ -1,7 +1,9 @@
 package com.blacksmith.metalstore.organization.controller
 
 import com.blacksmith.metalstore.organization.application.OrganizationService
+import com.blacksmith.metalstore.organization.config.RequiresRole
 import com.blacksmith.metalstore.organization.domain.dto.request.UpdateRoleRequest
+import com.blacksmith.metalstore.organization.domain.entity.OrganizationRole
 import com.blacksmith.metalstore.organization.domain.dto.response.MembershipResponse
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag
@@ -35,6 +37,7 @@ class MembershipController(
     }
 
     @PutMapping("/{userId}/role")
+    @RequiresRole(OrganizationRole.ADMIN, orgIdFromArg = 2)
     @Operation(summary = "Cambiar rol de un miembro")
     fun updateRole(
         @PathVariable orgId: UUID,
@@ -49,6 +52,7 @@ class MembershipController(
     }
 
     @DeleteMapping("/{userId}")
+    @RequiresRole(OrganizationRole.ADMIN, orgIdFromArg = 2)
     @Operation(summary = "Eliminar miembro de la organización")
     fun remove(
         @PathVariable orgId: UUID,

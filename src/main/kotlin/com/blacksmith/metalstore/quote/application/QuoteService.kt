@@ -9,6 +9,7 @@ import com.blacksmith.metalstore.quote.domain.repository.QuoteRepository
 import com.blacksmith.metalstore.shared.NumberSequence
 import com.blacksmith.metalstore.shared.NumberSequenceId
 import com.blacksmith.metalstore.shared.NumberSequenceRepository
+import com.blacksmith.metalstore.shared.exception.ResourceNotFoundException
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Service
@@ -30,8 +31,9 @@ class QuoteService(
         quoteRepo.findAllFiltered(organizationId, q, status, clientId, pageable)
 
     @Transactional(readOnly = true)
-    fun findQuote(organizationId: UUID, quoteId: UUID): Quote? =
-        quoteRepo.findById(quoteId).filter { it.organizationId == organizationId }.orElse(null)
+    fun findQuote(organizationId: UUID, quoteId: UUID): Quote =
+        quoteRepo.findById(quoteId).filter { it.organizationId == organizationId }
+            .orElseThrow { ResourceNotFoundException("Quote", quoteId) }
 
     @Transactional(readOnly = true)
     fun getLines(quoteId: UUID): List<QuoteLine> =
@@ -39,7 +41,22 @@ class QuoteService(
 
     fun createDraft(organizationId: UUID, quote: Quote): Quote {
         val number = nextQuoteNumber(organizationId)
-        val saved = quoteRepo.save(quote.copy(quoteNumber = number))
+        val saved = quoteRepo.save(Quote(
+            id = quote.id,
+            organizationId = quote.organizationId,
+            quoteNumber = number,
+            clientId = quote.clientId,
+            customerName = quote.customerName,
+            customerVat = quote.customerVat,
+            customerAddress = quote.customerAddress,
+            issueDate = quote.issueDate,
+            validUntil = quote.validUntil,
+            status = quote.status,
+            subtotal = quote.subtotal,
+            vatTotal = quote.vatTotal,
+            total = quote.total,
+            notes = quote.notes
+        ))
         audit.log(AuditLogger.AuditEvent(
             action = "QUOTE_CREATED",
             entityType = "Quote",
@@ -50,11 +67,23 @@ class QuoteService(
         return saved
     }
 
-    fun addLine(organizationId: UUID, quoteId: UUID, line: QuoteLine): QuoteLine? {
-        val quote = quoteRepo.findById(quoteId).filter { it.organizationId == organizationId }.orElse(null) ?: return null
-        if (quote.status != QuoteStatus.DRAFT) return null
+    fun addLine(organizationId: UUID, quoteId: UUID, line: QuoteLine): QuoteLine {
+        val quote = quoteRepo.findById(quoteId).filter { it.organizationId == organizationId }
+            .orElseThrow { ResourceNotFoundException("Quote", quoteId) }
+        require(quote.status == QuoteStatus.DRAFT) { "Quote $quoteId is not in DRAFT status" }
         val computedTotal = line.quantity * line.unitPrice
-        val lineWithTotal = line.copy(quoteId = quoteId, totalPrice = computedTotal)
+        val lineWithTotal = QuoteLine(
+            id = line.id,
+            quoteId = quoteId,
+            lineNumber = line.lineNumber,
+            profileId = line.profileId,
+            itemId = line.itemId,
+            description = line.description,
+            quantity = line.quantity,
+            unitPrice = line.unitPrice,
+            vatRate = line.vatRate,
+            totalPrice = computedTotal
+        )
         val saved = lineRepo.save(lineWithTotal)
         recalcTotals(quoteId)
         audit.log(AuditLogger.AuditEvent(
@@ -67,10 +96,12 @@ class QuoteService(
         return saved
     }
 
-    fun removeLine(organizationId: UUID, quoteId: UUID, lineId: UUID): Boolean {
-        val quote = quoteRepo.findById(quoteId).filter { it.organizationId == organizationId }.orElse(null) ?: return false
-        if (quote.status != QuoteStatus.DRAFT) return false
-        val line = lineRepo.findById(lineId).filter { it.quoteId == quoteId }.orElse(null) ?: return false
+    fun removeLine(organizationId: UUID, quoteId: UUID, lineId: UUID) {
+        val quote = quoteRepo.findById(quoteId).filter { it.organizationId == organizationId }
+            .orElseThrow { ResourceNotFoundException("Quote", quoteId) }
+        require(quote.status == QuoteStatus.DRAFT) { "Quote $quoteId is not in DRAFT status" }
+        val line = lineRepo.findById(lineId).filter { it.quoteId == quoteId }
+            .orElseThrow { ResourceNotFoundException("QuoteLine", lineId) }
         lineRepo.delete(line)
         recalcTotals(quoteId)
         audit.log(AuditLogger.AuditEvent(
@@ -80,12 +111,12 @@ class QuoteService(
             organizationId = organizationId.toString(),
             details = mapOf("quoteId" to quoteId.toString())
         ))
-        return true
     }
 
-    fun issue(organizationId: UUID, quoteId: UUID): Quote? {
-        val quote = quoteRepo.findById(quoteId).filter { it.organizationId == organizationId }.orElse(null) ?: return null
-        if (quote.status != QuoteStatus.DRAFT) return null
+    fun issue(organizationId: UUID, quoteId: UUID): Quote {
+        val quote = quoteRepo.findById(quoteId).filter { it.organizationId == organizationId }
+            .orElseThrow { ResourceNotFoundException("Quote", quoteId) }
+        require(quote.status.canTransitionTo(QuoteStatus.ISSUED)) { "Quote $quoteId cannot be issued from status ${quote.status}" }
         quote.status = QuoteStatus.ISSUED
         val saved = quoteRepo.save(quote)
         audit.log(AuditLogger.AuditEvent(
@@ -98,9 +129,10 @@ class QuoteService(
         return saved
     }
 
-    fun accept(organizationId: UUID, quoteId: UUID): Quote? {
-        val quote = quoteRepo.findById(quoteId).filter { it.organizationId == organizationId }.orElse(null) ?: return null
-        if (quote.status != QuoteStatus.ISSUED) return null
+    fun accept(organizationId: UUID, quoteId: UUID): Quote {
+        val quote = quoteRepo.findById(quoteId).filter { it.organizationId == organizationId }
+            .orElseThrow { ResourceNotFoundException("Quote", quoteId) }
+        require(quote.status.canTransitionTo(QuoteStatus.ACCEPTED)) { "Quote $quoteId cannot be accepted from status ${quote.status}" }
         quote.status = QuoteStatus.ACCEPTED
         val saved = quoteRepo.save(quote)
         audit.log(AuditLogger.AuditEvent(
@@ -113,9 +145,10 @@ class QuoteService(
         return saved
     }
 
-    fun reject(organizationId: UUID, quoteId: UUID): Quote? {
-        val quote = quoteRepo.findById(quoteId).filter { it.organizationId == organizationId }.orElse(null) ?: return null
-        if (quote.status != QuoteStatus.ISSUED) return null
+    fun reject(organizationId: UUID, quoteId: UUID): Quote {
+        val quote = quoteRepo.findById(quoteId).filter { it.organizationId == organizationId }
+            .orElseThrow { ResourceNotFoundException("Quote", quoteId) }
+        require(quote.status.canTransitionTo(QuoteStatus.REJECTED)) { "Quote $quoteId cannot be rejected from status ${quote.status}" }
         quote.status = QuoteStatus.REJECTED
         val saved = quoteRepo.save(quote)
         audit.log(AuditLogger.AuditEvent(
@@ -128,9 +161,10 @@ class QuoteService(
         return saved
     }
 
-    fun cancel(organizationId: UUID, quoteId: UUID): Quote? {
-        val quote = quoteRepo.findById(quoteId).filter { it.organizationId == organizationId }.orElse(null) ?: return null
-        if (quote.status == QuoteStatus.ACCEPTED || quote.status == QuoteStatus.REJECTED) return null
+    fun cancel(organizationId: UUID, quoteId: UUID): Quote {
+        val quote = quoteRepo.findById(quoteId).filter { it.organizationId == organizationId }
+            .orElseThrow { ResourceNotFoundException("Quote", quoteId) }
+        require(quote.status.canTransitionTo(QuoteStatus.CANCELLED)) { "Quote $quoteId cannot be cancelled from status ${quote.status}" }
         quote.status = QuoteStatus.CANCELLED
         val saved = quoteRepo.save(quote)
         audit.log(AuditLogger.AuditEvent(
@@ -149,18 +183,43 @@ class QuoteService(
         val vatTotal = lines.sumOf { it.totalPrice * it.vatRate / BigDecimal("100") }
         val total = subtotal + vatTotal
         quoteRepo.findById(quoteId).ifPresent { q ->
-            quoteRepo.save(q.copy(subtotal = subtotal, vatTotal = vatTotal, total = total))
+            quoteRepo.save(Quote(
+                id = q.id,
+                organizationId = q.organizationId,
+                quoteNumber = q.quoteNumber,
+                clientId = q.clientId,
+                customerName = q.customerName,
+                customerVat = q.customerVat,
+                customerAddress = q.customerAddress,
+                issueDate = q.issueDate,
+                validUntil = q.validUntil,
+                status = q.status,
+                subtotal = subtotal,
+                vatTotal = vatTotal,
+                total = total,
+                notes = q.notes
+            ))
         }
     }
 
-    fun update(organizationId: UUID, quoteId: UUID, customerName: String?, customerVat: String?, customerAddress: String?, validUntil: LocalDate?, notes: String?): Quote? {
-        val quote = quoteRepo.findById(quoteId).filter { it.organizationId == organizationId }.orElse(null) ?: return null
-        if (quote.status != QuoteStatus.DRAFT) return null
-        val merged = quote.copy(
+    fun update(organizationId: UUID, quoteId: UUID, customerName: String?, customerVat: String?, customerAddress: String?, validUntil: LocalDate?, notes: String?): Quote {
+        val quote = quoteRepo.findById(quoteId).filter { it.organizationId == organizationId }
+            .orElseThrow { ResourceNotFoundException("Quote", quoteId) }
+        require(quote.status == QuoteStatus.DRAFT) { "Quote $quoteId is not in DRAFT status" }
+        val merged = Quote(
+            id = quote.id,
+            organizationId = quote.organizationId,
+            quoteNumber = quote.quoteNumber,
+            clientId = quote.clientId,
             customerName = customerName ?: quote.customerName,
             customerVat = customerVat ?: quote.customerVat,
             customerAddress = customerAddress ?: quote.customerAddress,
+            issueDate = quote.issueDate,
             validUntil = validUntil ?: quote.validUntil,
+            status = quote.status,
+            subtotal = quote.subtotal,
+            vatTotal = quote.vatTotal,
+            total = quote.total,
             notes = notes ?: quote.notes
         )
         val saved = quoteRepo.save(merged)

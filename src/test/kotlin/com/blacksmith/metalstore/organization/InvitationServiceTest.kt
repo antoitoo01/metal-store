@@ -68,7 +68,7 @@ class InvitationServiceTest {
 
     @Test
     fun `createInvitations throws when user is not admin`() {
-        membershipRepository.save(Membership(userId = workerId, organizationId = orgId, role = OrganizationRole.WORKER))
+        membershipRepository.save(Membership(userId = workerId, organizationId = orgId, role = OrganizationRole.VIEWER))
 
         try {
             service.createInvitations(orgId, listOf("w@test.com"), workerId)
@@ -100,7 +100,7 @@ class InvitationServiceTest {
     }
 
     @Test
-    fun `acceptInvitation creates membership as WORKER`() {
+    fun `acceptInvitation creates membership as VIEWER`() {
         val token = UUID.randomUUID().toString()
         val email = "nuevo@test.com"
         invitationRepository.save(Invitation(token = token, organizationId = orgId, email = email, createdBy = ownerId))
@@ -108,7 +108,7 @@ class InvitationServiceTest {
         val membership = service.acceptInvitation(token, workerId, email)
 
         assert(membership.userId == workerId)
-        assert(membership.role == OrganizationRole.WORKER)
+        assert(membership.role == OrganizationRole.VIEWER)
 
         val updatedInv = invitationRepository.findByToken(token)!!
         assert(updatedInv.status == InvitationStatus.ACCEPTED)

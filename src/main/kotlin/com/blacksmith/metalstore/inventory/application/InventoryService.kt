@@ -4,6 +4,7 @@ import com.blacksmith.metalstore.auth.audit.AuditLogger
 import com.blacksmith.metalstore.inventory.domain.entity.InventoryItem
 import com.blacksmith.metalstore.inventory.domain.entity.assertValidSource
 import com.blacksmith.metalstore.inventory.domain.repository.InventoryItemRepository
+import com.blacksmith.metalstore.shared.exception.ResourceNotFoundException
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Service
@@ -21,8 +22,9 @@ class InventoryService(
         repo.findByOrganizationId(organizationId, pageable)
 
     @Transactional(readOnly = true)
-    fun findById(organizationId: UUID, id: UUID): InventoryItem? =
-        repo.findById(id).filter { it.organizationId == organizationId }.orElse(null)
+    fun findById(organizationId: UUID, id: UUID): InventoryItem =
+        repo.findById(id).filter { it.organizationId == organizationId }
+            .orElseThrow { ResourceNotFoundException("InventoryItem", id) }
 
     fun create(item: InventoryItem): InventoryItem {
         require(item.assertValidSource()) { "InventoryItem must reference either a profile or an item (exclusive)" }
@@ -37,13 +39,19 @@ class InventoryService(
         return saved
     }
 
-    fun update(organizationId: UUID, id: UUID, updated: InventoryItem): InventoryItem? {
-        val existing = repo.findById(id).filter { it.organizationId == organizationId }.orElse(null) ?: return null
-        val merged = existing.copy(
+    fun update(organizationId: UUID, id: UUID, updated: InventoryItem): InventoryItem {
+        val existing = repo.findById(id).filter { it.organizationId == organizationId }
+            .orElseThrow { ResourceNotFoundException("InventoryItem", id) }
+        val merged = InventoryItem(
+            id = existing.id,
+            organizationId = existing.organizationId,
+            profileId = existing.profileId,
+            itemId = existing.itemId,
             quantity = updated.quantity,
             location = updated.location ?: existing.location,
             costPriceEur = updated.costPriceEur ?: existing.costPriceEur,
             supplier = updated.supplier ?: existing.supplier,
+            receivedAt = existing.receivedAt,
             notes = updated.notes ?: existing.notes
         )
         val saved = repo.save(merged)
@@ -57,8 +65,9 @@ class InventoryService(
         return saved
     }
 
-    fun delete(organizationId: UUID, id: UUID): Boolean {
-        val item = repo.findById(id).filter { it.organizationId == organizationId }.orElse(null) ?: return false
+    fun delete(organizationId: UUID, id: UUID) {
+        val item = repo.findById(id).filter { it.organizationId == organizationId }
+            .orElseThrow { ResourceNotFoundException("InventoryItem", id) }
         repo.delete(item)
         audit.log(AuditLogger.AuditEvent(
             action = "INVENTORY_DELETED",
@@ -66,6 +75,5 @@ class InventoryService(
             entityId = id.toString(),
             organizationId = organizationId.toString()
         ))
-        return true
     }
 }

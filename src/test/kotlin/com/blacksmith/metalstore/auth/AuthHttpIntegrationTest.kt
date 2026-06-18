@@ -81,10 +81,10 @@ class AuthHttpIntegrationTest {
     fun `me returns user details when JWT is valid`() {
         val user = User(
             id = userId,
-            tenantId = organizationId,
+            organizationId = organizationId,
             username = "httptest",
             email = email,
-            role = Role.USER,
+            role = Role.COMPANY,
             status = UserState.ACTIVE
         )
         userRepository.save(user)

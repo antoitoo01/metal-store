@@ -128,7 +128,11 @@ class BillingControllerHttpTest {
 
     @Test
     fun `cannot add lines to issued invoice`() {
-        val inv = invoiceRepo.save(Invoice(organizationId = organizationId, invoiceNumber = "FAC-2026-001").copy(status = InvoiceStatus.ISSUED))
+        val inv = invoiceRepo.save(Invoice(
+            organizationId = organizationId,
+            invoiceNumber = "FAC-2026-001",
+            status = InvoiceStatus.ISSUED
+        ))
         val lineBody = """{"invoiceId":"${inv.id}","lineNumber":1,"description":"Test","quantity":1,"unitPrice":10,"totalPrice":10}"""
 
         mockMvc.perform(post("/api/billing/invoices/{id}/lines", inv.id)

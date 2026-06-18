@@ -2,6 +2,7 @@ package com.blacksmith.metalstore.organization.domain.entity
 
 import com.blacksmith.metalstore.shared.BaseEntity
 import jakarta.persistence.*
+import java.util.Objects
 import java.util.UUID
 
 @Entity
@@ -13,7 +14,7 @@ import java.util.UUID
         Index(name = "idx_membership_user", columnList = "user_id"),
     ]
 )
-data class Membership(
+class Membership(
     @Id
     val id: UUID = UUID.randomUUID(),
 
@@ -33,4 +34,13 @@ data class Membership(
 
     @Column(name = "invited_by")
     var invitedBy: UUID? = null,
-) : BaseEntity()
+) : BaseEntity() {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other == null || javaClass != other.javaClass) return false
+        val that = other as Membership
+        return id == that.id
+    }
+
+    override fun hashCode(): Int = Objects.hash(id)
+}

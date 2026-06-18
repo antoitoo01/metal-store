@@ -117,7 +117,7 @@ class InvitationControllerHttpTest {
             .content("""{"token":"$token"}"""))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.userId").value(newUserId.toString()))
-            .andExpect(jsonPath("$.role").value("WORKER"))
+            .andExpect(jsonPath("$.role").value("VIEWER"))
     }
 
     @Test

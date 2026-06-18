@@ -1,6 +1,8 @@
 package com.blacksmith.metalstore.quote.controller
 
 import com.blacksmith.metalstore.organization.config.CurrentOrganizationId
+import com.blacksmith.metalstore.organization.config.RequiresRole
+import com.blacksmith.metalstore.organization.domain.entity.OrganizationRole
 import com.blacksmith.metalstore.quote.application.QuoteService
 import com.blacksmith.metalstore.quote.domain.dto.request.CreateQuoteLineRequest
 import com.blacksmith.metalstore.quote.domain.dto.request.CreateQuoteRequest
@@ -45,13 +47,12 @@ class QuoteController(
         ApiResponse(responseCode = "200", description = "Operación exitosa"),
         ApiResponse(responseCode = "404", description = "Recurso no encontrado")
     ])
-    fun get(@CurrentOrganizationId organizationId: UUID, @PathVariable id: UUID): ResponseEntity<QuoteResponse> {
-        val quote = service.findQuote(organizationId, id) ?: return ResponseEntity.notFound().build()
-        return ResponseEntity.ok(QuoteResponse.from(quote))
-    }
+    fun get(@CurrentOrganizationId organizationId: UUID, @PathVariable id: UUID): QuoteResponse =
+        QuoteResponse.from(service.findQuote(organizationId, id))
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
+    @RequiresRole(OrganizationRole.EDITOR)
     @Operation(summary = "Crear borrador de cotización", description = "Crea un nuevo borrador de cotización.")
     @ApiResponses(value = [
         ApiResponse(responseCode = "201", description = "Recurso creado"),
@@ -66,6 +67,7 @@ class QuoteController(
     }
 
     @PutMapping("/{id}")
+    @RequiresRole(OrganizationRole.EDITOR)
     @Operation(summary = "Actualizar cotización", description = "Actualiza los datos de cabecera de una cotización en estado DRAFT.")
     @ApiResponses(value = [
         ApiResponse(responseCode = "200", description = "Operación exitosa"),
@@ -76,11 +78,8 @@ class QuoteController(
         @CurrentOrganizationId organizationId: UUID,
         @PathVariable id: UUID,
         @Valid @RequestBody request: UpdateQuoteRequest
-    ): ResponseEntity<QuoteResponse> {
-        val updated = service.update(organizationId, id, request.customerName, request.customerVat, request.customerAddress, request.validUntil, request.notes)
-            ?: return ResponseEntity.badRequest().build()
-        return ResponseEntity.ok(QuoteResponse.from(updated))
-    }
+    ): QuoteResponse =
+        QuoteResponse.from(service.update(organizationId, id, request.customerName, request.customerVat, request.customerAddress, request.validUntil, request.notes))
 
     @GetMapping("/{id}/lines")
     @Operation(summary = "Obtener líneas de cotización", description = "Retorna las líneas de una cotización.")
@@ -92,6 +91,7 @@ class QuoteController(
         service.getLines(id).map { QuoteLineResponse.from(it) }
 
     @PostMapping("/{id}/lines")
+    @RequiresRole(OrganizationRole.EDITOR)
     @Operation(summary = "Agregar línea a cotización", description = "Agrega una nueva línea a una cotización existente.")
     @ApiResponses(value = [
         ApiResponse(responseCode = "200", description = "Operación exitosa"),
@@ -101,14 +101,12 @@ class QuoteController(
         @CurrentOrganizationId organizationId: UUID,
         @PathVariable id: UUID,
         @Valid @RequestBody request: CreateQuoteLineRequest
-    ): ResponseEntity<QuoteLineResponse> {
-        val saved = service.addLine(organizationId, id, request.toEntity(id))
-            ?: return ResponseEntity.badRequest().build()
-        return ResponseEntity.ok(QuoteLineResponse.from(saved))
-    }
+    ): QuoteLineResponse =
+        QuoteLineResponse.from(service.addLine(organizationId, id, request.toEntity(id)))
 
     @DeleteMapping("/{quoteId}/lines/{lineId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
+    @RequiresRole(OrganizationRole.EDITOR)
     @Operation(summary = "Eliminar línea de cotización", description = "Elimina una línea de una cotización.")
     @ApiResponses(value = [
         ApiResponse(responseCode = "204", description = "Sin contenido"),
@@ -119,46 +117,42 @@ class QuoteController(
     }
 
     @PostMapping("/{id}/issue")
+    @RequiresRole(OrganizationRole.EDITOR)
     @Operation(summary = "Emitir cotización", description = "Cambia el estado de la cotización a emitida.")
     @ApiResponses(value = [
         ApiResponse(responseCode = "200", description = "Operación exitosa"),
         ApiResponse(responseCode = "400", description = "Solicitud inválida")
     ])
-    fun issue(@CurrentOrganizationId organizationId: UUID, @PathVariable id: UUID): ResponseEntity<QuoteResponse> {
-        val quote = service.issue(organizationId, id) ?: return ResponseEntity.badRequest().build()
-        return ResponseEntity.ok(QuoteResponse.from(quote))
-    }
+    fun issue(@CurrentOrganizationId organizationId: UUID, @PathVariable id: UUID): QuoteResponse =
+        QuoteResponse.from(service.issue(organizationId, id))
 
     @PostMapping("/{id}/accept")
+    @RequiresRole(OrganizationRole.EDITOR)
     @Operation(summary = "Aceptar cotización", description = "Cambia el estado de la cotización a aceptada.")
     @ApiResponses(value = [
         ApiResponse(responseCode = "200", description = "Operación exitosa"),
         ApiResponse(responseCode = "400", description = "Solicitud inválida")
     ])
-    fun accept(@CurrentOrganizationId organizationId: UUID, @PathVariable id: UUID): ResponseEntity<QuoteResponse> {
-        val quote = service.accept(organizationId, id) ?: return ResponseEntity.badRequest().build()
-        return ResponseEntity.ok(QuoteResponse.from(quote))
-    }
+    fun accept(@CurrentOrganizationId organizationId: UUID, @PathVariable id: UUID): QuoteResponse =
+        QuoteResponse.from(service.accept(organizationId, id))
 
     @PostMapping("/{id}/reject")
+    @RequiresRole(OrganizationRole.EDITOR)
     @Operation(summary = "Rechazar cotización", description = "Cambia el estado de la cotización a rechazada.")
     @ApiResponses(value = [
         ApiResponse(responseCode = "200", description = "Operación exitosa"),
         ApiResponse(responseCode = "400", description = "Solicitud inválida")
     ])
-    fun reject(@CurrentOrganizationId organizationId: UUID, @PathVariable id: UUID): ResponseEntity<QuoteResponse> {
-        val quote = service.reject(organizationId, id) ?: return ResponseEntity.badRequest().build()
-        return ResponseEntity.ok(QuoteResponse.from(quote))
-    }
+    fun reject(@CurrentOrganizationId organizationId: UUID, @PathVariable id: UUID): QuoteResponse =
+        QuoteResponse.from(service.reject(organizationId, id))
 
     @PostMapping("/{id}/cancel")
+    @RequiresRole(OrganizationRole.EDITOR)
     @Operation(summary = "Cancelar cotización", description = "Cambia el estado de la cotización a cancelada.")
     @ApiResponses(value = [
         ApiResponse(responseCode = "200", description = "Operación exitosa"),
         ApiResponse(responseCode = "400", description = "Solicitud inválida")
     ])
-    fun cancel(@CurrentOrganizationId organizationId: UUID, @PathVariable id: UUID): ResponseEntity<QuoteResponse> {
-        val quote = service.cancel(organizationId, id) ?: return ResponseEntity.badRequest().build()
-        return ResponseEntity.ok(QuoteResponse.from(quote))
-    }
+    fun cancel(@CurrentOrganizationId organizationId: UUID, @PathVariable id: UUID): QuoteResponse =
+        QuoteResponse.from(service.cancel(organizationId, id))
 }

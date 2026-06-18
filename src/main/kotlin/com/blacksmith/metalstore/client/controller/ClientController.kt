@@ -1,10 +1,12 @@
 package com.blacksmith.metalstore.client.controller
 
-import com.blacksmith.metalstore.organization.config.CurrentOrganizationId
 import com.blacksmith.metalstore.client.application.ClientService
 import com.blacksmith.metalstore.client.domain.dto.request.CreateClientRequest
 import com.blacksmith.metalstore.client.domain.dto.request.UpdateClientRequest
 import com.blacksmith.metalstore.client.domain.dto.response.ClientResponse
+import com.blacksmith.metalstore.organization.config.CurrentOrganizationId
+import com.blacksmith.metalstore.organization.config.RequiresRole
+import com.blacksmith.metalstore.organization.domain.entity.OrganizationRole
 import jakarta.validation.Valid
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
@@ -40,13 +42,12 @@ class ClientController(
         ApiResponse(responseCode = "200", description = "Operación exitosa"),
         ApiResponse(responseCode = "404", description = "Recurso no encontrado")
     ])
-    fun get(@CurrentOrganizationId organizationId: UUID, @PathVariable id: UUID): ResponseEntity<ClientResponse> {
-        val client = service.findById(organizationId, id) ?: return ResponseEntity.notFound().build()
-        return ResponseEntity.ok(ClientResponse.from(client))
-    }
+    fun get(@CurrentOrganizationId organizationId: UUID, @PathVariable id: UUID): ClientResponse =
+        ClientResponse.from(service.findById(organizationId, id))
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
+    @RequiresRole(OrganizationRole.EDITOR)
     @Operation(summary = "Crear cliente", description = "Crea un nuevo cliente en el sistema.")
     @ApiResponses(value = [
         ApiResponse(responseCode = "201", description = "Recurso creado"),
@@ -58,6 +59,7 @@ class ClientController(
     }
 
     @PutMapping("/{id}")
+    @RequiresRole(OrganizationRole.EDITOR)
     @Operation(summary = "Actualizar cliente", description = "Actualiza los datos de un cliente existente.")
     @ApiResponses(value = [
         ApiResponse(responseCode = "200", description = "Operación exitosa"),
@@ -68,43 +70,38 @@ class ClientController(
         @CurrentOrganizationId organizationId: UUID,
         @PathVariable id: UUID,
         @Valid @RequestBody request: UpdateClientRequest
-    ): ResponseEntity<ClientResponse> {
-        val updated = service.update(organizationId, id, request.toEntity(organizationId))
-            ?: return ResponseEntity.notFound().build()
-        return ResponseEntity.ok(ClientResponse.from(updated))
-    }
+    ): ClientResponse =
+        ClientResponse.from(service.update(organizationId, id, request.toEntity(organizationId)))
 
     @DeleteMapping("/{id}")
+    @RequiresRole(OrganizationRole.ADMIN)
     @Operation(summary = "Eliminar cliente", description = "Elimina un cliente por su UUID.")
     @ApiResponses(value = [
         ApiResponse(responseCode = "204", description = "Sin contenido"),
         ApiResponse(responseCode = "404", description = "Recurso no encontrado")
     ])
     fun delete(@CurrentOrganizationId organizationId: UUID, @PathVariable id: UUID): ResponseEntity<Unit> {
-        val deleted = service.delete(organizationId, id)
-        return if (deleted) ResponseEntity.noContent().build()
-        else ResponseEntity.notFound().build()
+        service.delete(organizationId, id)
+        return ResponseEntity.noContent().build()
     }
 
     @PostMapping("/{id}/activate")
+    @RequiresRole(OrganizationRole.EDITOR)
     @Operation(summary = "Activar cliente", description = "Activa un cliente previamente desactivado.")
     @ApiResponses(value = [
         ApiResponse(responseCode = "200", description = "Operación exitosa"),
         ApiResponse(responseCode = "404", description = "Recurso no encontrado")
     ])
-    fun activate(@CurrentOrganizationId organizationId: UUID, @PathVariable id: UUID): ResponseEntity<ClientResponse> {
-        val client = service.activate(organizationId, id) ?: return ResponseEntity.notFound().build()
-        return ResponseEntity.ok(ClientResponse.from(client))
-    }
+    fun activate(@CurrentOrganizationId organizationId: UUID, @PathVariable id: UUID): ClientResponse =
+        ClientResponse.from(service.activate(organizationId, id))
 
     @PostMapping("/{id}/deactivate")
+    @RequiresRole(OrganizationRole.EDITOR)
     @Operation(summary = "Desactivar cliente", description = "Desactiva un cliente existente.")
     @ApiResponses(value = [
         ApiResponse(responseCode = "200", description = "Operación exitosa"),
         ApiResponse(responseCode = "404", description = "Recurso no encontrado")
     ])
-    fun deactivate(@CurrentOrganizationId organizationId: UUID, @PathVariable id: UUID): ResponseEntity<ClientResponse> {
-        val client = service.deactivate(organizationId, id) ?: return ResponseEntity.notFound().build()
-        return ResponseEntity.ok(ClientResponse.from(client))
-    }
+    fun deactivate(@CurrentOrganizationId organizationId: UUID, @PathVariable id: UUID): ClientResponse =
+        ClientResponse.from(service.deactivate(organizationId, id))
 }

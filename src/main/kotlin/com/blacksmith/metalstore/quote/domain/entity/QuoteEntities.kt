@@ -5,10 +5,17 @@ import jakarta.persistence.*
 import jakarta.validation.constraints.Positive
 import java.math.BigDecimal
 import java.time.LocalDate
+import java.util.Objects
 import java.util.UUID
 
 enum class QuoteStatus {
-    DRAFT, ISSUED, ACCEPTED, REJECTED, CANCELLED
+    DRAFT, ISSUED, ACCEPTED, REJECTED, CANCELLED;
+
+    fun canTransitionTo(target: QuoteStatus): Boolean = when (this) {
+        DRAFT -> target == ISSUED || target == CANCELLED
+        ISSUED -> target == ACCEPTED || target == REJECTED || target == CANCELLED
+        ACCEPTED, REJECTED, CANCELLED -> false
+    }
 }
 
 @Entity
@@ -19,7 +26,7 @@ enum class QuoteStatus {
         Index(name = "idx_quote_status", columnList = "status")
     ]
 )
-data class Quote(
+class Quote(
     @Id
     val id: UUID = UUID.randomUUID(),
 
@@ -58,7 +65,16 @@ data class Quote(
 
     @Column(columnDefinition = "TEXT")
     val notes: String? = null
-) : BaseEntity()
+) : BaseEntity() {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other == null || javaClass != other.javaClass) return false
+        val that = other as Quote
+        return id == that.id
+    }
+
+    override fun hashCode(): Int = Objects.hash(id)
+}
 
 @Entity
 @Table(
@@ -67,7 +83,7 @@ data class Quote(
         Index(name = "idx_qline_quote", columnList = "quote_id")
     ]
 )
-data class QuoteLine(
+class QuoteLine(
     @Id
     val id: UUID = UUID.randomUUID(),
 
@@ -96,4 +112,13 @@ data class QuoteLine(
 
     @Column(nullable = false, precision = 14, scale = 4)
     val totalPrice: BigDecimal
-) : BaseEntity()
+) : BaseEntity() {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other == null || javaClass != other.javaClass) return false
+        val that = other as QuoteLine
+        return id == that.id
+    }
+
+    override fun hashCode(): Int = Objects.hash(id)
+}

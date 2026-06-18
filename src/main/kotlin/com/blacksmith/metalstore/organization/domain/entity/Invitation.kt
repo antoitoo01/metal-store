@@ -4,11 +4,12 @@ import com.blacksmith.metalstore.shared.BaseEntity
 import jakarta.persistence.*
 import java.time.Instant
 import java.time.temporal.ChronoUnit
+import java.util.Objects
 import java.util.UUID
 
 @Entity
 @Table(name = "invitations")
-data class Invitation(
+class Invitation(
     @Id
     val id: UUID = UUID.randomUUID(),
 
@@ -20,7 +21,7 @@ data class Invitation(
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    var role: OrganizationRole = OrganizationRole.WORKER,
+    var role: OrganizationRole = OrganizationRole.VIEWER,
 
     @Column(nullable = false)
     var email: String,
@@ -34,4 +35,13 @@ data class Invitation(
 
     @Column(name = "expires_at", nullable = false)
     var expiresAt: Instant = Instant.now().plus(1, ChronoUnit.HOURS),
-) : BaseEntity()
+) : BaseEntity() {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other == null || javaClass != other.javaClass) return false
+        val that = other as Invitation
+        return id == that.id
+    }
+
+    override fun hashCode(): Int = Objects.hash(id)
+}

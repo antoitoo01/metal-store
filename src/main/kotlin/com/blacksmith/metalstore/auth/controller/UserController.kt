@@ -4,6 +4,8 @@ import com.blacksmith.metalstore.auth.domain.dto.request.UpdateUserRequest
 import com.blacksmith.metalstore.auth.domain.dto.response.UserResponse
 import com.blacksmith.metalstore.auth.service.UserService
 import com.blacksmith.metalstore.organization.config.CurrentOrganizationId
+import com.blacksmith.metalstore.organization.config.RequiresRole
+import com.blacksmith.metalstore.organization.domain.entity.OrganizationRole
 import jakarta.validation.Valid
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
@@ -34,7 +36,7 @@ class UserController(private val userService: UserService) {
         @PageableDefault(size = 20) pageable: Pageable,
         @RequestParam(name = "q", required = false) q: String?
     ): Page<UserResponse> =
-        userService.findAll(organizationId, pageable, q).map { it.toResponse() }
+        userService.findAll(organizationId, pageable, q).map { UserResponse.from(it) }
 
     @GetMapping("/{id}")
     @Operation(summary = "Obtener usuario por ID", description = "Retorna los datos de un usuario por su UUID.")
@@ -44,7 +46,7 @@ class UserController(private val userService: UserService) {
     ])
     fun getById(@PathVariable id: UUID): ResponseEntity<UserResponse> {
         val user = userService.findById(id)
-        return ResponseEntity.ok(user.toResponse())
+        return ResponseEntity.ok(UserResponse.from(user))
     }
 
     @PutMapping
@@ -61,10 +63,11 @@ class UserController(private val userService: UserService) {
         val authenticatedId = jwt?.subject?.let { UUID.fromString(it) }
             ?: return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
         val user = userService.update(request, authenticatedId)
-        return ResponseEntity.ok(user.toResponse())
+        return ResponseEntity.ok(UserResponse.from(user))
     }
 
     @DeleteMapping("/{id}")
+    @RequiresRole(OrganizationRole.ADMIN)
     @Operation(summary = "Eliminar usuario", description = "Elimina un usuario por su UUID.")
     @ApiResponses(value = [
         ApiResponse(responseCode = "204", description = "Sin contenido"),

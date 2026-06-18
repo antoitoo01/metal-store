@@ -1,7 +1,7 @@
 package com.blacksmith.metalstore.organization.config
 
+import com.blacksmith.metalstore.auth.repository.UserRepository
 import com.blacksmith.metalstore.organization.domain.entity.MembershipStatus
-import com.blacksmith.metalstore.organization.domain.entity.OrganizationRole
 import com.blacksmith.metalstore.organization.domain.repository.MembershipRepository
 import com.blacksmith.metalstore.organization.exception.RoleRequiredException
 import jakarta.servlet.http.HttpServletRequest
@@ -16,6 +16,7 @@ import java.util.UUID
 @Component
 class RoleGuardInterceptor(
     private val membershipRepository: MembershipRepository,
+    private val userRepository: UserRepository,
 ) : HandlerInterceptor {
 
     override fun preHandle(request: HttpServletRequest, response: HttpServletResponse, handler: Any): Boolean {
@@ -27,15 +28,18 @@ class RoleGuardInterceptor(
         val requiredRole = annotation.value
 
         val auth = SecurityContextHolder.getContext().authentication
-        val userId = (if (auth != null && auth.isAuthenticated && auth.principal is Jwt) {
-            (auth.principal as Jwt).subject?.let {
-                try { UUID.fromString(it) } catch (_: IllegalArgumentException) { null }
-            }
-        } else null) ?: throw RoleRequiredException(requiredRole.name)
+        if (auth == null || !auth.isAuthenticated || auth.principal !is Jwt) return true
+        val userId = (auth.principal as Jwt).subject?.let {
+            try { UUID.fromString(it) } catch (_: IllegalArgumentException) { null }
+        } ?: throw RoleRequiredException(requiredRole.name)
 
         val orgId = if (annotation.orgIdFromArg >= 0) {
             extractOrgIdFromPath(request, annotation.orgIdFromArg) ?: throw RoleRequiredException(requiredRole.name)
-        } else throw RoleRequiredException(requiredRole.name)
+        } else {
+            val user = userRepository.findById(userId).orElse(null)
+                ?: throw RoleRequiredException(requiredRole.name)
+            user.organizationId
+        }
 
         val membership = membershipRepository.findByUserIdAndOrganizationIdAndStatus(userId, orgId, MembershipStatus.ACTIVE)
             ?: throw RoleRequiredException(requiredRole.name)

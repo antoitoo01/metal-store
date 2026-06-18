@@ -4,6 +4,7 @@ import com.blacksmith.metalstore.auth.audit.AuditLogger
 import com.blacksmith.metalstore.inventory.application.InventoryService
 import com.blacksmith.metalstore.inventory.domain.entity.InventoryItem
 import com.blacksmith.metalstore.inventory.domain.repository.InventoryItemRepository
+import com.blacksmith.metalstore.shared.exception.ResourceNotFoundException
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.mock
@@ -46,8 +47,7 @@ class InventoryServiceTest {
         assert(saved.quantity == BigDecimal("150.00"))
 
         val found = service.findById(organizationId, saved.id)
-        assert(found != null)
-        assert(found!!.supplier == "Aceros S.A.")
+        assert(found.supplier == "Aceros S.A.")
     }
 
     @Test
@@ -65,18 +65,21 @@ class InventoryServiceTest {
         val item = service.create(
             InventoryItem(organizationId = organizationId, profileId = profileId, quantity = BigDecimal.ONE)
         )
-        val deleted = service.delete(organizationId, item.id)
-        assert(deleted)
+        service.delete(organizationId, item.id)
         assert(repo.findById(item.id).isEmpty)
     }
 
     @Test
-    fun `delete returns false for wrong organization`() {
+    fun `delete throws for wrong organization`() {
         val otherTenant = UUID.randomUUID()
         val item = service.create(
             InventoryItem(organizationId = organizationId, profileId = profileId, quantity = BigDecimal.ONE)
         )
-        val deleted = service.delete(otherTenant, item.id)
-        assert(!deleted)
+        try {
+            service.delete(otherTenant, item.id)
+            assert(false) { "Expected ResourceNotFoundException" }
+        } catch (e: ResourceNotFoundException) {
+            // expected
+        }
     }
 }

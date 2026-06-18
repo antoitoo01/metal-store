@@ -4,7 +4,9 @@ import com.blacksmith.metalstore.auth.config.CurrentUser
 import com.blacksmith.metalstore.auth.config.CurrentUserInfo
 import com.blacksmith.metalstore.auth.config.CurrentUserId
 import com.blacksmith.metalstore.organization.application.InvitationService
+import com.blacksmith.metalstore.organization.config.RequiresRole
 import com.blacksmith.metalstore.organization.domain.dto.request.AcceptRequest
+import com.blacksmith.metalstore.organization.domain.entity.OrganizationRole
 import com.blacksmith.metalstore.organization.domain.dto.request.CreateInvitationRequest
 import com.blacksmith.metalstore.organization.domain.dto.request.DeclineRequest
 import com.blacksmith.metalstore.organization.domain.dto.response.InvitationResponse
@@ -32,6 +34,7 @@ class InvitationController(
     private val service: InvitationService,
 ) {
     @PostMapping("/api/organizations/{orgId}/invitations")
+    @RequiresRole(OrganizationRole.ADMIN, orgIdFromArg = 2)
     @Operation(summary = "Crear invitaciones en lote")
     fun create(
         @PathVariable orgId: UUID,
@@ -44,6 +47,7 @@ class InvitationController(
     }
 
     @GetMapping("/api/organizations/{orgId}/invitations")
+    @RequiresRole(OrganizationRole.ADMIN, orgIdFromArg = 2)
     @Operation(summary = "Listar invitaciones paginadas")
     fun list(
         @PathVariable orgId: UUID,
@@ -55,6 +59,7 @@ class InvitationController(
     }
 
     @DeleteMapping("/api/organizations/{orgId}/invitations/{id}")
+    @RequiresRole(OrganizationRole.ADMIN, orgIdFromArg = 2)
     @Operation(summary = "Cancelar invitación")
     fun cancel(
         @PathVariable orgId: UUID,

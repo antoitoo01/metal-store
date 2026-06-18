@@ -3,11 +3,12 @@ package com.blacksmith.metalstore.catalog.domain.entity
 import com.blacksmith.metalstore.shared.BaseEntity
 import jakarta.persistence.*
 import java.math.BigDecimal
+import java.util.Objects
 import java.util.UUID
 
 @Entity
 @Table(name = "catalog_items")
-data class CatalogItem(
+class CatalogItem(
     @Id
     val id: UUID = UUID.randomUUID(),
 
@@ -39,4 +40,13 @@ data class CatalogItem(
 
     @Column(length = 500)
     var imagePath: String? = null
-) : BaseEntity()
+) : BaseEntity() {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other == null || javaClass != other.javaClass) return false
+        val that = other as CatalogItem
+        return id == that.id
+    }
+
+    override fun hashCode(): Int = Objects.hash(id)
+}

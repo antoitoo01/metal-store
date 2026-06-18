@@ -1,6 +1,8 @@
 package com.blacksmith.metalstore.catalog.controller
 
 import com.blacksmith.metalstore.organization.config.CurrentOrganizationId
+import com.blacksmith.metalstore.organization.config.RequiresRole
+import com.blacksmith.metalstore.organization.domain.entity.OrganizationRole
 import com.blacksmith.metalstore.catalog.application.CatalogItemTypeService
 import com.blacksmith.metalstore.catalog.domain.dto.request.CreateTypeRequest
 import com.blacksmith.metalstore.catalog.domain.dto.request.UpdateTypeRequest
@@ -36,13 +38,12 @@ class CatalogItemTypeController(
         ApiResponse(responseCode = "200", description = "Operación exitosa"),
         ApiResponse(responseCode = "404", description = "Recurso no encontrado")
     ])
-    fun get(@CurrentOrganizationId organizationId: UUID, @PathVariable id: UUID): ResponseEntity<TypeResponse> {
-        val type = service.findById(organizationId, id) ?: return ResponseEntity.notFound().build()
-        return ResponseEntity.ok(TypeResponse.from(type))
-    }
+    fun get(@CurrentOrganizationId organizationId: UUID, @PathVariable id: UUID): TypeResponse =
+        TypeResponse.from(service.findById(organizationId, id))
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
+    @RequiresRole(OrganizationRole.EDITOR)
     @Operation(summary = "Crear tipo de ítem", description = "Crea un nuevo tipo de ítem de catálogo.")
     @ApiResponses(value = [
         ApiResponse(responseCode = "201", description = "Recurso creado"),
@@ -54,6 +55,7 @@ class CatalogItemTypeController(
     }
 
     @PutMapping("/{id}")
+    @RequiresRole(OrganizationRole.EDITOR)
     @Operation(summary = "Actualizar tipo de ítem", description = "Actualiza los datos de un tipo de ítem de catálogo existente.")
     @ApiResponses(value = [
         ApiResponse(responseCode = "200", description = "Operación exitosa"),
@@ -64,21 +66,18 @@ class CatalogItemTypeController(
         @CurrentOrganizationId organizationId: UUID,
         @PathVariable id: UUID,
         @Valid @RequestBody request: UpdateTypeRequest
-    ): ResponseEntity<TypeResponse> {
-        val updated = service.update(organizationId, id, request.toEntity(organizationId))
-            ?: return ResponseEntity.notFound().build()
-        return ResponseEntity.ok(TypeResponse.from(updated))
-    }
+    ): TypeResponse =
+        TypeResponse.from(service.update(organizationId, id, request.toEntity(organizationId)))
 
     @DeleteMapping("/{id}")
+    @RequiresRole(OrganizationRole.ADMIN)
     @Operation(summary = "Eliminar tipo de ítem", description = "Elimina un tipo de ítem de catálogo por su UUID.")
     @ApiResponses(value = [
         ApiResponse(responseCode = "204", description = "Sin contenido"),
         ApiResponse(responseCode = "404", description = "Recurso no encontrado")
     ])
     fun delete(@CurrentOrganizationId organizationId: UUID, @PathVariable id: UUID): ResponseEntity<Unit> {
-        val deleted = service.delete(organizationId, id)
-        return if (deleted) ResponseEntity.noContent().build()
-        else ResponseEntity.notFound().build()
+        service.delete(organizationId, id)
+        return ResponseEntity.noContent().build()
     }
 }

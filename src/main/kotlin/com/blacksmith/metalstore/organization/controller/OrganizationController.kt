@@ -2,7 +2,9 @@ package com.blacksmith.metalstore.organization.controller
 
 import com.blacksmith.metalstore.organization.application.OrganizationService
 import com.blacksmith.metalstore.organization.config.CurrentOrganizationId
+import com.blacksmith.metalstore.organization.config.RequiresRole
 import com.blacksmith.metalstore.organization.domain.dto.request.CreateOrganizationRequest
+import com.blacksmith.metalstore.organization.domain.entity.OrganizationRole
 import com.blacksmith.metalstore.organization.domain.dto.request.UpdateOrganizationRequest
 import com.blacksmith.metalstore.organization.domain.dto.response.OrganizationResponse
 import io.swagger.v3.oas.annotations.Operation
@@ -46,6 +48,7 @@ class OrganizationController(
         service.findOrganization(id)
 
     @PutMapping("/{id}")
+    @RequiresRole(OrganizationRole.ADMIN, orgIdFromArg = 2)
     @Operation(summary = "Actualizar organización")
     fun update(
         @PathVariable id: UUID,

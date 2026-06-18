@@ -1,6 +1,8 @@
 package com.blacksmith.metalstore.billing.controller
 
 import com.blacksmith.metalstore.organization.config.CurrentOrganizationId
+import com.blacksmith.metalstore.organization.config.RequiresRole
+import com.blacksmith.metalstore.organization.domain.entity.OrganizationRole
 import com.blacksmith.metalstore.billing.application.BillingService
 import com.blacksmith.metalstore.billing.domain.dto.request.CreateLineRequest
 import com.blacksmith.metalstore.billing.domain.dto.request.PriceUpdateRequest
@@ -38,6 +40,7 @@ class BillingController(
 
     @PostMapping("/prices")
     @ResponseStatus(HttpStatus.CREATED)
+    @RequiresRole(OrganizationRole.EDITOR)
     @Operation(summary = "Crear o actualizar precio", description = "Inserta o actualiza un precio.")
     @ApiResponses(value = [
         ApiResponse(responseCode = "201", description = "Recurso creado"),
@@ -49,18 +52,19 @@ class BillingController(
     }
 
     @DeleteMapping("/prices/{id}")
+    @RequiresRole(OrganizationRole.ADMIN)
     @Operation(summary = "Eliminar precio", description = "Elimina un precio por su UUID.")
     @ApiResponses(value = [
         ApiResponse(responseCode = "204", description = "Sin contenido"),
         ApiResponse(responseCode = "404", description = "Recurso no encontrado")
     ])
     fun deletePrice(@CurrentOrganizationId organizationId: UUID, @PathVariable id: UUID): ResponseEntity<Unit> {
-        val deleted = service.deletePrice(organizationId, id)
-        return if (deleted) ResponseEntity.noContent().build()
-        else ResponseEntity.notFound().build()
+        service.deletePrice(organizationId, id)
+        return ResponseEntity.noContent().build()
     }
 
     @PutMapping("/prices/{id}")
+    @RequiresRole(OrganizationRole.EDITOR)
     @Operation(summary = "Actualizar precio", description = "Actualiza los campos de un precio existente.")
     @ApiResponses(value = [
         ApiResponse(responseCode = "200", description = "Operación exitosa"),
@@ -70,11 +74,8 @@ class BillingController(
         @CurrentOrganizationId organizationId: UUID,
         @PathVariable id: UUID,
         @Valid @RequestBody request: PriceUpdateRequest
-    ): ResponseEntity<PriceResponse> {
-        val updated = service.updatePrice(organizationId, id, request.unitPrice, request.validFrom, request.validTo, request.notes)
-            ?: return ResponseEntity.notFound().build()
-        return ResponseEntity.ok(PriceResponse.from(updated))
-    }
+    ): PriceResponse =
+        PriceResponse.from(service.updatePrice(organizationId, id, request.unitPrice, request.validFrom, request.validTo, request.notes))
 
     // ── Invoices ────────────────────────────────────────────────
     @GetMapping("/invoices")
@@ -94,12 +95,11 @@ class BillingController(
         ApiResponse(responseCode = "200", description = "Operación exitosa"),
         ApiResponse(responseCode = "404", description = "Recurso no encontrado")
     ])
-    fun getInvoice(@CurrentOrganizationId organizationId: UUID, @PathVariable id: UUID): ResponseEntity<InvoiceResponse> {
-        val inv = service.findInvoice(organizationId, id) ?: return ResponseEntity.notFound().build()
-        return ResponseEntity.ok(InvoiceResponse.from(inv))
-    }
+    fun getInvoice(@CurrentOrganizationId organizationId: UUID, @PathVariable id: UUID): InvoiceResponse =
+        InvoiceResponse.from(service.findInvoice(organizationId, id))
 
     @PutMapping("/invoices/{id}")
+    @RequiresRole(OrganizationRole.EDITOR)
     @Operation(summary = "Actualizar factura", description = "Actualiza los datos de cabecera de una factura en estado DRAFT.")
     @ApiResponses(value = [
         ApiResponse(responseCode = "200", description = "Operación exitosa"),
@@ -110,11 +110,8 @@ class BillingController(
         @CurrentOrganizationId organizationId: UUID,
         @PathVariable id: UUID,
         @Valid @RequestBody request: UpdateInvoiceRequest
-    ): ResponseEntity<InvoiceResponse> {
-        val updated = service.update(organizationId, id, request.customerName, request.customerVat, request.customerAddress, request.notes)
-            ?: return ResponseEntity.badRequest().build()
-        return ResponseEntity.ok(InvoiceResponse.from(updated))
-    }
+    ): InvoiceResponse =
+        InvoiceResponse.from(service.update(organizationId, id, request.customerName, request.customerVat, request.customerAddress, request.notes))
 
     @GetMapping("/invoices/{id}/lines")
     @Operation(summary = "Obtener líneas de factura", description = "Retorna las líneas de una factura.")
@@ -127,6 +124,7 @@ class BillingController(
 
     @PostMapping("/invoices")
     @ResponseStatus(HttpStatus.CREATED)
+    @RequiresRole(OrganizationRole.EDITOR)
     @Operation(summary = "Crear borrador de factura", description = "Crea un nuevo borrador de factura.")
     @ApiResponses(value = [
         ApiResponse(responseCode = "201", description = "Recurso creado"),
@@ -139,6 +137,7 @@ class BillingController(
     ): InvoiceResponse = InvoiceResponse.from(service.createDraft(organizationId, customerName, customerVat))
 
     @PostMapping("/invoices/{id}/lines")
+    @RequiresRole(OrganizationRole.EDITOR)
     @Operation(summary = "Agregar línea a factura", description = "Agrega una nueva línea a una factura existente.")
     @ApiResponses(value = [
         ApiResponse(responseCode = "200", description = "Operación exitosa"),
@@ -148,14 +147,12 @@ class BillingController(
         @CurrentOrganizationId organizationId: UUID,
         @PathVariable id: UUID,
         @Valid @RequestBody request: CreateLineRequest
-    ): ResponseEntity<LineResponse> {
-        val saved = service.addLine(organizationId, id, request.toEntity(id))
-            ?: return ResponseEntity.badRequest().build()
-        return ResponseEntity.ok(LineResponse.from(saved))
-    }
+    ): LineResponse =
+        LineResponse.from(service.addLine(organizationId, id, request.toEntity(id)))
 
     @DeleteMapping("/invoices/{invoiceId}/lines/{lineId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
+    @RequiresRole(OrganizationRole.EDITOR)
     @Operation(summary = "Eliminar línea de factura", description = "Elimina una línea de una factura.")
     @ApiResponses(value = [
         ApiResponse(responseCode = "204", description = "Sin contenido"),
@@ -166,35 +163,32 @@ class BillingController(
     }
 
     @PostMapping("/invoices/{id}/issue")
+    @RequiresRole(OrganizationRole.EDITOR)
     @Operation(summary = "Emitir factura", description = "Cambia el estado de la factura a emitida.")
     @ApiResponses(value = [
         ApiResponse(responseCode = "200", description = "Operación exitosa"),
         ApiResponse(responseCode = "400", description = "Solicitud inválida")
     ])
-    fun issue(@CurrentOrganizationId organizationId: UUID, @PathVariable id: UUID): ResponseEntity<InvoiceResponse> {
-        val inv = service.issue(organizationId, id) ?: return ResponseEntity.badRequest().build()
-        return ResponseEntity.ok(InvoiceResponse.from(inv))
-    }
+    fun issue(@CurrentOrganizationId organizationId: UUID, @PathVariable id: UUID): InvoiceResponse =
+        InvoiceResponse.from(service.issue(organizationId, id))
 
     @PostMapping("/invoices/{id}/pay")
+    @RequiresRole(OrganizationRole.EDITOR)
     @Operation(summary = "Pagar factura", description = "Cambia el estado de la factura a pagada.")
     @ApiResponses(value = [
         ApiResponse(responseCode = "200", description = "Operación exitosa"),
         ApiResponse(responseCode = "400", description = "Solicitud inválida")
     ])
-    fun markPaid(@CurrentOrganizationId organizationId: UUID, @PathVariable id: UUID): ResponseEntity<InvoiceResponse> {
-        val inv = service.markPaid(organizationId, id) ?: return ResponseEntity.badRequest().build()
-        return ResponseEntity.ok(InvoiceResponse.from(inv))
-    }
+    fun markPaid(@CurrentOrganizationId organizationId: UUID, @PathVariable id: UUID): InvoiceResponse =
+        InvoiceResponse.from(service.markPaid(organizationId, id))
 
     @PostMapping("/invoices/{id}/cancel")
+    @RequiresRole(OrganizationRole.EDITOR)
     @Operation(summary = "Cancelar factura", description = "Cambia el estado de la factura a cancelada.")
     @ApiResponses(value = [
         ApiResponse(responseCode = "200", description = "Operación exitosa"),
         ApiResponse(responseCode = "400", description = "Solicitud inválida")
     ])
-    fun cancel(@CurrentOrganizationId organizationId: UUID, @PathVariable id: UUID): ResponseEntity<InvoiceResponse> {
-        val inv = service.cancel(organizationId, id) ?: return ResponseEntity.badRequest().build()
-        return ResponseEntity.ok(InvoiceResponse.from(inv))
-    }
+    fun cancel(@CurrentOrganizationId organizationId: UUID, @PathVariable id: UUID): InvoiceResponse =
+        InvoiceResponse.from(service.cancel(organizationId, id))
 }

@@ -86,14 +86,14 @@ class AuthControllerTest {
         assert(response.accessToken == accessToken)
         assert(response.refreshToken == refreshToken)
         assert(response.email == email)
-        assert(response.role == Role.ORGANIZATION_OWNER)
+        assert(response.role == Role.COMPANY)
         assert(response.organizationName == organizationName)
 
         val savedUser = userRepository.findById(userUuid)
         assert(savedUser.isPresent)
         assert(savedUser.get().email == email)
-        assert(savedUser.get().role == Role.ORGANIZATION_OWNER)
-        assert(savedUser.get().tenantId == response.organizationId)
+        assert(savedUser.get().role == Role.COMPANY)
+        assert(savedUser.get().organizationId == response.organizationId)
     }
 
     @Test

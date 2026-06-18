@@ -1,8 +1,7 @@
-package com.blacksmith.metalstore.auth.exception
+package com.blacksmith.metalstore.shared.exception
 
-import com.blacksmith.metalstore.shared.exception.ApiException
-import com.blacksmith.metalstore.shared.exception.ErrorCode
 import org.slf4j.LoggerFactory
+import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.http.HttpStatus
 import org.springframework.http.ProblemDetail
 import org.springframework.http.converter.HttpMessageNotReadableException
@@ -26,6 +25,12 @@ class GlobalExceptionHandler {
         val problem = ProblemDetail.forStatusAndDetail(ex.errorCode.httpStatus, ex.message)
         problem.setProperty("code", ex.errorCode.name)
         return problem
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException::class)
+    fun handleDataIntegrityViolation(ex: DataIntegrityViolationException): ProblemDetail {
+        log.warn("Data integrity violation: {}", ex.message)
+        return ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, "Data integrity violation")
     }
 
     @ExceptionHandler(ResourceAccessException::class)

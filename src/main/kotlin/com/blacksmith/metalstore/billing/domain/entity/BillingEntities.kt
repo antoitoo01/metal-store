@@ -5,6 +5,7 @@ import jakarta.persistence.*
 import jakarta.validation.constraints.Positive
 import java.math.BigDecimal
 import java.time.LocalDate
+import java.util.Objects
 import java.util.UUID
 
 @Entity
@@ -16,7 +17,7 @@ import java.util.UUID
         Index(name = "idx_price_item", columnList = "item_id")
     ]
 )
-data class PriceListItem(
+class PriceListItem(
     @Id
     val id: UUID = UUID.randomUUID(),
 
@@ -36,10 +37,25 @@ data class PriceListItem(
 
     @Column(columnDefinition = "TEXT")
     val notes: String? = null
-) : BaseEntity()
+) : BaseEntity() {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other == null || javaClass != other.javaClass) return false
+        val that = other as PriceListItem
+        return id == that.id
+    }
+
+    override fun hashCode(): Int = Objects.hash(id)
+}
 
 enum class InvoiceStatus {
-    DRAFT, ISSUED, PAID, CANCELLED
+    DRAFT, ISSUED, PAID, CANCELLED;
+
+    fun canTransitionTo(target: InvoiceStatus): Boolean = when (this) {
+        DRAFT -> target == ISSUED || target == CANCELLED
+        ISSUED -> target == PAID || target == CANCELLED
+        PAID, CANCELLED -> false
+    }
 }
 
 @Entity
@@ -50,7 +66,7 @@ enum class InvoiceStatus {
         Index(name = "idx_invoice_status", columnList = "status")
     ]
 )
-data class Invoice(
+class Invoice(
     @Id
     val id: UUID = UUID.randomUUID(),
 
@@ -87,7 +103,16 @@ data class Invoice(
 
     @Column(columnDefinition = "TEXT")
     val notes: String? = null
-) : BaseEntity()
+) : BaseEntity() {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other == null || javaClass != other.javaClass) return false
+        val that = other as Invoice
+        return id == that.id
+    }
+
+    override fun hashCode(): Int = Objects.hash(id)
+}
 
 @Entity
 @Table(
@@ -96,7 +121,7 @@ data class Invoice(
         Index(name = "idx_line_invoice", columnList = "invoice_id")
     ]
 )
-data class InvoiceLine(
+class InvoiceLine(
     @Id
     val id: UUID = UUID.randomUUID(),
 
@@ -125,4 +150,13 @@ data class InvoiceLine(
 
     @Column(nullable = false, precision = 14, scale = 4)
     val totalPrice: BigDecimal
-) : BaseEntity()
+) : BaseEntity() {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other == null || javaClass != other.javaClass) return false
+        val that = other as InvoiceLine
+        return id == that.id
+    }
+
+    override fun hashCode(): Int = Objects.hash(id)
+}

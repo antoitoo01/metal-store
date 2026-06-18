@@ -2,6 +2,7 @@ package com.blacksmith.metalstore.auth.exception
 
 import com.blacksmith.metalstore.shared.exception.ApiException
 import com.blacksmith.metalstore.shared.exception.ErrorCode
+import com.blacksmith.metalstore.shared.exception.GlobalExceptionHandler
 import org.junit.jupiter.api.Test
 import org.springframework.http.HttpStatus
 import org.springframework.web.client.ResourceAccessException
@@ -17,7 +18,7 @@ class GlobalExceptionHandlerTest {
 
         assert(problem.status == HttpStatus.UNAUTHORIZED.value())
         assert(problem.detail == "Invalid login")
-        assert(problem.properties?.get("code") == "INVALID_CREDENTIALS")
+        assert(problem.properties?.get("code") as? String == "INVALID_CREDENTIALS")
     }
 
     @Test
@@ -26,7 +27,7 @@ class GlobalExceptionHandlerTest {
         val problem = handler.handleApiException(ex)
 
         assert(problem.status == HttpStatus.NOT_FOUND.value())
-        assert(problem.properties?.get("code") == "RESOURCE_NOT_FOUND")
+        assert(problem.properties?.get("code") as? String == "RESOURCE_NOT_FOUND")
     }
 
     @Test
@@ -35,7 +36,7 @@ class GlobalExceptionHandlerTest {
         val problem = handler.handleApiException(ex)
 
         assert(problem.status == HttpStatus.INTERNAL_SERVER_ERROR.value())
-        assert(problem.properties?.get("code") == "INTERNAL_ERROR")
+        assert(problem.properties?.get("code") as? String == "INTERNAL_ERROR")
     }
 
     @Test
@@ -45,6 +46,6 @@ class GlobalExceptionHandlerTest {
 
         assert(problem.status == HttpStatus.SERVICE_UNAVAILABLE.value())
         assert(problem.detail == "External service is temporarily unavailable")
-        assert(problem.properties?.get("code") == "SERVICE_UNAVAILABLE")
+        assert(problem.properties?.get("code") as? String == "SERVICE_UNAVAILABLE")
     }
 }

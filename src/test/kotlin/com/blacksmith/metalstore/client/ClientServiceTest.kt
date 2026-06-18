@@ -5,6 +5,7 @@ import com.blacksmith.metalstore.client.application.ClientService
 import com.blacksmith.metalstore.client.domain.entity.Client
 import com.blacksmith.metalstore.client.domain.entity.ClientStatus
 import com.blacksmith.metalstore.client.domain.repository.ClientRepository
+import com.blacksmith.metalstore.shared.exception.ResourceNotFoundException
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.mock
@@ -37,8 +38,7 @@ class ClientServiceTest {
         assert(saved.name == "Taller LÃ³pez")
 
         val found = service.findById(organizationId, saved.id)
-        assert(found != null)
-        assert(found!!.name == "Taller LÃ³pez")
+        assert(found.name == "Taller LÃ³pez")
     }
 
     @Test
@@ -64,17 +64,20 @@ class ClientServiceTest {
     @Test
     fun `delete removes client for the correct organization`() {
         val client = service.create(Client(organizationId = organizationId, name = "Test"))
-        val deleted = service.delete(organizationId, client.id)
-        assert(deleted)
+        service.delete(organizationId, client.id)
         assert(repo.findById(client.id).isEmpty)
     }
 
     @Test
-    fun `delete returns false for wrong organization`() {
+    fun `delete throws for wrong organization`() {
         val otherTenant = UUID.randomUUID()
         val client = service.create(Client(organizationId = organizationId, name = "Test"))
-        val deleted = service.delete(otherTenant, client.id)
-        assert(!deleted)
+        try {
+            service.delete(otherTenant, client.id)
+            assert(false) { "Expected ResourceNotFoundException" }
+        } catch (e: ResourceNotFoundException) {
+            // expected
+        }
     }
 
     @Test

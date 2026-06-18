@@ -5,16 +5,17 @@ import com.blacksmith.metalstore.auth.domain.dto.response.UserResponse
 import com.blacksmith.metalstore.shared.BaseEntity
 import jakarta.persistence.*
 import jakarta.validation.constraints.Email
+import java.util.Objects
 import java.util.UUID
 
 @Entity
 @Table(name = "users")
-data class User(
+class User(
     @Id
     val id: UUID,
 
-    @Column(name = "tenant_id", nullable = false)
-    var tenantId: UUID,
+    @Column(name = "organization_id", nullable = false)
+    var organizationId: UUID,
 
     @Column(nullable = true)
     var username: String?,
@@ -25,24 +26,18 @@ data class User(
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    var role: Role = Role.USER,
+    var role: Role = Role.COMPANY,
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     var status: UserState = UserState.INACTIVE
 ) : BaseEntity() {
-    fun toResponse(
-        organizationName: String = "",
-        activeOrgId: UUID = tenantId,
-        organizations: List<UserOrganization> = emptyList()
-    ) = UserResponse(
-        id = id,
-        tenantId = tenantId,
-        username = username ?: "",
-        email = email,
-        role = role,
-        organizationId = activeOrgId,
-        organizationName = organizationName,
-        organizations = organizations,
-    )
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other == null || javaClass != other.javaClass) return false
+        val that = other as User
+        return id == that.id
+    }
+
+    override fun hashCode(): Int = Objects.hash(id)
 }

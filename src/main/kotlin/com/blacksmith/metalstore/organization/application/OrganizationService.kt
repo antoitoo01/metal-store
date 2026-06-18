@@ -90,8 +90,8 @@ class OrganizationService(
     private fun requireAdminOrOwner(orgId: UUID, userId: UUID) {
         val membership = membershipRepository.findByUserIdAndOrganizationIdAndStatus(userId, orgId, MembershipStatus.ACTIVE)
             ?: throw MembershipNotFoundException()
-        if (membership.role != OrganizationRole.OWNER && membership.role != OrganizationRole.SUPER_ADMIN && membership.role != OrganizationRole.ADMIN) {
-            throw RoleRequiredException("OWNER, SUPER_ADMIN, or ADMIN")
+        if (membership.role != OrganizationRole.OWNER && membership.role != OrganizationRole.ADMIN) {
+            throw RoleRequiredException("OWNER or ADMIN")
         }
     }
 

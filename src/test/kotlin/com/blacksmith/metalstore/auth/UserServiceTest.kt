@@ -47,9 +47,9 @@ class UserServiceTest {
 
         organizationRepository.save(Organization(id = organizationId, name = "Test Taller", slug = "test-taller"))
 
-        userRepository.save(User(id = ownerId, tenantId = organizationId, username = "owner", email = "owner@test.com", role = Role.USER))
-        userRepository.save(User(id = otherId, tenantId = organizationId, username = "other", email = "other@test.com", role = Role.USER))
-        userRepository.save(User(id = adminId, tenantId = organizationId, username = "admin", email = "admin@test.com", role = Role.ADMIN))
+        userRepository.save(User(id = ownerId, organizationId = organizationId, username = "owner", email = "owner@test.com", role = Role.COMPANY))
+        userRepository.save(User(id = otherId, organizationId = organizationId, username = "other", email = "other@test.com", role = Role.CUSTOMER))
+        userRepository.save(User(id = adminId, organizationId = organizationId, username = "admin", email = "admin@test.com", role = Role.COMPANY))
     }
 
     @Test
@@ -100,7 +100,7 @@ class UserServiceTest {
     @Test
     fun `non-admin cannot delete another user`() {
         assertThrows<AccessDeniedException> {
-            userService.deleteById(otherId, ownerId)
+            userService.deleteById(ownerId, otherId)
         }
     }
 
