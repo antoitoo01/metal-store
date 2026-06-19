@@ -40,7 +40,7 @@ class InvitationServiceTest {
         orgRepository.deleteAll()
         val org = orgRepository.save(Organization(name = "Test", slug = "test"))
         orgId = org.id
-        membershipRepository.save(Membership(userId = ownerId, organizationId = orgId, role = OrganizationRole.OWNER))
+        membershipRepository.save(Membership(userId = ownerId, organizationId = orgId, role = OrganizationRole.ORGANIZATION_OWNER))
         service = InvitationService(orgRepository, membershipRepository, invitationRepository, "http://localhost:4200")
     }
 
@@ -68,7 +68,7 @@ class InvitationServiceTest {
 
     @Test
     fun `createInvitations throws when user is not admin`() {
-        membershipRepository.save(Membership(userId = workerId, organizationId = orgId, role = OrganizationRole.VIEWER))
+        membershipRepository.save(Membership(userId = workerId, organizationId = orgId, role = OrganizationRole.USER))
 
         try {
             service.createInvitations(orgId, listOf("w@test.com"), workerId)
@@ -108,7 +108,7 @@ class InvitationServiceTest {
         val membership = service.acceptInvitation(token, workerId, email)
 
         assert(membership.userId == workerId)
-        assert(membership.role == OrganizationRole.VIEWER)
+        assert(membership.role == OrganizationRole.USER)
 
         val updatedInv = invitationRepository.findByToken(token)!!
         assert(updatedInv.status == InvitationStatus.ACCEPTED)

@@ -137,7 +137,7 @@ class CatalogItemTypeControllerHttpTest {
         ))
         membershipRepo.save(Membership(
             userId = userId, organizationId = organizationId,
-            role = OrganizationRole.VIEWER, status = MembershipStatus.ACTIVE
+            role = OrganizationRole.USER, status = MembershipStatus.ACTIVE
         ))
         repo.save(CatalogItemType(organizationId = organizationId, name = "JWT Type"))
 

@@ -40,8 +40,8 @@ class MembershipControllerHttpTest {
         orgRepository.deleteAll()
         val org = orgRepository.save(Organization(name = "Test", slug = "test"))
         orgId = org.id
-        membershipRepository.save(Membership(userId = ownerId, organizationId = orgId, role = OrganizationRole.OWNER))
-        membershipRepository.save(Membership(userId = memberId, organizationId = orgId, role = OrganizationRole.VIEWER))
+        membershipRepository.save(Membership(userId = ownerId, organizationId = orgId, role = OrganizationRole.ORGANIZATION_OWNER))
+        membershipRepository.save(Membership(userId = memberId, organizationId = orgId, role = OrganizationRole.USER))
     }
 
     @Test
@@ -58,7 +58,7 @@ class MembershipControllerHttpTest {
             .with(jwt().jwt { it.subject(ownerId.toString()) }))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.userId").value(ownerId.toString()))
-            .andExpect(jsonPath("$.role").value("OWNER"))
+            .andExpect(jsonPath("$.role").value("ORGANIZATION_OWNER"))
     }
 
     @Test
@@ -66,11 +66,11 @@ class MembershipControllerHttpTest {
         mockMvc.perform(put("/api/organizations/{orgId}/members/{userId}/role", orgId, memberId)
             .with(jwt().jwt { it.subject(ownerId.toString()) })
             .contentType(MediaType.APPLICATION_JSON)
-            .content("""{"role":"EDITOR"}"""))
+            .content("""{"role":"STAFF"}"""))
             .andExpect(status().isOk)
 
         val membership = membershipRepository.findByUserIdAndOrganizationIdAndStatus(memberId, orgId, MembershipStatus.ACTIVE)
-        assert(membership!!.role == OrganizationRole.EDITOR)
+        assert(membership!!.role == OrganizationRole.STAFF)
     }
 
     @Test

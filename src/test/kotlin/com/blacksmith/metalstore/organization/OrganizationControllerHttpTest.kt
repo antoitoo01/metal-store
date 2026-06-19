@@ -43,7 +43,7 @@ class OrganizationControllerHttpTest {
     @Test
     fun `list returns organizations for user`() {
         val org = orgRepository.save(com.blacksmith.metalstore.organization.domain.entity.Organization(name = "Mi Taller", slug = "mi-taller"))
-        membershipRepository.save(Membership(userId = ownerId, organizationId = org.id, role = OrganizationRole.OWNER))
+        membershipRepository.save(Membership(userId = ownerId, organizationId = org.id, role = OrganizationRole.ORGANIZATION_OWNER))
 
         mockMvc.perform(get("/api/organizations")
             .with(jwt().jwt { it.subject(ownerId.toString()) }))
@@ -85,7 +85,7 @@ class OrganizationControllerHttpTest {
     @Test
     fun `update modifies organization`() {
         val org = orgRepository.save(com.blacksmith.metalstore.organization.domain.entity.Organization(name = "Original", slug = "original"))
-        membershipRepository.save(Membership(userId = ownerId, organizationId = org.id, role = OrganizationRole.OWNER))
+        membershipRepository.save(Membership(userId = ownerId, organizationId = org.id, role = OrganizationRole.ORGANIZATION_OWNER))
 
         mockMvc.perform(put("/api/organizations/{id}", org.id)
             .with(jwt().jwt { it.subject(ownerId.toString()) })

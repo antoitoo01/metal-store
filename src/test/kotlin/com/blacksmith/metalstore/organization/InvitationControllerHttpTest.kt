@@ -46,7 +46,7 @@ class InvitationControllerHttpTest {
         orgRepository.deleteAll()
         val org = orgRepository.save(Organization(name = orgName, slug = "test"))
         orgId = org.id
-        membershipRepository.save(Membership(userId = ownerId, organizationId = orgId, role = OrganizationRole.OWNER))
+        membershipRepository.save(Membership(userId = ownerId, organizationId = orgId, role = OrganizationRole.ORGANIZATION_OWNER))
     }
 
     @Test
@@ -117,7 +117,7 @@ class InvitationControllerHttpTest {
             .content("""{"token":"$token"}"""))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.userId").value(newUserId.toString()))
-            .andExpect(jsonPath("$.role").value("VIEWER"))
+            .andExpect(jsonPath("$.role").value("USER"))
     }
 
     @Test
