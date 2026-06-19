@@ -52,7 +52,7 @@ class QuoteController(
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    @RequiresRole(OrganizationRole.EDITOR)
+    @RequiresRole(OrganizationRole.STAFF)
     @Operation(summary = "Crear borrador de cotización", description = "Crea un nuevo borrador de cotización.")
     @ApiResponses(value = [
         ApiResponse(responseCode = "201", description = "Recurso creado"),
@@ -67,7 +67,7 @@ class QuoteController(
     }
 
     @PutMapping("/{id}")
-    @RequiresRole(OrganizationRole.EDITOR)
+    @RequiresRole(OrganizationRole.STAFF)
     @Operation(summary = "Actualizar cotización", description = "Actualiza los datos de cabecera de una cotización en estado DRAFT.")
     @ApiResponses(value = [
         ApiResponse(responseCode = "200", description = "Operación exitosa"),
@@ -91,7 +91,7 @@ class QuoteController(
         service.getLines(id).map { QuoteLineResponse.from(it) }
 
     @PostMapping("/{id}/lines")
-    @RequiresRole(OrganizationRole.EDITOR)
+    @RequiresRole(OrganizationRole.STAFF)
     @Operation(summary = "Agregar línea a cotización", description = "Agrega una nueva línea a una cotización existente.")
     @ApiResponses(value = [
         ApiResponse(responseCode = "200", description = "Operación exitosa"),
@@ -106,7 +106,7 @@ class QuoteController(
 
     @DeleteMapping("/{quoteId}/lines/{lineId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @RequiresRole(OrganizationRole.EDITOR)
+    @RequiresRole(OrganizationRole.STAFF)
     @Operation(summary = "Eliminar línea de cotización", description = "Elimina una línea de una cotización.")
     @ApiResponses(value = [
         ApiResponse(responseCode = "204", description = "Sin contenido"),
@@ -117,7 +117,7 @@ class QuoteController(
     }
 
     @PostMapping("/{id}/issue")
-    @RequiresRole(OrganizationRole.EDITOR)
+    @RequiresRole(OrganizationRole.STAFF)
     @Operation(summary = "Emitir cotización", description = "Cambia el estado de la cotización a emitida.")
     @ApiResponses(value = [
         ApiResponse(responseCode = "200", description = "Operación exitosa"),
@@ -127,7 +127,7 @@ class QuoteController(
         QuoteResponse.from(service.issue(organizationId, id))
 
     @PostMapping("/{id}/accept")
-    @RequiresRole(OrganizationRole.EDITOR)
+    @RequiresRole(OrganizationRole.STAFF)
     @Operation(summary = "Aceptar cotización", description = "Cambia el estado de la cotización a aceptada.")
     @ApiResponses(value = [
         ApiResponse(responseCode = "200", description = "Operación exitosa"),
@@ -137,7 +137,7 @@ class QuoteController(
         QuoteResponse.from(service.accept(organizationId, id))
 
     @PostMapping("/{id}/reject")
-    @RequiresRole(OrganizationRole.EDITOR)
+    @RequiresRole(OrganizationRole.STAFF)
     @Operation(summary = "Rechazar cotización", description = "Cambia el estado de la cotización a rechazada.")
     @ApiResponses(value = [
         ApiResponse(responseCode = "200", description = "Operación exitosa"),
@@ -147,7 +147,7 @@ class QuoteController(
         QuoteResponse.from(service.reject(organizationId, id))
 
     @PostMapping("/{id}/cancel")
-    @RequiresRole(OrganizationRole.EDITOR)
+    @RequiresRole(OrganizationRole.STAFF)
     @Operation(summary = "Cancelar cotización", description = "Cambia el estado de la cotización a cancelada.")
     @ApiResponses(value = [
         ApiResponse(responseCode = "200", description = "Operación exitosa"),

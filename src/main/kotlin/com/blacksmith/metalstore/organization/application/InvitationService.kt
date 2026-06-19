@@ -53,8 +53,8 @@ class InvitationService(
         }
     }
 
-    fun listInvitations(orgId: UUID, pageable: Pageable, currentUserId: UUID): Page<InvitationResponse> {
-        requireAdminOrOwner(orgId, currentUserId)
+    fun listInvitations(orgId: UUID, pageable: Pageable, currentUserId: UUID?): Page<InvitationResponse> {
+        if (currentUserId != null) requireAdminOrOwner(orgId, currentUserId)
         val org = orgRepository.findById(orgId).orElseThrow { OrganizationNotFoundException() }
         return invitationRepository.findByOrganizationIdOrderByCreatedAtDesc(orgId, pageable)
             .map { InvitationResponse.from(it, org.name, baseUrl) }
@@ -89,7 +89,7 @@ class InvitationService(
         val membership = membershipRepository.save(Membership(
             userId = userId,
             organizationId = invitation.organizationId,
-            role = OrganizationRole.VIEWER,
+            role = OrganizationRole.USER,
             status = MembershipStatus.ACTIVE,
             invitedBy = invitation.createdBy,
         ))
@@ -110,7 +110,7 @@ class InvitationService(
     private fun requireAdminOrOwner(orgId: UUID, userId: UUID) {
         val membership = membershipRepository.findByUserIdAndOrganizationIdAndStatus(userId, orgId, MembershipStatus.ACTIVE)
             ?: throw MembershipNotFoundException()
-        if (membership.role != OrganizationRole.OWNER && membership.role != OrganizationRole.ADMIN) {
+        if (membership.role != OrganizationRole.ORGANIZATION_OWNER && membership.role != OrganizationRole.ADMIN) {
             throw RoleRequiredException("OWNER or ADMIN")
         }
     }

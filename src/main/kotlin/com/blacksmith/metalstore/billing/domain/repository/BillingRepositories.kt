@@ -27,14 +27,14 @@ interface InvoiceRepository : JpaRepository<Invoice, UUID> {
     @Query("""
         SELECT i FROM Invoice i
         WHERE i.organizationId = :orgId
-        AND (:q IS NULL OR LOWER(i.customerName) LIKE LOWER(CONCAT('%', :q, '%'))
-          OR LOWER(i.invoiceNumber) LIKE LOWER(CONCAT('%', :q, '%')))
+        AND (:q = '' OR LOWER(i.customerName) LIKE CONCAT('%', :q, '%')
+          OR LOWER(i.invoiceNumber) LIKE CONCAT('%', :q, '%'))
         AND (:status IS NULL OR i.status = :status)
         ORDER BY i.issueDate DESC
     """)
     fun findAllFiltered(
         @Param("orgId") orgId: UUID,
-        @Param("q") q: String?,
+        @Param("q") q: String,
         @Param("status") status: InvoiceStatus?,
         pageable: Pageable
     ): Page<Invoice>

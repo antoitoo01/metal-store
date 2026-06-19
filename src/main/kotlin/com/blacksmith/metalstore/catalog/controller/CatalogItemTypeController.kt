@@ -43,7 +43,7 @@ class CatalogItemTypeController(
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    @RequiresRole(OrganizationRole.EDITOR)
+    @RequiresRole(OrganizationRole.STAFF)
     @Operation(summary = "Crear tipo de ítem", description = "Crea un nuevo tipo de ítem de catálogo.")
     @ApiResponses(value = [
         ApiResponse(responseCode = "201", description = "Recurso creado"),
@@ -55,7 +55,7 @@ class CatalogItemTypeController(
     }
 
     @PutMapping("/{id}")
-    @RequiresRole(OrganizationRole.EDITOR)
+    @RequiresRole(OrganizationRole.STAFF)
     @Operation(summary = "Actualizar tipo de ítem", description = "Actualiza los datos de un tipo de ítem de catálogo existente.")
     @ApiResponses(value = [
         ApiResponse(responseCode = "200", description = "Operación exitosa"),

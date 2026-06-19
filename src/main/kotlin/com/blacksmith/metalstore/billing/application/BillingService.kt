@@ -85,7 +85,7 @@ class BillingService(
     // ── Invoices ────────────────────────────────────────────────
     @Transactional(readOnly = true)
     fun listInvoices(organizationId: UUID, pageable: Pageable, q: String? = null, status: InvoiceStatus? = null): Page<Invoice> =
-        invoiceRepo.findAllFiltered(organizationId, q, status, pageable)
+        invoiceRepo.findAllFiltered(organizationId, q?.lowercase() ?: "", status, pageable)
 
     @Transactional(readOnly = true)
     fun findInvoice(organizationId: UUID, invoiceId: UUID): Invoice =

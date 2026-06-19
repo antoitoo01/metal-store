@@ -40,7 +40,7 @@ class BillingController(
 
     @PostMapping("/prices")
     @ResponseStatus(HttpStatus.CREATED)
-    @RequiresRole(OrganizationRole.EDITOR)
+    @RequiresRole(OrganizationRole.STAFF)
     @Operation(summary = "Crear o actualizar precio", description = "Inserta o actualiza un precio.")
     @ApiResponses(value = [
         ApiResponse(responseCode = "201", description = "Recurso creado"),
@@ -64,7 +64,7 @@ class BillingController(
     }
 
     @PutMapping("/prices/{id}")
-    @RequiresRole(OrganizationRole.EDITOR)
+    @RequiresRole(OrganizationRole.STAFF)
     @Operation(summary = "Actualizar precio", description = "Actualiza los campos de un precio existente.")
     @ApiResponses(value = [
         ApiResponse(responseCode = "200", description = "Operación exitosa"),
@@ -99,7 +99,7 @@ class BillingController(
         InvoiceResponse.from(service.findInvoice(organizationId, id))
 
     @PutMapping("/invoices/{id}")
-    @RequiresRole(OrganizationRole.EDITOR)
+    @RequiresRole(OrganizationRole.STAFF)
     @Operation(summary = "Actualizar factura", description = "Actualiza los datos de cabecera de una factura en estado DRAFT.")
     @ApiResponses(value = [
         ApiResponse(responseCode = "200", description = "Operación exitosa"),
@@ -124,7 +124,7 @@ class BillingController(
 
     @PostMapping("/invoices")
     @ResponseStatus(HttpStatus.CREATED)
-    @RequiresRole(OrganizationRole.EDITOR)
+    @RequiresRole(OrganizationRole.STAFF)
     @Operation(summary = "Crear borrador de factura", description = "Crea un nuevo borrador de factura.")
     @ApiResponses(value = [
         ApiResponse(responseCode = "201", description = "Recurso creado"),
@@ -137,7 +137,7 @@ class BillingController(
     ): InvoiceResponse = InvoiceResponse.from(service.createDraft(organizationId, customerName, customerVat))
 
     @PostMapping("/invoices/{id}/lines")
-    @RequiresRole(OrganizationRole.EDITOR)
+    @RequiresRole(OrganizationRole.STAFF)
     @Operation(summary = "Agregar línea a factura", description = "Agrega una nueva línea a una factura existente.")
     @ApiResponses(value = [
         ApiResponse(responseCode = "200", description = "Operación exitosa"),
@@ -152,7 +152,7 @@ class BillingController(
 
     @DeleteMapping("/invoices/{invoiceId}/lines/{lineId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @RequiresRole(OrganizationRole.EDITOR)
+    @RequiresRole(OrganizationRole.STAFF)
     @Operation(summary = "Eliminar línea de factura", description = "Elimina una línea de una factura.")
     @ApiResponses(value = [
         ApiResponse(responseCode = "204", description = "Sin contenido"),
@@ -163,7 +163,7 @@ class BillingController(
     }
 
     @PostMapping("/invoices/{id}/issue")
-    @RequiresRole(OrganizationRole.EDITOR)
+    @RequiresRole(OrganizationRole.STAFF)
     @Operation(summary = "Emitir factura", description = "Cambia el estado de la factura a emitida.")
     @ApiResponses(value = [
         ApiResponse(responseCode = "200", description = "Operación exitosa"),
@@ -173,7 +173,7 @@ class BillingController(
         InvoiceResponse.from(service.issue(organizationId, id))
 
     @PostMapping("/invoices/{id}/pay")
-    @RequiresRole(OrganizationRole.EDITOR)
+    @RequiresRole(OrganizationRole.STAFF)
     @Operation(summary = "Pagar factura", description = "Cambia el estado de la factura a pagada.")
     @ApiResponses(value = [
         ApiResponse(responseCode = "200", description = "Operación exitosa"),
@@ -183,7 +183,7 @@ class BillingController(
         InvoiceResponse.from(service.markPaid(organizationId, id))
 
     @PostMapping("/invoices/{id}/cancel")
-    @RequiresRole(OrganizationRole.EDITOR)
+    @RequiresRole(OrganizationRole.STAFF)
     @Operation(summary = "Cancelar factura", description = "Cambia el estado de la factura a cancelada.")
     @ApiResponses(value = [
         ApiResponse(responseCode = "200", description = "Operación exitosa"),

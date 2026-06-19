@@ -167,7 +167,7 @@ class AuthService(
             refreshToken = supabaseResponse["refresh_token"] as? String,
             expiresIn = (supabaseResponse["expires_in"] as? Int) ?: 3600,
             email = user.email,
-            username = user.username,
+            username = user.username ?: user.email.substringBefore("@"),
             role = user.role,
             organizationId = user.organizationId,
             organizationName = organizationName

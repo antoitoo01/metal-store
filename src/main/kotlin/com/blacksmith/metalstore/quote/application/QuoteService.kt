@@ -28,7 +28,7 @@ class QuoteService(
 ) {
     @Transactional(readOnly = true)
     fun listQuotes(organizationId: UUID, pageable: Pageable, q: String? = null, status: QuoteStatus? = null, clientId: UUID? = null): Page<Quote> =
-        quoteRepo.findAllFiltered(organizationId, q, status, clientId, pageable)
+        quoteRepo.findAllFiltered(organizationId, q?.lowercase() ?: "", status, clientId, pageable)
 
     @Transactional(readOnly = true)
     fun findQuote(organizationId: UUID, quoteId: UUID): Quote =

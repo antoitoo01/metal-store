@@ -40,7 +40,7 @@ class OrganizationService(
         membershipRepository.save(Membership(
             userId = userId,
             organizationId = org.id,
-            role = OrganizationRole.OWNER,
+            role = OrganizationRole.ORGANIZATION_OWNER,
             status = MembershipStatus.ACTIVE,
         ))
         return OrganizationResponse.from(org, 1)
@@ -79,9 +79,9 @@ class OrganizationService(
         requireAdminOrOwner(orgId, currentUserId)
         val membership = membershipRepository.findByUserIdAndOrganizationIdAndStatus(targetUserId, orgId, MembershipStatus.ACTIVE)
             ?: throw MembershipNotFoundException()
-        if (membership.role == OrganizationRole.OWNER) {
+        if (membership.role == OrganizationRole.ORGANIZATION_OWNER) {
             val owners = membershipRepository.findByOrganizationId(orgId)
-                .filter { it.role == OrganizationRole.OWNER && it.status == MembershipStatus.ACTIVE }
+                .filter { it.role == OrganizationRole.ORGANIZATION_OWNER && it.status == MembershipStatus.ACTIVE }
             if (owners.size <= 1) throw CannotRemoveLastOwnerException()
         }
         membershipRepository.delete(membership)
@@ -90,7 +90,7 @@ class OrganizationService(
     private fun requireAdminOrOwner(orgId: UUID, userId: UUID) {
         val membership = membershipRepository.findByUserIdAndOrganizationIdAndStatus(userId, orgId, MembershipStatus.ACTIVE)
             ?: throw MembershipNotFoundException()
-        if (membership.role != OrganizationRole.OWNER && membership.role != OrganizationRole.ADMIN) {
+        if (membership.role != OrganizationRole.ORGANIZATION_OWNER && membership.role != OrganizationRole.ADMIN) {
             throw RoleRequiredException("OWNER or ADMIN")
         }
     }

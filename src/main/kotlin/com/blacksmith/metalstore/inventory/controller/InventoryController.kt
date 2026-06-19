@@ -43,7 +43,7 @@ class InventoryController(
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    @RequiresRole(OrganizationRole.EDITOR)
+    @RequiresRole(OrganizationRole.STAFF)
     @Operation(summary = "Crear ítem", description = "Crea un nuevo ítem de inventario.")
     @ApiResponses(value = [
         ApiResponse(responseCode = "201", description = "Recurso creado"),
@@ -55,7 +55,7 @@ class InventoryController(
     }
 
     @PutMapping("/{id}")
-    @RequiresRole(OrganizationRole.EDITOR)
+    @RequiresRole(OrganizationRole.STAFF)
     @Operation(summary = "Actualizar ítem", description = "Actualiza los datos de un ítem de inventario existente.")
     @ApiResponses(value = [
         ApiResponse(responseCode = "200", description = "Operación exitosa"),

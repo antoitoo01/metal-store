@@ -18,9 +18,13 @@ class ClientService(
     private val audit: AuditLogger
 ) {
     @Transactional(readOnly = true)
-    fun findAll(organizationId: UUID, pageable: Pageable, nameFilter: String? = null): Page<Client> =
-        if (nameFilter.isNullOrBlank()) repo.findByOrganizationId(organizationId, pageable)
-        else repo.findByOrganizationIdAndNameContainingIgnoreCase(organizationId, nameFilter, pageable)
+    fun findAll(organizationId: UUID, pageable: Pageable, nameFilter: String? = null, status: ClientStatus? = null): Page<Client> =
+        when {
+            !nameFilter.isNullOrBlank() && status != null -> repo.findByOrganizationIdAndNameContainingIgnoreCaseAndStatus(organizationId, nameFilter, status, pageable)
+            !nameFilter.isNullOrBlank() -> repo.findByOrganizationIdAndNameContainingIgnoreCase(organizationId, nameFilter, pageable)
+            status != null -> repo.findByOrganizationIdAndStatus(organizationId, status, pageable)
+            else -> repo.findByOrganizationId(organizationId, pageable)
+        }
 
     @Transactional(readOnly = true)
     fun findById(organizationId: UUID, id: UUID): Client =

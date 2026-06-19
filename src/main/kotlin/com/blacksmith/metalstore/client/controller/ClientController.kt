@@ -4,6 +4,7 @@ import com.blacksmith.metalstore.client.application.ClientService
 import com.blacksmith.metalstore.client.domain.dto.request.CreateClientRequest
 import com.blacksmith.metalstore.client.domain.dto.request.UpdateClientRequest
 import com.blacksmith.metalstore.client.domain.dto.response.ClientResponse
+import com.blacksmith.metalstore.client.domain.entity.ClientStatus
 import com.blacksmith.metalstore.organization.config.CurrentOrganizationId
 import com.blacksmith.metalstore.organization.config.RequiresRole
 import com.blacksmith.metalstore.organization.domain.entity.OrganizationRole
@@ -32,9 +33,10 @@ class ClientController(
     fun list(
         @CurrentOrganizationId organizationId: UUID,
         @PageableDefault(size = 20) pageable: Pageable,
-        @RequestParam(name = "q", required = false) nameFilter: String?
+        @RequestParam(name = "q", required = false) nameFilter: String?,
+        @RequestParam(required = false) status: ClientStatus?
     ): Page<ClientResponse> =
-        service.findAll(organizationId, pageable, nameFilter).map { ClientResponse.from(it) }
+        service.findAll(organizationId, pageable, nameFilter, status).map { ClientResponse.from(it) }
 
     @GetMapping("/{id}")
     @Operation(summary = "Obtener cliente por ID", description = "Retorna los datos de un cliente por su UUID.")
@@ -47,7 +49,7 @@ class ClientController(
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    @RequiresRole(OrganizationRole.EDITOR)
+    @RequiresRole(OrganizationRole.STAFF)
     @Operation(summary = "Crear cliente", description = "Crea un nuevo cliente en el sistema.")
     @ApiResponses(value = [
         ApiResponse(responseCode = "201", description = "Recurso creado"),
@@ -59,7 +61,7 @@ class ClientController(
     }
 
     @PutMapping("/{id}")
-    @RequiresRole(OrganizationRole.EDITOR)
+    @RequiresRole(OrganizationRole.STAFF)
     @Operation(summary = "Actualizar cliente", description = "Actualiza los datos de un cliente existente.")
     @ApiResponses(value = [
         ApiResponse(responseCode = "200", description = "Operación exitosa"),
@@ -86,7 +88,7 @@ class ClientController(
     }
 
     @PostMapping("/{id}/activate")
-    @RequiresRole(OrganizationRole.EDITOR)
+    @RequiresRole(OrganizationRole.STAFF)
     @Operation(summary = "Activar cliente", description = "Activa un cliente previamente desactivado.")
     @ApiResponses(value = [
         ApiResponse(responseCode = "200", description = "Operación exitosa"),
@@ -96,7 +98,7 @@ class ClientController(
         ClientResponse.from(service.activate(organizationId, id))
 
     @PostMapping("/{id}/deactivate")
-    @RequiresRole(OrganizationRole.EDITOR)
+    @RequiresRole(OrganizationRole.STAFF)
     @Operation(summary = "Desactivar cliente", description = "Desactiva un cliente existente.")
     @ApiResponses(value = [
         ApiResponse(responseCode = "200", description = "Operación exitosa"),

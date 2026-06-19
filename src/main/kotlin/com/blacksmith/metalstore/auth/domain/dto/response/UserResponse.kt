@@ -31,7 +31,7 @@ data class UserResponse(
     companion object {
         fun from(user: User, organizationName: String = "", activeOrgId: UUID = user.organizationId, organizations: List<UserOrganization> = emptyList()) = UserResponse(
             id = user.id,
-            username = user.username ?: "",
+            username = user.username ?: user.email.substringBefore("@"),
             email = user.email,
             role = user.role,
             organizationId = activeOrgId,

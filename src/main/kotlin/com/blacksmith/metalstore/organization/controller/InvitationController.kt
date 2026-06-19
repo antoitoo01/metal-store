@@ -53,10 +53,8 @@ class InvitationController(
         @PathVariable orgId: UUID,
         pageable: Pageable,
         @CurrentUserId userId: UUID?,
-    ): ResponseEntity<Page<InvitationResponse>> {
-        val uid = userId ?: return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
-        return ResponseEntity.ok(service.listInvitations(orgId, pageable, uid))
-    }
+    ): ResponseEntity<Page<InvitationResponse>> =
+        ResponseEntity.ok(service.listInvitations(orgId, pageable, userId))
 
     @DeleteMapping("/api/organizations/{orgId}/invitations/{id}")
     @RequiresRole(OrganizationRole.ADMIN, orgIdFromArg = 2)

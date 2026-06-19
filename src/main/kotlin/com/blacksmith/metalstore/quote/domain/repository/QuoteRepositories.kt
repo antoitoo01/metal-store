@@ -16,15 +16,15 @@ interface QuoteRepository : JpaRepository<Quote, UUID> {
     @Query("""
         SELECT q FROM Quote q
         WHERE q.organizationId = :orgId
-        AND (:q IS NULL OR LOWER(q.quoteNumber) LIKE LOWER(CONCAT('%', :q, '%'))
-          OR LOWER(q.customerName) LIKE LOWER(CONCAT('%', :q, '%')))
+        AND (:q = '' OR LOWER(q.quoteNumber) LIKE CONCAT('%', :q, '%')
+          OR LOWER(q.customerName) LIKE CONCAT('%', :q, '%'))
         AND (:status IS NULL OR q.status = :status)
         AND (:clientId IS NULL OR q.clientId = :clientId)
         ORDER BY q.issueDate DESC
     """)
     fun findAllFiltered(
         @Param("orgId") orgId: UUID,
-        @Param("q") q: String?,
+        @Param("q") q: String,
         @Param("status") status: QuoteStatus?,
         @Param("clientId") clientId: UUID?,
         pageable: Pageable

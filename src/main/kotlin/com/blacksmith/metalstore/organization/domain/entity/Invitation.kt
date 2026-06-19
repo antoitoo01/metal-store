@@ -21,7 +21,7 @@ class Invitation(
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    var role: OrganizationRole = OrganizationRole.VIEWER,
+    var role: OrganizationRole = OrganizationRole.USER,
 
     @Column(nullable = false)
     var email: String,

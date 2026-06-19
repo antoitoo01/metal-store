@@ -1,8 +1,8 @@
 package com.blacksmith.metalstore.organization.domain.entity
 
 enum class OrganizationRole {
-    OWNER,
+    ORGANIZATION_OWNER,
     ADMIN,
-    EDITOR,
-    VIEWER,
+    STAFF,
+    USER,
 }
