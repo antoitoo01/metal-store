@@ -41,6 +41,10 @@
 | `/api/users` | PUT | JWT | Update current user |
 | `/api/users/{id}` | DELETE | ADMIN | Delete user |
 
+## Language
+
+- All UI text must be in **Español de España** (Spain Spanish) — use "inicia sesión", not "iniciá sesión". Never use voseo.
+
 ## Conventions
 
 - Default profile is `dev` (PostgreSQL + permit-all security)
