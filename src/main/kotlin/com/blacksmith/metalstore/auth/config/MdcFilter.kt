@@ -26,6 +26,7 @@ class MdcFilter : OncePerRequestFilter() {
             MDC.put("clientIp", clientIp)
             MDC.put("method", request.method)
             MDC.put("path", request.requestURI)
+            MDC.put("traceId", java.util.UUID.randomUUID().toString())
 
             filterChain.doFilter(request, response)
         } finally {

@@ -23,10 +23,17 @@ class SecurityConfig {
 
     @Bean
     @Profile("dev", "test")
-    fun devSecurityFilterChain(http: HttpSecurity): SecurityFilterChain {
+    fun devSecurityFilterChain(
+        http: HttpSecurity,
+        jwtDecoder: JwtDecoder,
+    ): SecurityFilterChain {
         http
             .csrf { it.disable() }
+            .sessionManagement { it.sessionCreationPolicy(SessionCreationPolicy.STATELESS) }
             .authorizeHttpRequests { it.anyRequest().permitAll() }
+            .oauth2ResourceServer { oauth2 ->
+                oauth2.jwt { it.decoder(jwtDecoder) }
+            }
         return http.build()
     }
 
@@ -53,7 +60,6 @@ class SecurityConfig {
     }
 
     @Bean
-    @Profile("prod")
     fun jwtDecoder(props: SupabaseProperties): JwtDecoder {
         val jwkSetUrl = URL("${props.url}/auth/v1/.well-known/jwks.json")
         val jwkSet = RemoteJWKSet<SecurityContext>(jwkSetUrl)
