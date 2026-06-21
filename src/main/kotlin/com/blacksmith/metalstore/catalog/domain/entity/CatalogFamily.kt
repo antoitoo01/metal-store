@@ -20,7 +20,7 @@ class CatalogFamily(
     @Column(nullable = false, length = 10)
     val shapeType: String,
 
-    @Column(length = 100)
+    @Column(length = 100, columnDefinition = "TEXT")
     val description: String? = null
 ) : BaseEntity() {
     override fun equals(other: Any?): Boolean {

@@ -19,8 +19,7 @@ abstract class CatalogProfile(
     @JoinColumn(nullable = false)
     val family: CatalogFamily,
 
-    @JdbcTypeCode(SqlTypes.VARCHAR)
-    @Column(nullable = false, length = 65535)
+    @Column(nullable = false, columnDefinition = "TEXT")
     val designation: String,
 
     @Column(precision = 10, scale = 4)

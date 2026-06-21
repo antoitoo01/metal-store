@@ -30,8 +30,9 @@ interface CatalogProfileRepository : JpaRepository<CatalogProfile, UUID> {
 
     @EntityGraph(attributePaths = ["family"])
     @Query("""
-        SELECT p FROM CatalogProfile p JOIN p.family f
-        WHERE (:q IS NULL OR LOWER(p.designation) LIKE LOWER(CONCAT('%', :q, '%')))
+        SELECT p FROM CatalogProfile p
+        JOIN p.family f
+        WHERE (:q IS NULL OR LOWER(p.designation) LIKE LOWER(CONCAT('%', CAST(:q AS STRING), '%')))
         AND (:standard IS NULL OR f.standard = :standard)
         AND (:shapeType IS NULL OR f.shapeType = :shapeType)
         AND (:familyCode IS NULL OR f.code = :familyCode)
