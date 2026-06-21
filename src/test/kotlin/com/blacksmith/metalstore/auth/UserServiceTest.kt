@@ -53,6 +53,50 @@ class UserServiceTest {
     }
 
     @Test
+    fun `checkAvailability returns true when username exists`() {
+        val result = userService.checkAvailability("username", "owner", organizationId)
+        assert(result)
+    }
+
+    @Test
+    fun `checkAvailability returns false when username is free`() {
+        val result = userService.checkAvailability("username", "nonexistent", organizationId)
+        assert(!result)
+    }
+
+    @Test
+    fun `checkAvailability is case-insensitive`() {
+        val result = userService.checkAvailability("username", "OWNER", organizationId)
+        assert(result)
+    }
+
+    @Test
+    fun `checkAvailability returns true when email exists`() {
+        val result = userService.checkAvailability("email", "owner@test.com", organizationId)
+        assert(result)
+    }
+
+    @Test
+    fun `checkAvailability returns false when email is free`() {
+        val result = userService.checkAvailability("email", "free@test.com", organizationId)
+        assert(!result)
+    }
+
+    @Test
+    fun `checkAvailability throws on invalid field`() {
+        assertThrows<IllegalArgumentException> {
+            userService.checkAvailability("invalid", "value", organizationId)
+        }
+    }
+
+    @Test
+    fun `checkAvailability scopes by organizationId`() {
+        val otherOrg = UUID.randomUUID()
+        val result = userService.checkAvailability("username", "owner", otherOrg)
+        assert(!result)
+    }
+
+    @Test
     fun `update own profile works`() {
         val request = UpdateUserRequest(username = "owner-updated", email = "owner@test.com")
 

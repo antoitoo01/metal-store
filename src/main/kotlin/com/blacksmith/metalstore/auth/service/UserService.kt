@@ -31,6 +31,16 @@ class UserService(
     }
 
     @Transactional(readOnly = true)
+    fun checkAvailability(field: String, value: String, organizationId: UUID): Boolean {
+        val normalized = value.trim().lowercase()
+        return when (field) {
+            "username" -> userRepository.existsByOrganizationIdAndUsernameIgnoreCase(organizationId, normalized)
+            "email" -> userRepository.existsByOrganizationIdAndEmailIgnoreCase(organizationId, normalized)
+            else -> throw IllegalArgumentException("field must be one of: username, email")
+        }
+    }
+
+    @Transactional(readOnly = true)
     fun findByUsername(username: String): User {
         return userRepository.findByUsername(username)
             .orElseThrow { UserNotFoundException("Usuario $username no encontrado") }

@@ -38,6 +38,27 @@ class UserController(private val userService: UserService) {
     ): Page<UserResponse> =
         userService.findAll(organizationId, pageable, q).map { UserResponse.from(it) }
 
+    @GetMapping("/check")
+    @Operation(summary = "Verificar disponibilidad", description = "Verifica si un username o email está disponible en la organización.")
+    @ApiResponses(value = [
+        ApiResponse(responseCode = "200", description = "Resultado de disponibilidad"),
+        ApiResponse(responseCode = "400", description = "Parámetro field inválido")
+    ])
+    fun checkAvailability(
+        @RequestParam field: String,
+        @RequestParam value: String,
+        @CurrentOrganizationId organizationId: UUID
+    ): ResponseEntity<Map<String, Any>> {
+        val validFields = setOf("username", "email")
+        if (field !in validFields) {
+            return ResponseEntity.badRequest().body(
+                mapOf("available" to false, "error" to "field must be one of: username, email")
+            )
+        }
+        val available = !userService.checkAvailability(field, value, organizationId)
+        return ResponseEntity.ok(mapOf("available" to available))
+    }
+
     @GetMapping("/{id}")
     @Operation(summary = "Obtener usuario por ID", description = "Retorna los datos de un usuario por su UUID.")
     @ApiResponses(value = [
