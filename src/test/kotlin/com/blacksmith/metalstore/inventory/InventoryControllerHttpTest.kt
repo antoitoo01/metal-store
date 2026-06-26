@@ -10,6 +10,7 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.http.MediaType
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.web.servlet.MockMvc
+import org.springframework.transaction.annotation.Transactional
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.*
 import java.math.BigDecimal
@@ -100,5 +101,62 @@ class InventoryControllerHttpTest {
             .content(body))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.quantity").value(99.00))
+    }
+
+    @Test
+    fun `getMovements returns movement history`() {
+        val item = repo.save(InventoryItem(organizationId = organizationId, profileId = profileId, quantity = BigDecimal("50.00")))
+        val addBody = """{"quantity":25.00,"notes":"Entrada extra"}"""
+
+        mockMvc.perform(post("/api/inventory/{id}/add-stock", item.id)
+            .header("X-Organization-Id", organizationId.toString())
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(addBody))
+            .andExpect(status().isOk)
+
+        mockMvc.perform(get("/api/inventory/{id}/movements", item.id)
+            .header("X-Organization-Id", organizationId.toString()))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.page.totalElements").value(1))
+            .andExpect(jsonPath("$.content[0].movementType").value("INBOUND"))
+            .andExpect(jsonPath("$.content[0].quantity").value(25.00))
+    }
+
+    @Test
+    fun `addStock increments quantity and registers movement`() {
+        val item = repo.save(InventoryItem(organizationId = organizationId, profileId = profileId, quantity = BigDecimal("50.00")))
+        val body = """{"quantity":25.00,"notes":"Entrada extra"}"""
+
+        mockMvc.perform(post("/api/inventory/{id}/add-stock", item.id)
+            .header("X-Organization-Id", organizationId.toString())
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(body))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.quantity").value(75.00))
+    }
+
+    @Test
+    fun `removeStock decrements quantity and registers movement`() {
+        val item = repo.save(InventoryItem(organizationId = organizationId, profileId = profileId, quantity = BigDecimal("50.00")))
+        val body = """{"quantity":15.00,"notes":"Salida manual"}"""
+
+        mockMvc.perform(post("/api/inventory/{id}/remove-stock", item.id)
+            .header("X-Organization-Id", organizationId.toString())
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(body))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.quantity").value(35.00))
+    }
+
+    @Test
+    fun `removeStock returns 400 on insufficient stock`() {
+        val item = repo.save(InventoryItem(organizationId = organizationId, profileId = profileId, quantity = BigDecimal("10.00")))
+        val body = """{"quantity":99.00}"""
+
+        mockMvc.perform(post("/api/inventory/{id}/remove-stock", item.id)
+            .header("X-Organization-Id", organizationId.toString())
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(body))
+            .andExpect(status().isBadRequest)
     }
 }

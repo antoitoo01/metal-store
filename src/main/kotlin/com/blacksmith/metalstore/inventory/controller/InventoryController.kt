@@ -4,9 +4,11 @@ import com.blacksmith.metalstore.organization.config.CurrentOrganizationId
 import com.blacksmith.metalstore.organization.config.RequiresRole
 import com.blacksmith.metalstore.organization.domain.entity.OrganizationRole
 import com.blacksmith.metalstore.inventory.application.InventoryService
+import com.blacksmith.metalstore.inventory.domain.dto.request.AdjustStockRequest
 import com.blacksmith.metalstore.inventory.domain.dto.request.CreateItemRequest
 import com.blacksmith.metalstore.inventory.domain.dto.request.UpdateItemRequest
 import com.blacksmith.metalstore.inventory.domain.dto.response.ItemResponse
+import com.blacksmith.metalstore.inventory.domain.dto.response.MovementResponse
 import jakarta.validation.Valid
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
@@ -44,7 +46,7 @@ class InventoryController(
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @RequiresRole(OrganizationRole.STAFF)
-    @Operation(summary = "Crear ítem", description = "Crea un nuevo ítem de inventario.")
+    @Operation(summary = "Crear ítem", description = "Crea un nuevo ítem de inventario registrando una entrada inicial.")
     @ApiResponses(value = [
         ApiResponse(responseCode = "201", description = "Recurso creado"),
         ApiResponse(responseCode = "400", description = "Solicitud inválida")
@@ -56,7 +58,7 @@ class InventoryController(
 
     @PutMapping("/{id}")
     @RequiresRole(OrganizationRole.STAFF)
-    @Operation(summary = "Actualizar ítem", description = "Actualiza los datos de un ítem de inventario existente.")
+    @Operation(summary = "Actualizar ítem", description = "Actualiza los datos de un ítem de inventario existente. Si la cantidad cambia, se registra un movimiento.")
     @ApiResponses(value = [
         ApiResponse(responseCode = "200", description = "Operación exitosa"),
         ApiResponse(responseCode = "400", description = "Solicitud inválida"),
@@ -80,4 +82,46 @@ class InventoryController(
         service.delete(organizationId, id)
         return ResponseEntity.noContent().build()
     }
+
+    @GetMapping("/{id}/movements")
+    @Operation(summary = "Historial de movimientos", description = "Retorna el historial paginado de movimientos de un ítem de inventario.")
+    @ApiResponses(value = [
+        ApiResponse(responseCode = "200", description = "Operación exitosa"),
+        ApiResponse(responseCode = "404", description = "Recurso no encontrado")
+    ])
+    fun getMovements(
+        @CurrentOrganizationId organizationId: UUID,
+        @PathVariable id: UUID,
+        @PageableDefault(size = 20) pageable: Pageable
+    ): Page<MovementResponse> =
+        service.getMovements(organizationId, id, pageable).map { MovementResponse.from(it) }
+
+    @PostMapping("/{id}/add-stock")
+    @RequiresRole(OrganizationRole.STAFF)
+    @Operation(summary = "Añadir stock", description = "Incrementa la cantidad de un ítem de inventario y registra un movimiento de entrada.")
+    @ApiResponses(value = [
+        ApiResponse(responseCode = "200", description = "Operación exitosa"),
+        ApiResponse(responseCode = "404", description = "Recurso no encontrado")
+    ])
+    fun addStock(
+        @CurrentOrganizationId organizationId: UUID,
+        @PathVariable id: UUID,
+        @Valid @RequestBody request: AdjustStockRequest
+    ): ItemResponse =
+        ItemResponse.from(service.addStock(organizationId, id, request.quantity, request.notes))
+
+    @PostMapping("/{id}/remove-stock")
+    @RequiresRole(OrganizationRole.STAFF)
+    @Operation(summary = "Retirar stock", description = "Decrementa la cantidad de un ítem de inventario y registra un movimiento de salida.")
+    @ApiResponses(value = [
+        ApiResponse(responseCode = "200", description = "Operación exitosa"),
+        ApiResponse(responseCode = "400", description = "Stock insuficiente"),
+        ApiResponse(responseCode = "404", description = "Recurso no encontrado")
+    ])
+    fun removeStock(
+        @CurrentOrganizationId organizationId: UUID,
+        @PathVariable id: UUID,
+        @Valid @RequestBody request: AdjustStockRequest
+    ): ItemResponse =
+        ItemResponse.from(service.removeStock(organizationId, id, request.quantity, request.notes))
 }
