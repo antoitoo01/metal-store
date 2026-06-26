@@ -24,6 +24,5 @@ gradle-app.setting
 skills/
 **/skill.md
 .agents/
-/sql/rls-policies.sql
 
 uploads/

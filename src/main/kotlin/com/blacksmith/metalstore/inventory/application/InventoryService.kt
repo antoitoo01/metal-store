@@ -95,7 +95,14 @@ class InventoryService(
         ))
     }
 
-    fun addStock(organizationId: UUID, id: UUID, quantity: BigDecimal, notes: String?): InventoryItem {
+    fun addStock(
+        organizationId: UUID,
+        id: UUID,
+        quantity: BigDecimal,
+        notes: String? = null,
+        referenceType: ReferenceType? = null,
+        referenceId: UUID? = null
+    ): InventoryItem {
         val item = repo.findById(id).filter { it.organizationId == organizationId }
             .orElseThrow { ResourceNotFoundException("InventoryItem", id) }
         val previousQty = item.quantity
@@ -113,7 +120,7 @@ class InventoryService(
             notes = item.notes
         )
         val saved = repo.save(merged)
-        registerMovement(organizationId, id, MovementType.INBOUND, quantity, ReferenceType.MANUAL_ADJUSTMENT, null, notes ?: "Entrada manual", previousQty, newQty)
+        registerMovement(organizationId, id, MovementType.INBOUND, quantity, referenceType ?: ReferenceType.MANUAL_ADJUSTMENT, referenceId, notes ?: "Entrada manual", previousQty, newQty)
         audit.log(AuditLogger.AuditEvent(
             action = "INVENTORY_STOCK_ADDED",
             entityType = "InventoryItem",
@@ -124,7 +131,14 @@ class InventoryService(
         return saved
     }
 
-    fun removeStock(organizationId: UUID, id: UUID, quantity: BigDecimal, notes: String?): InventoryItem {
+    fun removeStock(
+        organizationId: UUID,
+        id: UUID,
+        quantity: BigDecimal,
+        notes: String? = null,
+        referenceType: ReferenceType? = null,
+        referenceId: UUID? = null
+    ): InventoryItem {
         val item = repo.findById(id).filter { it.organizationId == organizationId }
             .orElseThrow { ResourceNotFoundException("InventoryItem", id) }
         require(item.quantity >= quantity) { "Insufficient stock: available ${item.quantity}, requested $quantity" }
@@ -143,7 +157,7 @@ class InventoryService(
             notes = item.notes
         )
         val saved = repo.save(merged)
-        registerMovement(organizationId, id, MovementType.OUTBOUND, quantity, ReferenceType.MANUAL_ADJUSTMENT, null, notes ?: "Salida manual", previousQty, newQty)
+        registerMovement(organizationId, id, MovementType.OUTBOUND, quantity, referenceType ?: ReferenceType.MANUAL_ADJUSTMENT, referenceId, notes ?: "Salida manual", previousQty, newQty)
         audit.log(AuditLogger.AuditEvent(
             action = "INVENTORY_STOCK_REMOVED",
             entityType = "InventoryItem",
