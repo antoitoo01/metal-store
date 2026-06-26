@@ -395,3 +395,69 @@ CREATE POLICY "Users manage their own delivery note lines"
       WHERE idn.id = delivery_note_id AND idn.organization_id IN (SELECT public.user_organization_ids())
     )
   );
+
+-- ── outbound_delivery_notes (org-scoped) ────────────────────────────────
+ALTER TABLE public.outbound_delivery_notes ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Users see their own outbound delivery notes" ON public.outbound_delivery_notes;
+CREATE POLICY "Users see their own outbound delivery notes"
+  ON public.outbound_delivery_notes FOR SELECT
+  USING (organization_id IN (SELECT public.user_organization_ids()));
+
+DROP POLICY IF EXISTS "Users manage their own outbound delivery notes" ON public.outbound_delivery_notes;
+CREATE POLICY "Users manage their own outbound delivery notes"
+  ON public.outbound_delivery_notes FOR INSERT
+  WITH CHECK (organization_id IN (SELECT public.user_organization_ids()));
+
+DROP POLICY IF EXISTS "Users manage their own outbound delivery notes" ON public.outbound_delivery_notes;
+CREATE POLICY "Users manage their own outbound delivery notes"
+  ON public.outbound_delivery_notes FOR UPDATE
+  USING (organization_id IN (SELECT public.user_organization_ids()));
+
+DROP POLICY IF EXISTS "Users manage their own outbound delivery notes" ON public.outbound_delivery_notes;
+CREATE POLICY "Users manage their own outbound delivery notes"
+  ON public.outbound_delivery_notes FOR DELETE
+  USING (organization_id IN (SELECT public.user_organization_ids()));
+
+-- ── outbound_delivery_note_lines (org-scoped via outbound_delivery_notes.organization_id) ─
+ALTER TABLE public.outbound_delivery_note_lines ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Users see their own outbound delivery note lines" ON public.outbound_delivery_note_lines;
+CREATE POLICY "Users see their own outbound delivery note lines"
+  ON public.outbound_delivery_note_lines FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.outbound_delivery_notes odn
+      WHERE odn.id = delivery_note_id AND odn.organization_id IN (SELECT public.user_organization_ids())
+    )
+  );
+
+DROP POLICY IF EXISTS "Users manage their own outbound delivery note lines" ON public.outbound_delivery_note_lines;
+CREATE POLICY "Users manage their own outbound delivery note lines"
+  ON public.outbound_delivery_note_lines FOR INSERT
+  WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM public.outbound_delivery_notes odn
+      WHERE odn.id = delivery_note_id AND odn.organization_id IN (SELECT public.user_organization_ids())
+    )
+  );
+
+DROP POLICY IF EXISTS "Users manage their own outbound delivery note lines" ON public.outbound_delivery_note_lines;
+CREATE POLICY "Users manage their own outbound delivery note lines"
+  ON public.outbound_delivery_note_lines FOR UPDATE
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.outbound_delivery_notes odn
+      WHERE odn.id = delivery_note_id AND odn.organization_id IN (SELECT public.user_organization_ids())
+    )
+  );
+
+DROP POLICY IF EXISTS "Users manage their own outbound delivery note lines" ON public.outbound_delivery_note_lines;
+CREATE POLICY "Users manage their own outbound delivery note lines"
+  ON public.outbound_delivery_note_lines FOR DELETE
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.outbound_delivery_notes odn
+      WHERE odn.id = delivery_note_id AND odn.organization_id IN (SELECT public.user_organization_ids())
+    )
+  );
