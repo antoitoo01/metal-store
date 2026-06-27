@@ -1,0 +1,11 @@
+change:
+  id: fase2-peso-pricing
+  title: Cálculo de peso automático y pricing inteligente
+  status: explore
+  intent: >
+    Añadir cálculo automático de peso desde dimensiones de perfiles, y un sistema
+    de pricing basado en peso × markup por perfil/familia.
+  features:
+    - auto-weight: Calcular peso teórico desde área/dimensiones del perfil
+    - smart-pricing: Calcular precio sugerido basado en peso + markup configurable
+  dependencies: []

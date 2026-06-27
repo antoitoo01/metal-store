@@ -1,0 +1,39 @@
+change:
+  id: frontend-ui
+  title: Interfaz de usuario Angular para Metal Store ERP
+  status: spec
+  intent: Proporcionar especificaciones detalladas para que un desarrollador frontend implemente la interfaz de usuario completa del sistema Metal Store ERP.
+  context:
+    backend: >
+      El backend Spring Boot + Kotlin expone ~80 endpoints REST organizados por bounded contexts.
+      Autenticación mediante JWT de Supabase. Todas las operaciones requieren el header
+      `X-Organization-Id` con el UUID de la organización activa. Roles: ADMIN, STAFF, VIEWER.
+      Perfil dev: permit-all (no JWT). Perfil prod: OAuth2 con validación JWT.
+    api_base: http://localhost:8080/api (dev)
+  features:
+    - auth
+    - dashboard
+    - catalog
+    - clients
+    - suppliers
+    - purchase-orders
+    - inbound
+    - outbound
+    - inventory
+    - quotes
+    - billing
+    - organizations
+specs:
+  - specs/001-layout-global.md
+  - specs/002-auth.md
+  - specs/003-dashboard.md
+  - specs/004-catalog.md
+  - specs/005-clients.md
+  - specs/006-suppliers.md
+  - specs/007-purchase-orders.md
+  - specs/008-inbound.md
+  - specs/009-outbound.md
+  - specs/010-inventory.md
+  - specs/011-quotes.md
+  - specs/012-billing.md
+  - specs/013-organizations.md

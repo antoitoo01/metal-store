@@ -1,5 +1,6 @@
 package com.blacksmith.metalstore.catalog.domain.entity
 
+import com.blacksmith.metalstore.shared.domain.MaterialType
 import jakarta.persistence.*
 import java.math.BigDecimal
 import java.util.UUID
@@ -78,6 +79,8 @@ class EuroProfile(
     val melRdZKnm: BigDecimal? = null,
 
     @Column(precision = 10, scale = 4)
-    val mplRdZKnm: BigDecimal? = null
+    val mplRdZKnm: BigDecimal? = null,
 
-) : CatalogProfile(id, family, designation, weightKgM, areaCm2)
+    materialType: MaterialType? = null
+
+) : CatalogProfile(id, family, designation, weightKgM, areaCm2, materialType = materialType)

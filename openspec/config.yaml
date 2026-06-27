@@ -1,0 +1,15 @@
+context:
+  project: Metal Store ERP
+  stack:
+    backend: Spring Boot 4.0.1 + Kotlin 2.2.21 + Java 25
+    frontend: Angular 20+ (to be implemented)
+  architecture: Modular monolith REST API with bounded contexts
+  api_base: http://localhost:8080/api (dev)
+  auth: Supabase JWT via Bearer token + X-Organization-Id header
+strict_tdd: false
+testing:
+  layers:
+    unit: angular-test (Karma/Jasmine)
+    integration: Angular TestBed
+    e2e: Playwright
+persistence: openspec

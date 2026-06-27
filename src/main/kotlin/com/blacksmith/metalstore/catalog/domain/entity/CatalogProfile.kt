@@ -1,10 +1,10 @@
 package com.blacksmith.metalstore.catalog.domain.entity
 
 import com.blacksmith.metalstore.shared.BaseEntity
+import com.blacksmith.metalstore.shared.domain.MaterialType
 import jakarta.persistence.*
-import org.hibernate.annotations.JdbcTypeCode
-import org.hibernate.type.SqlTypes
 import java.math.BigDecimal
+import java.math.RoundingMode
 import java.util.UUID
 
 @Entity
@@ -28,5 +28,16 @@ abstract class CatalogProfile(
     @Column(precision = 10, scale = 4)
     val areaCm2: BigDecimal? = null,
 
-    var imagePath: String? = null
-) : BaseEntity()
+    var imagePath: String? = null,
+
+    @Enumerated(EnumType.STRING)
+    @Column(length = 20)
+    val materialType: MaterialType? = null
+) : BaseEntity() {
+
+    fun getCalculatedWeightKgM(): BigDecimal? =
+        areaCm2?.let { area ->
+            val density = (materialType ?: MaterialType.STEEL).densityKgM3
+            area.multiply(density).divide(BigDecimal("10000"), 4, RoundingMode.HALF_UP)
+        }
+}
