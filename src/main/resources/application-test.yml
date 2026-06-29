@@ -2,10 +2,12 @@ spring:
   datasource:
     driver-class-name: org.h2.Driver
     url: jdbc:h2:mem:testdb;MODE=PostgreSQL;NON_KEYWORDS=YEAR
-
   jpa:
     hibernate:
       ddl-auto: create
     properties:
       hibernate:
         nationalization-support: false
+
+rate-limiting:
+  enabled: false

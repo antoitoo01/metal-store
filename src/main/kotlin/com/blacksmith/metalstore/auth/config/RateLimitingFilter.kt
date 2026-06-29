@@ -8,6 +8,7 @@ import jakarta.servlet.FilterChain
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import org.slf4j.LoggerFactory
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.core.Ordered
 import org.springframework.core.annotation.Order
 import org.springframework.stereotype.Component
@@ -17,6 +18,7 @@ import java.util.concurrent.ConcurrentHashMap
 
 @Component
 @Order(Ordered.HIGHEST_PRECEDENCE)
+@ConditionalOnProperty(name = ["rate-limiting.enabled"], havingValue = "true", matchIfMissing = true)
 class RateLimitingFilter(
     private val properties: RateLimitingProperties
 ) : OncePerRequestFilter() {
