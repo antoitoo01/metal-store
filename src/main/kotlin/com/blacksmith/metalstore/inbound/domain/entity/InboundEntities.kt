@@ -36,34 +36,34 @@ class InboundDeliveryNote(
     @Column(nullable = false, unique = true, length = 50)
     val number: String,
 
-    val supplierId: UUID? = null,
+    var supplierId: UUID? = null,
 
     @Column(length = 255)
-    val supplierName: String? = null,
+    var supplierName: String? = null,
 
     @Column(length = 20)
-    val supplierVat: String? = null,
+    var supplierVat: String? = null,
 
     @Column(length = 500)
-    val supplierAddress: String? = null,
+    var supplierAddress: String? = null,
 
-    val poId: UUID? = null,
+    var poId: UUID? = null,
 
     @Column(length = 50)
-    val poNumber: String? = null,
+    var poNumber: String? = null,
 
     @Column(nullable = false)
-    val issueDate: LocalDate = LocalDate.now(),
+    var issueDate: LocalDate = LocalDate.now(),
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     var status: InboundDeliveryNoteStatus = InboundDeliveryNoteStatus.DRAFT,
 
     @Column(precision = 14, scale = 4)
-    val totalAmount: BigDecimal = BigDecimal.ZERO,
+    var totalAmount: BigDecimal = BigDecimal.ZERO,
 
     @Column(columnDefinition = "TEXT")
-    val notes: String? = null
+    var notes: String? = null
 ) : BaseEntity() {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

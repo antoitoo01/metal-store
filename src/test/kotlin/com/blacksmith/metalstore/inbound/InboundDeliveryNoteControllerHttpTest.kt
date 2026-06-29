@@ -168,4 +168,56 @@ class InboundDeliveryNoteControllerHttpTest {
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.status").value("CONFIRMED"))
     }
+
+    @Test
+    fun `update updates header fields of draft inbound`() {
+        val note = repo.save(InboundDeliveryNote(
+            organizationId = organizationId,
+            number = "AL-2026-001",
+            supplierName = "Original"
+        ))
+
+        val body = """{"supplierName":"Aceros Revisados","supplierVat":"C98765432","notes":"Nota actualizada"}"""
+
+        mockMvc.perform(put("/api/inbound-delivery-notes/{id}", note.id)
+            .header("X-Organization-Id", organizationId.toString())
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(body))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.supplierName").value("Aceros Revisados"))
+            .andExpect(jsonPath("$.supplierVat").value("C98765432"))
+            .andExpect(jsonPath("$.notes").value("Nota actualizada"))
+            .andExpect(jsonPath("$.status").value("DRAFT"))
+
+        val updated = repo.findById(note.id).get()
+        assert(updated.supplierName == "Aceros Revisados") { "Expected updated supplierName" }
+    }
+
+    @Test
+    fun `update rejects for confirmed inbound`() {
+        val note = repo.save(InboundDeliveryNote(
+            organizationId = organizationId,
+            number = "AL-2026-001",
+            status = InboundDeliveryNoteStatus.CONFIRMED
+        ))
+
+        val body = """{"supplierName":"Cambio"}"""
+
+        mockMvc.perform(put("/api/inbound-delivery-notes/{id}", note.id)
+            .header("X-Organization-Id", organizationId.toString())
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(body))
+            .andExpect(status().isBadRequest)
+    }
+
+    @Test
+    fun `update returns 404 for non-existent inbound`() {
+        val body = """{"supplierName":"Test"}"""
+
+        mockMvc.perform(put("/api/inbound-delivery-notes/{id}", UUID.randomUUID())
+            .header("X-Organization-Id", organizationId.toString())
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(body))
+            .andExpect(status().isNotFound)
+    }
 }

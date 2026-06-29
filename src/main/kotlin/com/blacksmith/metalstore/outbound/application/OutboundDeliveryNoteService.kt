@@ -5,6 +5,7 @@ import com.blacksmith.metalstore.inventory.application.InventoryService
 import com.blacksmith.metalstore.inventory.domain.entity.ReferenceType
 import com.blacksmith.metalstore.inventory.domain.repository.InventoryItemRepository
 import com.blacksmith.metalstore.outbound.domain.entity.OutboundDeliveryNote
+import com.blacksmith.metalstore.outbound.domain.dto.request.UpdateOutboundDeliveryNoteRequest
 import com.blacksmith.metalstore.outbound.domain.entity.OutboundDeliveryNoteLine
 import com.blacksmith.metalstore.outbound.domain.entity.OutboundDeliveryNoteStatus
 import com.blacksmith.metalstore.outbound.domain.repository.OutboundDeliveryNoteLineRepository
@@ -65,6 +66,27 @@ class OutboundDeliveryNoteService(
             entityId = saved.id.toString(),
             organizationId = organizationId.toString(),
             details = mapOf("number" to number)
+        ))
+        return saved
+    }
+
+    fun update(organizationId: UUID, id: UUID, request: UpdateOutboundDeliveryNoteRequest): OutboundDeliveryNote {
+        val note = repo.findById(id).filter { it.organizationId == organizationId }
+            .orElseThrow { ResourceNotFoundException("OutboundDeliveryNote", id) }
+        require(note.status == OutboundDeliveryNoteStatus.DRAFT) { "OutboundDeliveryNote $id is not in DRAFT status" }
+        note.customerId = request.customerId
+        note.customerName = request.customerName
+        note.customerVat = request.customerVat
+        note.customerAddress = request.customerAddress
+        note.issueDate = request.issueDate ?: note.issueDate
+        note.notes = request.notes
+        val saved = repo.save(note)
+        audit.log(AuditLogger.AuditEvent(
+            action = "ODN_UPDATED",
+            entityType = "OutboundDeliveryNote",
+            entityId = saved.id.toString(),
+            organizationId = organizationId.toString(),
+            details = mapOf("number" to saved.number)
         ))
         return saved
     }
@@ -156,19 +178,8 @@ class OutboundDeliveryNoteService(
         val lines = lineRepo.findByDeliveryNoteIdOrderByLineNumber(noteId)
         val total = lines.sumOf { it.quantity * it.unitPrice }
         repo.findById(noteId).ifPresent { note ->
-            repo.save(OutboundDeliveryNote(
-                id = note.id,
-                organizationId = note.organizationId,
-                number = note.number,
-                customerId = note.customerId,
-                customerName = note.customerName,
-                customerVat = note.customerVat,
-                customerAddress = note.customerAddress,
-                issueDate = note.issueDate,
-                status = note.status,
-                totalAmount = total,
-                notes = note.notes
-            ))
+            note.totalAmount = total
+            repo.save(note)
         }
     }
 

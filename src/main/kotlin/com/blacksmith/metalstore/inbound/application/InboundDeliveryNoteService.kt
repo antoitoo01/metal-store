@@ -2,6 +2,7 @@ package com.blacksmith.metalstore.inbound.application
 
 import com.blacksmith.metalstore.auth.audit.AuditLogger
 import com.blacksmith.metalstore.inbound.domain.entity.InboundDeliveryNote
+import com.blacksmith.metalstore.inbound.domain.dto.request.UpdateInboundDeliveryNoteRequest
 import com.blacksmith.metalstore.inbound.domain.entity.InboundDeliveryNoteLine
 import com.blacksmith.metalstore.inbound.domain.entity.InboundDeliveryNoteStatus
 import com.blacksmith.metalstore.inbound.domain.repository.InboundDeliveryNoteLineRepository
@@ -68,6 +69,29 @@ class InboundDeliveryNoteService(
             entityId = saved.id.toString(),
             organizationId = organizationId.toString(),
             details = mapOf("number" to number)
+        ))
+        return saved
+    }
+
+    fun update(organizationId: UUID, id: UUID, request: UpdateInboundDeliveryNoteRequest): InboundDeliveryNote {
+        val note = repo.findById(id).filter { it.organizationId == organizationId }
+            .orElseThrow { ResourceNotFoundException("InboundDeliveryNote", id) }
+        require(note.status == InboundDeliveryNoteStatus.DRAFT) { "InboundDeliveryNote $id is not in DRAFT status" }
+        note.supplierId = request.supplierId
+        note.supplierName = request.supplierName
+        note.supplierVat = request.supplierVat
+        note.supplierAddress = request.supplierAddress
+        note.poId = request.poId
+        note.poNumber = request.poNumber
+        note.issueDate = request.issueDate ?: note.issueDate
+        note.notes = request.notes
+        val saved = repo.save(note)
+        audit.log(AuditLogger.AuditEvent(
+            action = "IDN_UPDATED",
+            entityType = "InboundDeliveryNote",
+            entityId = saved.id.toString(),
+            organizationId = organizationId.toString(),
+            details = mapOf("number" to saved.number)
         ))
         return saved
     }
@@ -167,21 +191,8 @@ class InboundDeliveryNoteService(
         val lines = lineRepo.findByDeliveryNoteIdOrderByLineNumber(noteId)
         val total = lines.sumOf { it.quantity * it.unitPrice }
         repo.findById(noteId).ifPresent { note ->
-            repo.save(InboundDeliveryNote(
-                id = note.id,
-                organizationId = note.organizationId,
-                number = note.number,
-                supplierId = note.supplierId,
-                supplierName = note.supplierName,
-                supplierVat = note.supplierVat,
-                supplierAddress = note.supplierAddress,
-                poId = note.poId,
-                poNumber = note.poNumber,
-                issueDate = note.issueDate,
-                status = note.status,
-                totalAmount = total,
-                notes = note.notes
-            ))
+            note.totalAmount = total
+            repo.save(note)
         }
     }
 

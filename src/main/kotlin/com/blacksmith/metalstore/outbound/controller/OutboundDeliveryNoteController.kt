@@ -6,6 +6,7 @@ import com.blacksmith.metalstore.organization.domain.entity.OrganizationRole
 import com.blacksmith.metalstore.outbound.application.OutboundDeliveryNoteService
 import com.blacksmith.metalstore.outbound.domain.dto.request.AddOutboundLineRequest
 import com.blacksmith.metalstore.outbound.domain.dto.request.CreateOutboundDeliveryNoteRequest
+import com.blacksmith.metalstore.outbound.domain.dto.request.UpdateOutboundDeliveryNoteRequest
 import com.blacksmith.metalstore.outbound.domain.dto.response.OutboundDeliveryNoteLineResponse
 import com.blacksmith.metalstore.outbound.domain.dto.response.OutboundDeliveryNoteResponse
 import io.swagger.v3.oas.annotations.Operation
@@ -70,6 +71,21 @@ class OutboundDeliveryNoteController(
         @Valid @RequestBody request: CreateOutboundDeliveryNoteRequest
     ): OutboundDeliveryNoteResponse =
         OutboundDeliveryNoteResponse.from(service.create(organizationId, request.toEntity(organizationId, "")))
+
+    @PutMapping("/{id}")
+    @RequiresRole(OrganizationRole.STAFF)
+    @Operation(summary = "Actualizar albarán", description = "Actualiza los datos de cabecera de un albarán en DRAFT.")
+    @ApiResponses(value = [
+        ApiResponse(responseCode = "200", description = "Albarán actualizado"),
+        ApiResponse(responseCode = "400", description = "El albarán no está en DRAFT"),
+        ApiResponse(responseCode = "404", description = "Recurso no encontrado")
+    ])
+    fun update(
+        @CurrentOrganizationId organizationId: UUID,
+        @PathVariable id: UUID,
+        @Valid @RequestBody request: UpdateOutboundDeliveryNoteRequest
+    ): OutboundDeliveryNoteResponse =
+        OutboundDeliveryNoteResponse.from(service.update(organizationId, id, request))
 
     @PostMapping("/{id}/lines")
     @RequiresRole(OrganizationRole.STAFF)

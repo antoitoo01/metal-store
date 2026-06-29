@@ -4,6 +4,7 @@ import com.blacksmith.metalstore.inventory.domain.entity.InventoryItem
 import com.blacksmith.metalstore.inventory.domain.repository.InventoryItemRepository
 import com.blacksmith.metalstore.outbound.domain.entity.OutboundDeliveryNote
 import com.blacksmith.metalstore.outbound.domain.entity.OutboundDeliveryNoteLine
+import com.blacksmith.metalstore.outbound.domain.entity.OutboundDeliveryNoteStatus
 import com.blacksmith.metalstore.outbound.domain.repository.OutboundDeliveryNoteLineRepository
 import com.blacksmith.metalstore.outbound.domain.repository.OutboundDeliveryNoteRepository
 import org.junit.jupiter.api.BeforeEach
@@ -145,5 +146,57 @@ class OutboundDeliveryNoteControllerHttpTest {
             .header("X-Organization-Id", organizationId.toString()))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.status").value("CANCELLED"))
+    }
+
+    @Test
+    fun `update updates header fields of draft outbound`() {
+        val note = repo.save(OutboundDeliveryNote(
+            organizationId = organizationId,
+            number = "ALS-2026-001",
+            customerName = "Original"
+        ))
+
+        val body = """{"customerName":"Cliente Modificado","customerVat":"A12345678","notes":"Nota actualizada"}"""
+
+        mockMvc.perform(put("/api/outbound-delivery-notes/{id}", note.id)
+            .header("X-Organization-Id", organizationId.toString())
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(body))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.customerName").value("Cliente Modificado"))
+            .andExpect(jsonPath("$.customerVat").value("A12345678"))
+            .andExpect(jsonPath("$.notes").value("Nota actualizada"))
+            .andExpect(jsonPath("$.status").value("DRAFT"))
+
+        val updated = repo.findById(note.id).get()
+        assert(updated.customerName == "Cliente Modificado") { "Expected updated customerName" }
+    }
+
+    @Test
+    fun `update rejects for confirmed outbound`() {
+        val note = repo.save(OutboundDeliveryNote(
+            organizationId = organizationId,
+            number = "ALS-2026-001",
+            status = OutboundDeliveryNoteStatus.CONFIRMED
+        ))
+
+        val body = """{"customerName":"Cambio"}"""
+
+        mockMvc.perform(put("/api/outbound-delivery-notes/{id}", note.id)
+            .header("X-Organization-Id", organizationId.toString())
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(body))
+            .andExpect(status().isBadRequest)
+    }
+
+    @Test
+    fun `update returns 404 for non-existent outbound`() {
+        val body = """{"customerName":"Test"}"""
+
+        mockMvc.perform(put("/api/outbound-delivery-notes/{id}", UUID.randomUUID())
+            .header("X-Organization-Id", organizationId.toString())
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(body))
+            .andExpect(status().isNotFound)
     }
 }
