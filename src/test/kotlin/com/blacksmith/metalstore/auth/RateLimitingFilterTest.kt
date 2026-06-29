@@ -19,6 +19,7 @@ import java.util.UUID
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
 @TestPropertySource(properties = [
+    "rate-limiting.enabled=true",
     "rate-limiting.default-limit=5",
     "rate-limiting.default-window-seconds=60",
     "rate-limiting.excluded-paths="
